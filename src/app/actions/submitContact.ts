@@ -26,16 +26,31 @@ export async function submitContact(formData: FormData): Promise<ContactResponse
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const response = await fetch('https://n8n.mick-solutions.ch/webhook/Contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ nom, email, message }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
+    // Log pour debug
+    const responseText = await response.text();
+    console.log('n8n response status:', response.status);
+    console.log('n8n response body:', responseText);
+
     if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
+      console.error('n8n error:', response.status, responseText);
+      return {
+        success: false,
+        message: `Erreur serveur (${response.status}). Réessayez plus tard.`,
+      };
     }
 
     return {
@@ -44,10 +59,23 @@ export async function submitContact(formData: FormData): Promise<ContactResponse
     };
   } catch (error) {
     console.error('Erreur lors de l\'envoi du formulaire:', error);
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        return {
+          success: false,
+          message: 'Délai d\'attente dépassé. Vérifiez votre connexion.',
+        };
+      }
+      return {
+        success: false,
+        message: `Erreur: ${error.message}`,
+      };
+    }
+    
     return {
       success: false,
       message: 'Une erreur est survenue. Veuillez réessayer plus tard.',
     };
   }
 }
-
