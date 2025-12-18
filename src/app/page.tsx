@@ -1,3 +1,5 @@
+import ContactForm from '@/components/ContactForm';
+
 export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0a0f1c]">
@@ -16,7 +18,7 @@ export default function Home() {
       />
 
       {/* Main content */}
-      <main className="relative z-10 text-center px-6">
+      <main className="relative z-10 text-center px-6 py-16 w-full max-w-4xl">
         {/* Logo mark */}
         <div className="mb-8 flex justify-center">
           <div className="relative">
@@ -51,9 +53,21 @@ export default function Home() {
           <div className="h-px w-16 bg-gradient-to-l from-transparent to-violet-500/50" />
         </div>
 
+        {/* Contact Section */}
+        <section className="mt-16">
+          <h2 className="text-2xl sm:text-3xl font-light text-white mb-3">
+            Me <span className="font-semibold bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">contacter</span>
+          </h2>
+          <p className="text-slate-500 mb-8 max-w-md mx-auto">
+            Un projet d&apos;automatisation ou d&apos;infrastructure ? Parlons-en.
+          </p>
+          
+          <ContactForm />
+        </section>
+
         {/* CTA hint */}
-        <p className="mt-12 text-sm text-slate-500 tracking-wide">
-          Site en construction — Revenez bientôt
+        <p className="mt-16 text-sm text-slate-500 tracking-wide">
+          Site en construction — Plus de contenu à venir
         </p>
       </main>
 
