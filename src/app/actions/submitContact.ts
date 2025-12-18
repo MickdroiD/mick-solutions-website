@@ -33,6 +33,8 @@ export async function submitContact(formData: FormData): Promise<ContactResponse
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'MickSolutions-ContactForm/1.0',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ nom, email, message }),
       signal: controller.signal,
