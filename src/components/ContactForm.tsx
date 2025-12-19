@@ -1,11 +1,26 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { motion } from 'framer-motion';
+import { useInView } from 'framer-motion';
+import { useRef } from 'react';
 import { submitContact } from '@/app/actions/submitContact';
+import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+
+const timeThieves = [
+  { value: "", label: "Sélectionnez une option" },
+  { value: "emails", label: "Gestion des emails" },
+  { value: "facturation", label: "Facturation & comptabilité" },
+  { value: "saisie", label: "Saisie de données" },
+  { value: "planification", label: "Planification & RDV" },
+  { value: "autre", label: "Autre" },
+];
 
 export default function ContactForm() {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   const handleSubmit = async (formData: FormData) => {
     setFeedback(null);
@@ -13,7 +28,6 @@ export default function ContactForm() {
       const result = await submitContact(formData);
       setFeedback(result);
       if (result.success) {
-        // Reset form on success
         const form = document.getElementById('contact-form') as HTMLFormElement;
         form?.reset();
       }
@@ -21,110 +35,212 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form id="contact-form" action={handleSubmit} className="space-y-5">
-        {/* Nom */}
-        <div className="group">
-          <label htmlFor="nom" className="block text-sm font-medium text-slate-400 mb-2 tracking-wide">
-            Nom
-          </label>
-          <input
-            type="text"
-            id="nom"
-            name="nom"
-            required
-            disabled={isPending}
-            placeholder="Votre nom"
-            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 
-                     text-white placeholder-slate-500 
-                     focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
-                     transition-all duration-300 backdrop-blur-sm
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
+    <section id="contact" className="relative py-24 sm:py-32 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-primary-500/10 to-transparent blur-[100px]" />
 
-        {/* Email */}
-        <div className="group">
-          <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-2 tracking-wide">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            disabled={isPending}
-            placeholder="votre@email.com"
-            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 
-                     text-white placeholder-slate-500 
-                     focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
-                     transition-all duration-300 backdrop-blur-sm
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
-
-        {/* Message */}
-        <div className="group">
-          <label htmlFor="message" className="block text-sm font-medium text-slate-400 mb-2 tracking-wide">
-            Message
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            rows={4}
-            required
-            disabled={isPending}
-            placeholder="Décrivez votre projet..."
-            className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-700/50 
-                     text-white placeholder-slate-500 resize-none
-                     focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
-                     transition-all duration-300 backdrop-blur-sm
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isPending}
-          className="relative w-full py-3.5 rounded-xl font-medium tracking-wide
-                   bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500
-                   text-white shadow-lg shadow-cyan-500/25
-                   hover:shadow-cyan-500/40 hover:scale-[1.02]
-                   active:scale-[0.98]
-                   transition-all duration-300
-                   disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100
-                   overflow-hidden group"
+      <div ref={ref} className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
         >
-          <span className={`transition-opacity duration-200 ${isPending ? 'opacity-0' : 'opacity-100'}`}>
-            Envoyer le message
-          </span>
-          {isPending && (
-            <span className="absolute inset-0 flex items-center justify-center">
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span className="ml-2">Envoi en cours...</span>
-            </span>
-          )}
-        </button>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Commençons <span className="text-gradient">ensemble</span>
+          </h2>
+          <p className="text-lg text-slate-400 max-w-xl mx-auto">
+            Décrivez votre situation, on vous répond sous 24h avec une proposition concrète.
+          </p>
+        </motion.div>
 
-        {/* Feedback Message */}
-        {feedback && (
-          <div
-            className={`p-4 rounded-xl text-sm font-medium text-center backdrop-blur-sm
-                      transition-all duration-300 animate-fadeIn
-                      ${feedback.success 
-                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' 
-                        : 'bg-red-500/10 border border-red-500/30 text-red-400'
-                      }`}
-          >
-            {feedback.message}
+        {/* Form card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative"
+        >
+          {/* Glow effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-3xl blur-xl opacity-50" />
+          
+          <div className="relative p-8 sm:p-10 rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-xl">
+            <form id="contact-form" action={handleSubmit} className="space-y-6">
+              {/* Row 1: Name & Company */}
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="group">
+                  <label htmlFor="nom" className="block text-sm font-medium text-slate-300 mb-2">
+                    Nom complet <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="nom"
+                    name="nom"
+                    required
+                    disabled={isPending}
+                    placeholder="Jean Dupont"
+                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
+                             text-white placeholder-slate-500 
+                             focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20
+                             transition-all duration-300
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                <div className="group">
+                  <label htmlFor="entreprise" className="block text-sm font-medium text-slate-300 mb-2">
+                    Nom de l&apos;entreprise <span className="text-slate-500">(optionnel)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="entreprise"
+                    name="entreprise"
+                    disabled={isPending}
+                    placeholder="Ma Société SA"
+                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
+                             text-white placeholder-slate-500 
+                             focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20
+                             transition-all duration-300
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Email */}
+              <div className="group">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                  Email <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  disabled={isPending}
+                  placeholder="jean@entreprise.ch"
+                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
+                           text-white placeholder-slate-500 
+                           focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20
+                           transition-all duration-300
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Row 3: Time thief select */}
+              <div className="group">
+                <label htmlFor="voleurTemps" className="block text-sm font-medium text-slate-300 mb-2">
+                  Quel est votre plus gros voleur de temps ? <span className="text-red-400">*</span>
+                </label>
+                <select
+                  id="voleurTemps"
+                  name="voleurTemps"
+                  required
+                  disabled={isPending}
+                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
+                           text-white 
+                           focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20
+                           transition-all duration-300
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center',
+                    backgroundSize: '1.25rem',
+                  }}
+                >
+                  {timeThieves.map((option) => (
+                    <option key={option.value} value={option.value} className="bg-slate-900">
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Row 4: Message */}
+              <div className="group">
+                <label htmlFor="message" className="block text-sm font-medium text-slate-300 mb-2">
+                  Décrivez votre situation <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={5}
+                  required
+                  disabled={isPending}
+                  placeholder="Je passe X heures par semaine à faire Y... J'aimerais automatiser Z..."
+                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
+                           text-white placeholder-slate-500 resize-none
+                           focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20
+                           transition-all duration-300
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                disabled={isPending}
+                whileHover={{ scale: isPending ? 1 : 1.02 }}
+                whileTap={{ scale: isPending ? 1 : 0.98 }}
+                className="relative w-full py-4 rounded-xl font-semibold tracking-wide
+                         bg-gradient-to-r from-primary-500 to-accent-500
+                         text-white shadow-xl shadow-primary-500/20
+                         hover:shadow-primary-500/40
+                         transition-all duration-300
+                         disabled:opacity-60 disabled:cursor-not-allowed
+                         overflow-hidden flex items-center justify-center gap-3"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Demander mon audit gratuit
+                  </>
+                )}
+              </motion.button>
+
+              {/* Feedback Message */}
+              {feedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-center gap-3 p-4 rounded-xl text-sm font-medium
+                            ${feedback.success 
+                              ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' 
+                              : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                            }`}
+                >
+                  {feedback.success ? (
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  )}
+                  {feedback.message}
+                </motion.div>
+              )}
+            </form>
           </div>
-        )}
-      </form>
-    </div>
+        </motion.div>
+
+        {/* Privacy note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-center text-sm text-slate-500 mt-6"
+        >
+          Vos données sont sécurisées et ne seront jamais partagées. 
+          <br className="sm:hidden" />
+          Hébergement 100% suisse.
+        </motion.p>
+      </div>
+    </section>
   );
 }
-

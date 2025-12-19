@@ -7,42 +7,62 @@ interface ContactResponse {
 
 export async function submitContact(formData: FormData): Promise<ContactResponse> {
   const nom = formData.get('nom') as string;
+  const entreprise = formData.get('entreprise') as string || '';
   const email = formData.get('email') as string;
+  const voleurTemps = formData.get('voleurTemps') as string;
   const message = formData.get('message') as string;
 
-  // Validation basique
-  if (!nom || !email || !message) {
+  // Validation
+  if (!nom || !email || !message || !voleurTemps) {
     return {
       success: false,
-      message: 'Tous les champs sont requis.',
+      message: 'Veuillez remplir tous les champs obligatoires.',
     };
   }
 
-  if (!email.includes('@')) {
+  if (!email.includes('@') || !email.includes('.')) {
     return {
       success: false,
       message: 'Adresse email invalide.',
     };
   }
 
+  // Map voleurTemps to readable text
+  const voleurTempsMap: Record<string, string> = {
+    emails: 'Gestion des emails',
+    facturation: 'Facturation & comptabilité',
+    saisie: 'Saisie de données',
+    planification: 'Planification & RDV',
+    autre: 'Autre',
+  };
+
+  const voleurTempsReadable = voleurTempsMap[voleurTemps] || voleurTemps;
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch('https://n8n.mick-solutions.ch/webhook/Contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'MickSolutions-ContactForm/1.0',
+        'User-Agent': 'MickSolutions-ContactForm/2.0',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ nom, email, message }),
+      body: JSON.stringify({
+        nom,
+        entreprise,
+        email,
+        voleurTemps: voleurTempsReadable,
+        message,
+        source: 'Site Web - Nouveau Design',
+        date: new Date().toISOString(),
+      }),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
-    // Log pour debug
     const responseText = await response.text();
     console.log('n8n response status:', response.status);
     console.log('n8n response body:', responseText);
@@ -57,7 +77,7 @@ export async function submitContact(formData: FormData): Promise<ContactResponse
 
     return {
       success: true,
-      message: 'Message envoyé avec succès ! Je vous répondrai rapidement.',
+      message: 'Merci ! Votre demande a été envoyée. Nous vous répondrons sous 24h.',
     };
   } catch (error) {
     console.error('Erreur lors de l\'envoi du formulaire:', error);
