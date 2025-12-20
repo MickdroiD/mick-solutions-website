@@ -6,7 +6,7 @@ import Image from 'next/image';
 import type { Project } from '@/lib/baserow';
 
 interface PortfolioSectionProps {
-  projects: Project[] | null;
+  projects?: Project[];
 }
 
 // Mock data si pas de données Baserow

@@ -10,7 +10,7 @@ interface Service {
   Titre: string;
   Description: string;
   Icone: string;
-  Ordre: string;
+  Ordre: string | null;
 }
 
 // Icon mapping
@@ -55,9 +55,9 @@ function getIcon(iconName: string) {
 }
 
 // Map order to icon for services without explicit icon
-function getIconByOrder(order: string) {
+function getIconByOrder(order: string | null) {
   const orderIcons = ['mail', 'database', 'shield', 'file', 'users', 'chart'];
-  const index = parseInt(order) - 1;
+  const index = order ? parseInt(order) - 1 : 0;
   return iconMap[orderIcons[index] || 'file'] || FileText;
 }
 
