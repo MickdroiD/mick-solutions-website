@@ -21,8 +21,8 @@ export default async function Home() {
       <Header globalSettings={globalSettings} />
       <HeroSection globalSettings={globalSettings} />
       <AdvantagesSection />
-      <ServicesSection services={services} />
-      <PortfolioSection projects={projects} />
+      <ServicesSection services={services ?? []} />
+      <PortfolioSection projects={projects ?? []} />
       <TrustSection />
       <ContactForm />
       <Footer globalSettings={globalSettings} />
