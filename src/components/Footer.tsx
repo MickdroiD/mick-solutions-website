@@ -1,10 +1,32 @@
 'use client';
 
+import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Linkedin, Mail, MapPin } from 'lucide-react';
 import Image from 'next/image';
 
+const navItems = [
+  { name: 'Avantages', id: 'avantages' },
+  { name: 'Services', id: 'services' },
+  { name: 'Confiance', id: 'confiance' },
+  { name: 'Contact', id: 'contact' },
+];
+
 export default function Footer() {
+  // Navigation programmatique compatible tous navigateurs
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const handleLogoClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <footer className="relative py-16 overflow-hidden">
       {/* Background */}
@@ -15,7 +37,11 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-12 md:gap-8 mb-12">
           {/* Brand */}
           <div>
-            <a href="#" className="flex items-center gap-3 mb-4 group">
+            <a 
+              href="#" 
+              onClick={handleLogoClick}
+              className="flex items-center gap-3 mb-4 group touch-manipulation"
+            >
               <Image
                 src="/logo.svg"
                 alt="Mick Solutions"
@@ -37,13 +63,14 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Navigation</h4>
             <ul className="space-y-2">
-              {['Avantages', 'Services', 'Confiance', 'Contact'].map((item) => (
-                <li key={item}>
+              {navItems.map((item) => (
+                <li key={item.name}>
                   <a 
-                    href={`#${item.toLowerCase()}`}
-                    className="text-slate-400 hover:text-primary-400 text-sm transition-colors"
+                    href={`#${item.id}`}
+                    onClick={(e) => handleNavClick(e, item.id)}
+                    className="text-slate-400 hover:text-primary-400 text-sm transition-colors touch-manipulation"
                   >
-                    {item}
+                    {item.name}
                   </a>
                 </li>
               ))}

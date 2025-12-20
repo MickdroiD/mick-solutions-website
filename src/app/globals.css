@@ -7,10 +7,26 @@
 :root {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --header-height: 64px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 80px;
+  }
 }
 
 html {
   scroll-behavior: smooth;
+  /* Compense le header fixe lors du scroll vers les ancres */
+  scroll-padding-top: var(--header-height);
+}
+
+/* Support Safari < 15.4 pour scroll-behavior */
+@supports not (scroll-behavior: smooth) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -19,6 +35,19 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Évite le zoom accidentel sur iOS lors du focus input */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Améliore la performance du touch sur mobile */
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Force les sections à prendre en compte le header fixe */
+section[id] {
+  scroll-margin-top: var(--header-height);
 }
 
 /* Selection styling */
