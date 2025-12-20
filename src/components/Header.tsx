@@ -38,24 +38,24 @@ export default function Header() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-3 group">
+          <a href="#" className="flex items-center gap-2 sm:gap-3 group">
             <motion.div 
-              className="logo-frame"
+              className="logo-frame flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="relative bg-slate-900/90 rounded-xl p-1.5 sm:p-2">
+              <div className="relative bg-slate-900/90 rounded-xl p-1 sm:p-2">
                 <Image
                   src="/logo.svg"
                   alt="Mick Solutions"
                   width={48}
                   height={48}
-                  className="h-8 w-8 sm:h-10 sm:w-10 relative z-10"
+                  className="h-7 w-7 sm:h-10 sm:w-10 relative z-10"
                   priority
                 />
               </div>
             </motion.div>
-            <span className="hidden sm:block text-lg font-semibold text-white">
+            <span className="text-xs sm:text-lg font-semibold text-white whitespace-nowrap">
               Mick <span className="text-gradient">Solutions</span>
             </span>
           </a>
