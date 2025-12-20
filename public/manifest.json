@@ -1,0 +1,27 @@
+{
+  "name": "Mick Solutions",
+  "short_name": "Mick Solutions",
+  "description": "Automatisation sur-mesure pour PME Suisses - DevOps & n8n Expert",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "fr-CH"
+}
+
