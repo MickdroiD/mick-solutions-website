@@ -33,8 +33,13 @@ async function getServices() {
     console.log('⏳ Envoi de la requête...');
 
     const response = await fetch(apiUrl, {
+      method: 'GET',
       headers: {
-        Authorization: `Token ${token}`,
+        'Authorization': `Token ${token}`,
+        'User-Agent': 'MickSolutions-Website/1.0 (Vercel; Next.js)',
+        'Accept': 'application/json',
+        'Accept-Language': 'fr-CH,fr;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
       },
       next: { revalidate: 3600 }, // Cache for 1 hour
     });
