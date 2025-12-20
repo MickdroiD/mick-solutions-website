@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import Image from 'next/image';
 
 const navItems = [
   { name: 'Avantages', href: '#avantages' },
@@ -37,20 +38,15 @@ export default function Header() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-500 p-[2px]">
-                <div className="w-full h-full rounded-xl bg-background flex items-center justify-center">
-                  <span className="text-lg font-bold bg-gradient-to-br from-primary-400 to-accent-500 bg-clip-text text-transparent">
-                    MS
-                  </span>
-                </div>
-              </div>
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary-400 to-accent-500 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-            </div>
-            <span className="hidden sm:block text-lg font-semibold text-white">
-              Mick <span className="text-gradient">Solutions</span>
-            </span>
+          <a href="#" className="flex items-center group">
+            <Image
+              src="/logo_white.svg"
+              alt="Mick Solutions"
+              width={180}
+              height={40}
+              className="h-8 sm:h-10 w-auto"
+              priority
+            />
           </a>
 
           {/* Desktop Navigation */}

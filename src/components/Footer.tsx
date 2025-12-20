@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Linkedin, Mail, MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -14,17 +15,14 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-12 md:gap-8 mb-12">
           {/* Brand */}
           <div>
-            <a href="#" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-500 p-[2px]">
-                <div className="w-full h-full rounded-xl bg-background flex items-center justify-center">
-                  <span className="text-lg font-bold bg-gradient-to-br from-primary-400 to-accent-500 bg-clip-text text-transparent">
-                    MS
-                  </span>
-                </div>
-              </div>
-              <span className="text-lg font-semibold text-white">
-                Mick <span className="text-gradient">Solutions</span>
-              </span>
+            <a href="#" className="inline-block mb-4">
+              <Image
+                src="/logo_white.svg"
+                alt="Mick Solutions"
+                width={160}
+                height={36}
+                className="h-9 w-auto opacity-70 hover:opacity-100 transition-opacity duration-300"
+              />
             </a>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Automatisation sur-mesure pour PME et indépendants suisses. 
