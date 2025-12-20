@@ -2,19 +2,27 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Phone } from 'lucide-react';
 import Image from 'next/image';
+import type { GlobalSettings } from '@/lib/baserow';
 
 const navItems = [
   { name: 'Avantages', href: '#avantages', id: 'avantages' },
   { name: 'Services', href: '#services', id: 'services' },
+  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
   { name: 'Confiance', href: '#confiance', id: 'confiance' },
   { name: 'Contact', href: '#contact', id: 'contact' },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  globalSettings: GlobalSettings | null;
+}
+
+export default function Header({ globalSettings }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const lienBoutonAppel = globalSettings?.lienBoutonAppel || '#contact';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -118,7 +126,20 @@ export default function Header() {
           </div>
 
           {/* CTA Button */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            {lienBoutonAppel && lienBoutonAppel !== '#contact' && (
+              <a
+                href={lienBoutonAppel}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-slate-300
+                         bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20
+                         transition-all duration-300"
+              >
+                <Phone className="w-4 h-4" />
+                Réserver un appel
+              </a>
+            )}
             <a
               href="#contact"
               onClick={(e) => handleNavClick(e, 'contact')}
@@ -165,6 +186,17 @@ export default function Header() {
                   {item.name}
                 </a>
               ))}
+              {lienBoutonAppel && lienBoutonAppel !== '#contact' && (
+                <a
+                  href={lienBoutonAppel}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-3 px-2 text-slate-400 hover:text-white transition-colors touch-manipulation text-base"
+                >
+                  <Phone className="w-4 h-4" />
+                  Réserver un appel
+                </a>
+              )}
               <a
                 href="#contact"
                 onClick={(e) => handleNavClick(e, 'contact')}
@@ -181,4 +213,3 @@ export default function Header() {
     </motion.header>
   );
 }
-

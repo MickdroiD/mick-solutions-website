@@ -2,17 +2,28 @@
 
 import { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Linkedin, Mail, MapPin } from 'lucide-react';
+import { Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import Image from 'next/image';
+import type { GlobalSettings } from '@/lib/baserow';
 
 const navItems = [
   { name: 'Avantages', id: 'avantages' },
   { name: 'Services', id: 'services' },
+  { name: 'Portfolio', id: 'portfolio' },
   { name: 'Confiance', id: 'confiance' },
   { name: 'Contact', id: 'contact' },
 ];
 
-export default function Footer() {
+interface FooterProps {
+  globalSettings: GlobalSettings | null;
+}
+
+export default function Footer({ globalSettings }: FooterProps) {
+  // Valeurs par défaut
+  const email = globalSettings?.email || 'contact@mick-solutions.ch';
+  const telephone = globalSettings?.telephone || '';
+  const lienLinkedin = globalSettings?.lienLinkedin || 'https://linkedin.com/company/mick-solutions';
+
   // Navigation programmatique compatible tous navigateurs
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     e.preventDefault();
@@ -82,24 +93,35 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-slate-400 text-sm">
-                <MapPin className="w-4 h-4 text-primary-400" />
+                <MapPin className="w-4 h-4 text-primary-400 flex-shrink-0" />
                 Genève, Suisse
               </li>
               <li>
                 <a 
-                  href="mailto:contact@mick-solutions.ch"
+                  href={`mailto:${email}`}
                   className="flex items-center gap-3 text-slate-400 hover:text-primary-400 text-sm transition-colors"
                 >
-                  <Mail className="w-4 h-4 text-primary-400" />
-                  contact@mick-solutions.ch
+                  <Mail className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                  {email}
                 </a>
               </li>
+              {telephone && (
+                <li>
+                  <a 
+                    href={`tel:${telephone.replace(/\s/g, '')}`}
+                    className="flex items-center gap-3 text-slate-400 hover:text-primary-400 text-sm transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                    {telephone}
+                  </a>
+                </li>
+              )}
             </ul>
 
             {/* Social links */}
             <div className="flex items-center gap-4 mt-6">
               <motion.a
-                href="https://linkedin.com"
+                href={lienLinkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1 }}
@@ -128,4 +150,3 @@ export default function Footer() {
     </footer>
   );
 }
-

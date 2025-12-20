@@ -3,8 +3,23 @@
 import { motion } from 'framer-motion';
 import AnimatedLogo from './AnimatedLogo';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import type { GlobalSettings } from '@/lib/baserow';
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  globalSettings: GlobalSettings | null;
+}
+
+export default function HeroSection({ globalSettings }: HeroSectionProps) {
+  // Valeurs par défaut si pas de données Baserow
+  const titreHero = globalSettings?.titreHero || 'Gagnez du temps. Économisez de l\'argent. Restez concentrés.';
+  const sousTitreHero = globalSettings?.sousTitreHero || 'L\'automatisation sur-mesure pour les PME suisses. Plus efficace qu\'un employé, 100% sécurisé à Genève.';
+
+  // Parser le titre pour créer le gradient sur la 2e ligne
+  const titreParts = titreHero.split('.');
+  const ligne1 = titreParts[0] ? titreParts[0].trim() + '.' : 'Gagnez du temps.';
+  const ligne2 = titreParts[1] ? titreParts[1].trim() + '.' : 'Économisez de l\'argent.';
+  const ligne3 = titreParts[2] ? titreParts[2].trim() + (titreParts[2].endsWith('.') ? '' : '.') : 'Restez concentrés.';
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background gradients */}
@@ -49,18 +64,16 @@ export default function HeroSection() {
 
             {/* Main headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Gagnez du temps.
+              {ligne1}
               <br />
-              <span className="text-gradient">Économisez de l&apos;argent.</span>
+              <span className="text-gradient">{ligne2}</span>
               <br />
-              Restez concentrés.
+              {ligne3}
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg sm:text-xl text-slate-400 mb-8 max-w-xl mx-auto lg:mx-0">
-              L&apos;automatisation sur-mesure pour les PME suisses.
-              <br className="hidden sm:block" />
-              Plus efficace qu&apos;un employé, 100% sécurisé à Genève.
+              {sousTitreHero}
             </p>
 
             {/* CTA Buttons */}
@@ -138,4 +151,3 @@ export default function HeroSection() {
     </section>
   );
 }
-

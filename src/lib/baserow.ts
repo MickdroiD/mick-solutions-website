@@ -1,0 +1,268 @@
+// ============================================
+// BASEROW API CLIENT - Mick Solutions Website
+// ============================================
+
+const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
+const BASEROW_TOKEN = process.env.BASEROW_TOKEN;
+
+// Table IDs
+const TABLE_IDS = {
+  SERVICES: 748,
+  PORTFOLIO: 749,
+  REVIEWS: 750,
+  GLOBAL: 751,
+  FAQ: 752,
+} as const;
+
+// ============================================
+// INTERFACES
+// ============================================
+
+export interface Service {
+  id: number;
+  Titre: string;
+  Description: string;
+  Icone: string;
+  Ordre: string | null;
+}
+
+export interface Project {
+  id: number;
+  Nom: string;
+  Slug: string;
+  Tags: { id: number; value: string; color: string }[];
+  DescriptionCourte: string;
+  ImageCouverture: { url: string; name: string }[];
+  LienSite: string;
+  Statut: { id: number; value: string; color: string };
+  Ordre: string | null;
+}
+
+export interface Review {
+  id: number;
+  NomClient: string;
+  PosteEntreprise: string;
+  Photo: { url: string; name: string }[];
+  Message: string;
+  Note: string;
+  Afficher: boolean;
+}
+
+export interface GlobalSettings {
+  id: number;
+  email: string;
+  telephone: string;
+  lienLinkedin: string;
+  titreHero: string;
+  sousTitreHero: string;
+  lienBoutonAppel: string;
+}
+
+export interface FAQ {
+  id: number;
+  Question: string;
+  Reponse: string;
+  Ordre: string | null;
+}
+
+// ============================================
+// RAW BASEROW RESPONSE TYPES (snake_case)
+// ============================================
+
+interface BaserowProjectRow {
+  id: number;
+  Nom: string;
+  Slug: string;
+  Tags: { id: number; value: string; color: string }[];
+  'Description courte': string;
+  'Image de couverture': { url: string; name: string }[];
+  'Lien du site': string;
+  Statut: { id: number; value: string; color: string };
+  Ordre: string | null;
+}
+
+interface BaserowReviewRow {
+  id: number;
+  'Nom du client': string;
+  'Poste / Entreprise': string;
+  Photo: { url: string; name: string }[];
+  Message: string;
+  Note: string;
+  Afficher: boolean;
+}
+
+interface BaserowGlobalRow {
+  id: number;
+  Email: string;
+  'Téléphone': string;
+  'Lien Linkedin': string;
+  'Titre Hero': string;
+  'Sous-titre Hero': string;
+  'Lien Bouton Appel': string;
+}
+
+// ============================================
+// GENERIC FETCH FUNCTION
+// ============================================
+
+async function fetchBaserow<T>(
+  tableId: number,
+  options?: {
+    filters?: string;
+    orderBy?: string;
+    size?: number;
+  }
+): Promise<T[] | null> {
+  if (!BASEROW_TOKEN) {
+    console.error('❌ BASEROW_TOKEN non défini');
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams({ user_field_names: 'true' });
+    
+    if (options?.filters) {
+      params.append('filters', options.filters);
+    }
+    if (options?.orderBy) {
+      params.append('order_by', options.orderBy);
+    }
+    if (options?.size) {
+      params.append('size', options.size.toString());
+    }
+
+    const url = `${BASEROW_BASE_URL}/${tableId}/?${params.toString()}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Token ${BASEROW_TOKEN}`,
+        'Accept': 'application/json',
+      },
+      next: { revalidate: 3600 }, // Cache 1h
+    });
+
+    if (!response.ok) {
+      console.error(`❌ Erreur Baserow (table ${tableId}): ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.results as T[];
+  } catch (error) {
+    console.error(`❌ Exception Baserow (table ${tableId}):`, error);
+    return null;
+  }
+}
+
+// ============================================
+// API FUNCTIONS
+// ============================================
+
+/**
+ * Récupère les services depuis Baserow
+ */
+export async function getServices(): Promise<Service[] | null> {
+  return fetchBaserow<Service>(TABLE_IDS.SERVICES, {
+    orderBy: 'Ordre',
+  });
+}
+
+/**
+ * Récupère les projets publiés, triés par ordre
+ * Filtre: Statut = "Publié" (id: 3068)
+ */
+export async function getProjects(): Promise<Project[] | null> {
+  const rawProjects = await fetchBaserow<BaserowProjectRow>(TABLE_IDS.PORTFOLIO, {
+    filters: JSON.stringify({
+      filter_type: 'AND',
+      filters: [
+        {
+          type: 'single_select_equal',
+          field: 'Statut',
+          value: '3068', // ID de "Publié"
+        },
+      ],
+    }),
+    orderBy: 'Ordre',
+  });
+
+  if (!rawProjects) return null;
+
+  // Mapper les noms de champs Baserow vers notre interface
+  return rawProjects.map((row) => ({
+    id: row.id,
+    Nom: row.Nom,
+    Slug: row.Slug,
+    Tags: row.Tags,
+    DescriptionCourte: row['Description courte'],
+    ImageCouverture: row['Image de couverture'],
+    LienSite: row['Lien du site'],
+    Statut: row.Statut,
+    Ordre: row.Ordre,
+  }));
+}
+
+/**
+ * Récupère les témoignages à afficher
+ * Filtre: Afficher = true
+ */
+export async function getReviews(): Promise<Review[] | null> {
+  const rawReviews = await fetchBaserow<BaserowReviewRow>(TABLE_IDS.REVIEWS, {
+    filters: JSON.stringify({
+      filter_type: 'AND',
+      filters: [
+        {
+          type: 'boolean',
+          field: 'Afficher',
+          value: 'true',
+        },
+      ],
+    }),
+  });
+
+  if (!rawReviews) return null;
+
+  // Mapper les noms de champs Baserow vers notre interface
+  return rawReviews.map((row) => ({
+    id: row.id,
+    NomClient: row['Nom du client'],
+    PosteEntreprise: row['Poste / Entreprise'],
+    Photo: row.Photo,
+    Message: row.Message,
+    Note: row.Note,
+    Afficher: row.Afficher,
+  }));
+}
+
+/**
+ * Récupère les paramètres globaux (première ligne de la table)
+ */
+export async function getGlobalSettings(): Promise<GlobalSettings | null> {
+  const rawSettings = await fetchBaserow<BaserowGlobalRow>(TABLE_IDS.GLOBAL, {
+    size: 1,
+  });
+
+  if (!rawSettings || rawSettings.length === 0) return null;
+
+  const row = rawSettings[0];
+  return {
+    id: row.id,
+    email: row.Email,
+    telephone: row['Téléphone'],
+    lienLinkedin: row['Lien Linkedin'],
+    titreHero: row['Titre Hero'],
+    sousTitreHero: row['Sous-titre Hero'],
+    lienBoutonAppel: row['Lien Bouton Appel'],
+  };
+}
+
+/**
+ * Récupère les FAQ triées par ordre
+ */
+export async function getFAQ(): Promise<FAQ[] | null> {
+  return fetchBaserow<FAQ>(TABLE_IDS.FAQ, {
+    orderBy: 'Ordre',
+  });
+}
+
