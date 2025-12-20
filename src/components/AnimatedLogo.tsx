@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function AnimatedLogo({ className = "" }: { className?: string }) {
   const [isClient, setIsClient] = useState(false);
@@ -12,26 +13,20 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
 
   if (!isClient) {
     return (
-      <div className={`w-64 h-64 ${className}`}>
-        <svg viewBox="0 0 200 200" className="w-full h-full">
-          <defs>
-            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="50%" stopColor="#06b6d4" />
-              <stop offset="100%" stopColor="#a855f7" />
-            </linearGradient>
-          </defs>
-          <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" 
-                fill="url(#logoGradient)" fontSize="72" fontWeight="700" fontFamily="Inter, sans-serif">
-            MS
-          </text>
-        </svg>
+      <div className={`w-64 h-64 flex items-center justify-center ${className}`}>
+        <Image
+          src="/logo.svg"
+          alt="Mick Solutions"
+          width={200}
+          height={200}
+          className="w-40 h-40"
+        />
       </div>
     );
   }
 
   return (
-    <div className={`relative w-64 h-64 ${className}`}>
+    <div className={`relative w-64 h-64 flex items-center justify-center ${className}`}>
       {/* Glow effect behind */}
       <motion.div
         className="absolute inset-0 blur-3xl opacity-30"
@@ -45,7 +40,8 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <svg viewBox="0 0 200 200" className="w-full h-full relative z-10">
+      {/* Animated circles around the logo */}
+      <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
         <defs>
           {/* Main gradient */}
           <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -67,23 +63,9 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
               transition={{ duration: 3, repeat: Infinity }}
             />
           </linearGradient>
-
-          {/* Filter for glow */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          {/* Circuit pattern */}
-          <pattern id="circuitPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="10" cy="10" r="1" fill="rgba(34,211,238,0.3)" />
-          </pattern>
         </defs>
 
-        {/* Background circle with circuit pattern */}
+        {/* Background circle with rotation */}
         <motion.circle
           cx="100"
           cy="100"
@@ -110,21 +92,6 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
           animate={{ scale: [0.95, 1, 0.95] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
-
-        {/* Main MS text */}
-        <text
-          x="50%"
-          y="55%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="url(#mainGradient)"
-          fontSize="72"
-          fontWeight="700"
-          fontFamily="Inter, sans-serif"
-          filter="url(#glow)"
-        >
-          MS
-        </text>
 
         {/* Circuit lines - Top */}
         <motion.path
@@ -215,27 +182,36 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
             transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
           />
         ))}
-
-        {/* Electric pulse effect on letters */}
-        <motion.text
-          x="50%"
-          y="55%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="none"
-          stroke="#22d3ee"
-          strokeWidth="0.5"
-          fontSize="72"
-          fontWeight="700"
-          fontFamily="Inter, sans-serif"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.5, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
-        >
-          MS
-        </motion.text>
       </svg>
+
+      {/* Main Logo Image */}
+      <motion.div
+        className="relative z-10"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Image
+          src="/logo.svg"
+          alt="Mick Solutions"
+          width={140}
+          height={140}
+          className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+        />
+        
+        {/* Pulse glow effect on logo */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{
+            boxShadow: [
+              "0 0 20px rgba(34,211,238,0.2)",
+              "0 0 40px rgba(168,85,247,0.3)",
+              "0 0 20px rgba(34,211,238,0.2)",
+            ],
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </motion.div>
     </div>
   );
 }
-

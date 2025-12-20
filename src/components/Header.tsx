@@ -38,15 +38,25 @@ export default function Header() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center group">
-            <Image
-              src="/logo_white.svg"
-              alt="Mick Solutions"
-              width={180}
-              height={40}
-              className="h-8 sm:h-10 w-auto"
-              priority
-            />
+          <a href="#" className="flex items-center gap-3 group">
+            <motion.div 
+              className="relative"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Image
+                src="/logo.svg"
+                alt="Mick Solutions"
+                width={48}
+                height={48}
+                className="h-10 w-10 sm:h-12 sm:w-12"
+                priority
+              />
+              <div className="absolute -inset-1 bg-gradient-to-br from-primary-400 to-accent-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+            </motion.div>
+            <span className="hidden sm:block text-lg font-semibold text-white">
+              Mick <span className="text-gradient">Solutions</span>
+            </span>
           </a>
 
           {/* Desktop Navigation */}

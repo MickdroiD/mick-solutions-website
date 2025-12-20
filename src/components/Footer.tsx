@@ -15,14 +15,17 @@ export default function Footer() {
         <div className="grid md:grid-cols-3 gap-12 md:gap-8 mb-12">
           {/* Brand */}
           <div>
-            <a href="#" className="inline-block mb-4">
+            <a href="#" className="flex items-center gap-3 mb-4 group">
               <Image
-                src="/logo_white.svg"
+                src="/logo.svg"
                 alt="Mick Solutions"
-                width={160}
-                height={36}
-                className="h-9 w-auto opacity-70 hover:opacity-100 transition-opacity duration-300"
+                width={40}
+                height={40}
+                className="h-10 w-10 opacity-80 group-hover:opacity-100 transition-opacity duration-300"
               />
+              <span className="text-lg font-semibold text-white opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                Mick <span className="text-gradient">Solutions</span>
+              </span>
             </a>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Automatisation sur-mesure pour PME et indépendants suisses. 
