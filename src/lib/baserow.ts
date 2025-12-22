@@ -5,6 +5,11 @@
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 
+// Debug en production : log si le token est défini (sans révéler le token)
+if (typeof window === 'undefined') {
+  console.log(`[Baserow] Token status: ${BASEROW_TOKEN ? '✅ Configured' : '❌ MISSING - Set BASEROW_API_TOKEN env var'}`);
+}
+
 // Table IDs
 const TABLE_IDS = {
   SERVICES: 748,
@@ -133,7 +138,8 @@ async function fetchBaserow<T>(
   }
 ): Promise<T[] | null> {
   if (!BASEROW_TOKEN) {
-    console.error('❌ BASEROW_TOKEN non défini');
+    console.error('❌ [Baserow] BASEROW_API_TOKEN non défini dans les variables d\'environnement');
+    console.error('   → Sur Vercel: Settings > Environment Variables > Ajouter BASEROW_API_TOKEN');
     return null;
   }
 
@@ -152,24 +158,29 @@ async function fetchBaserow<T>(
 
     const url = `${BASEROW_BASE_URL}/${tableId}/?${params.toString()}`;
     
+    console.log(`[Baserow] Fetching table ${tableId}...`);
+    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Token ${BASEROW_TOKEN}`,
         'Accept': 'application/json',
       },
-      next: { revalidate: 3600 }, // Cache 1h
+      next: { revalidate: 60 }, // Cache 1 minute (réduit pour rafraîchir plus souvent)
     });
 
     if (!response.ok) {
-      console.error(`❌ Erreur Baserow (table ${tableId}): ${response.status}`);
+      const errorText = await response.text();
+      console.error(`❌ [Baserow] Erreur table ${tableId}: HTTP ${response.status}`);
+      console.error(`   → Response: ${errorText.substring(0, 200)}`);
       return null;
     }
 
     const data = await response.json();
+    console.log(`✅ [Baserow] Table ${tableId}: ${data.results?.length ?? 0} rows fetched`);
     return data.results as T[];
   } catch (error) {
-    console.error(`❌ Exception Baserow (table ${tableId}):`, error);
+    console.error(`❌ [Baserow] Exception table ${tableId}:`, error);
     return null;
   }
 }
