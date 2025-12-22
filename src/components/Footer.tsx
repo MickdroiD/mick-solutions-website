@@ -4,7 +4,8 @@ import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import Image from 'next/image';
-import type { GlobalSettings } from '@/lib/baserow';
+import Link from 'next/link';
+import type { GlobalSettings, LegalDoc } from '@/lib/baserow';
 
 const navItems = [
   { name: 'Avantages', id: 'avantages' },
@@ -16,9 +17,10 @@ const navItems = [
 
 interface FooterProps {
   globalSettings: GlobalSettings | null;
+  legalDocs?: LegalDoc[] | null;
 }
 
-export default function Footer({ globalSettings }: FooterProps) {
+export default function Footer({ globalSettings, legalDocs }: FooterProps) {
   // Valeurs par défaut
   const email = globalSettings?.email || 'contact@mick-solutions.ch';
   const telephone = globalSettings?.telephone || '';
@@ -140,6 +142,22 @@ export default function Footer({ globalSettings }: FooterProps) {
             <p className="text-slate-500 text-sm">
               © 2025 Mick Solutions. Tous droits réservés.
             </p>
+            
+            {/* Liens légaux dynamiques */}
+            {legalDocs && legalDocs.length > 0 && (
+              <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                {legalDocs.map((doc) => (
+                  <Link
+                    key={doc.id}
+                    href={`/legal/${doc.Slug}`}
+                    className="text-slate-500 hover:text-primary-400 text-sm transition-colors"
+                  >
+                    {doc.Titre}
+                  </Link>
+                ))}
+              </nav>
+            )}
+            
             <div className="flex items-center gap-2 text-slate-500 text-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Hébergé en Suisse

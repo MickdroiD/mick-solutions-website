@@ -6,14 +6,15 @@ import PortfolioSection from '@/components/PortfolioSection';
 import TrustSection from '@/components/TrustSection';
 import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
-import { getServices, getProjects, getGlobalSettings } from '@/lib/baserow';
+import { getServices, getProjects, getGlobalSettings, getAllLegalDocs } from '@/lib/baserow';
 
 export default async function Home() {
   // Fetch en parallèle pour optimiser les performances
-  const [services, projects, globalSettings] = await Promise.all([
+  const [services, projects, globalSettings, legalDocs] = await Promise.all([
     getServices(),
     getProjects(),
     getGlobalSettings(),
+    getAllLegalDocs(),
   ]);
 
   return (
@@ -25,7 +26,7 @@ export default async function Home() {
       <PortfolioSection projects={projects ?? []} />
       <TrustSection />
       <ContactForm />
-      <Footer globalSettings={globalSettings} />
+      <Footer globalSettings={globalSettings} legalDocs={legalDocs} />
     </main>
   );
 }

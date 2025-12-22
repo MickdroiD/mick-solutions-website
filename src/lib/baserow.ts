@@ -3,7 +3,7 @@
 // ============================================
 
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
-const BASEROW_TOKEN = process.env.BASEROW_TOKEN;
+const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 
 // Table IDs
 const TABLE_IDS = {
@@ -12,6 +12,7 @@ const TABLE_IDS = {
   REVIEWS: 750,
   GLOBAL: 751,
   FAQ: 752,
+  LEGAL_DOCS: 753,
 } as const;
 
 // ============================================
@@ -65,6 +66,15 @@ export interface FAQ {
   Ordre: string | null;
 }
 
+export interface LegalDoc {
+  id: number;
+  Titre: string;
+  Slug: string;
+  Contenu: string;
+  DateMiseAJour: string | null;
+  IsActive: boolean;
+}
+
 // ============================================
 // RAW BASEROW RESPONSE TYPES (snake_case)
 // ============================================
@@ -99,6 +109,15 @@ interface BaserowGlobalRow {
   'Titre Hero': string;
   'Sous-titre Hero': string;
   'Lien Bouton Appel': string;
+}
+
+interface BaserowLegalDocRow {
+  id: number;
+  Titre: string;
+  Slug: string;
+  Contenu: string;
+  Date_Mise_a_jour: string | null;
+  Is_Active: boolean;
 }
 
 // ============================================
@@ -264,5 +283,60 @@ export async function getFAQ(): Promise<FAQ[] | null> {
   return fetchBaserow<FAQ>(TABLE_IDS.FAQ, {
     orderBy: 'Ordre',
   });
+}
+
+/**
+ * Récupère tous les documents légaux actifs (pour menus/liens)
+ * Filtre: Is_Active = true
+ */
+export async function getAllLegalDocs(): Promise<LegalDoc[] | null> {
+  try {
+    const rawDocs = await fetchBaserow<BaserowLegalDocRow>(TABLE_IDS.LEGAL_DOCS);
+
+    if (!rawDocs) return null;
+
+    // Filtrer les documents actifs côté serveur
+    return rawDocs
+      .filter((row) => row.Is_Active === true)
+      .map((row) => ({
+        id: row.id,
+        Titre: row.Titre,
+        Slug: row.Slug,
+        Contenu: row.Contenu,
+        DateMiseAJour: row.Date_Mise_a_jour,
+        IsActive: row.Is_Active,
+      }));
+  } catch (error) {
+    console.error('❌ Erreur getAllLegalDocs:', error);
+    return null;
+  }
+}
+
+/**
+ * Récupère un document légal spécifique par son slug
+ */
+export async function getLegalDocBySlug(slug: string): Promise<LegalDoc | null> {
+  try {
+    const rawDocs = await fetchBaserow<BaserowLegalDocRow>(TABLE_IDS.LEGAL_DOCS);
+
+    if (!rawDocs) return null;
+
+    // Trouver le document par slug et vérifiant qu'il est actif
+    const row = rawDocs.find((doc) => doc.Slug === slug && doc.Is_Active === true);
+    
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      Titre: row.Titre,
+      Slug: row.Slug,
+      Contenu: row.Contenu,
+      DateMiseAJour: row.Date_Mise_a_jour,
+      IsActive: row.Is_Active,
+    };
+  } catch (error) {
+    console.error(`❌ Erreur getLegalDocBySlug (${slug}):`, error);
+    return null;
+  }
 }
 
