@@ -162,6 +162,12 @@ export default function RootLayout({
   return (
     <html lang="fr" className="scroll-smooth">
       <head>
+        {/* Umami Analytics - GDPR/nLPD compliant */}
+        <script
+          defer
+          src="https://umami.mick-solutions.ch/script.js"
+          data-website-id="35753aec-b7a1-485d-a978-a066e64c1e0e"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
