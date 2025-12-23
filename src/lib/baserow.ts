@@ -24,12 +24,32 @@ const TABLE_IDS = {
 // INTERFACES
 // ============================================
 
+// Tag Baserow (format renvoyé par l'API pour les select multiple)
+export interface BaserowTag {
+  id: number;
+  value: string;
+  color: string;
+}
+
+// Type Baserow (format renvoyé par l'API pour les select simple)
+export interface BaserowSelectOption {
+  id: number;
+  value: string;
+  color: string;
+}
+
 export interface Service {
   id: number;
   Titre: string;
   Description: string;
   Icone: string;
   Ordre: string | null;
+  // Nouveaux champs
+  Tagline: string | null;
+  tags: BaserowTag[];
+  points_cle: string | null;
+  type: BaserowSelectOption | null;
+  tarif: string | null;
 }
 
 export interface Project {
@@ -189,13 +209,46 @@ async function fetchBaserow<T>(
 // API FUNCTIONS
 // ============================================
 
+// ============================================
+// RAW BASEROW SERVICE ROW TYPE
+// ============================================
+
+interface BaserowServiceRow {
+  id: number;
+  Titre: string;
+  Description: string;
+  Icone: string;
+  Ordre: string | null;
+  Tagline: string | null;
+  tags: BaserowTag[];
+  points_cle: string | null;
+  type: BaserowSelectOption | null;
+  tarif: string | null;
+}
+
 /**
  * Récupère les services depuis Baserow
  */
 export async function getServices(): Promise<Service[] | null> {
-  return fetchBaserow<Service>(TABLE_IDS.SERVICES, {
+  const rawServices = await fetchBaserow<BaserowServiceRow>(TABLE_IDS.SERVICES, {
     orderBy: 'Ordre',
   });
+
+  if (!rawServices) return null;
+
+  // Mapper les champs avec des valeurs par défaut pour les nouveaux champs
+  return rawServices.map((row) => ({
+    id: row.id,
+    Titre: row.Titre,
+    Description: row.Description,
+    Icone: row.Icone,
+    Ordre: row.Ordre,
+    Tagline: row.Tagline || null,
+    tags: row.tags || [],
+    points_cle: row.points_cle || null,
+    type: row.type || null,
+    tarif: row.tarif || null,
+  }));
 }
 
 /**
