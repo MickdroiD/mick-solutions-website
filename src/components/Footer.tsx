@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 import { Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { GlobalSettings, LegalDoc } from '@/lib/baserow';
+import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
+import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
+import type { LegalDoc } from '@/lib/baserow';
 
 const navItems = [
   { name: 'Avantages', id: 'avantages' },
@@ -16,15 +18,22 @@ const navItems = [
 ];
 
 interface FooterProps {
-  globalSettings: GlobalSettings | null;
+  globalSettings: GlobalSettingsComplete;
   legalDocs?: LegalDoc[] | null;
 }
 
 export default function Footer({ globalSettings, legalDocs }: FooterProps) {
-  // Valeurs par défaut
-  const email = globalSettings?.email || 'contact@mick-solutions.ch';
-  const telephone = globalSettings?.telephone || '';
-  const lienLinkedin = globalSettings?.lienLinkedin || 'https://linkedin.com/company/mick-solutions';
+  // Données dynamiques avec fallback
+  const settings = globalSettings || DEFAULT_SETTINGS;
+  const email = settings.email;
+  const telephone = settings.telephone;
+  const lienLinkedin = settings.lienLinkedin;
+  const adresse = settings.adresse;
+  const nomSite = settings.nomSite;
+  const logoUrl = settings.logoUrl;
+  const slogan = settings.slogan;
+  const copyrightTexte = settings.copyrightTexte;
+  const paysHebergement = settings.paysHebergement;
 
   // Navigation programmatique compatible tous navigateurs
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -56,19 +65,18 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
               className="flex items-center gap-3 mb-4 group touch-manipulation"
             >
               <Image
-                src="/logo.svg"
-                alt="Mick Solutions"
+                src={logoUrl}
+                alt={nomSite}
                 width={40}
                 height={40}
                 className="h-10 w-10 opacity-80 group-hover:opacity-100 transition-opacity duration-300"
               />
               <span className="text-lg font-semibold text-white opacity-80 group-hover:opacity-100 transition-opacity duration-300">
-                Mick <span className="text-gradient">Solutions</span>
+                {nomSite.split(' ')[0]} <span className="text-gradient">{nomSite.split(' ').slice(1).join(' ')}</span>
               </span>
             </a>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Automatisation sur-mesure pour PME et indépendants suisses. 
-              Gagnez du temps, économisez de l&apos;argent.
+              {slogan}
             </p>
           </div>
 
@@ -96,7 +104,7 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-slate-400 text-sm">
                 <MapPin className="w-4 h-4 text-primary-400 flex-shrink-0" />
-                Genève, Suisse
+                {adresse}
               </li>
               <li>
                 <a 
@@ -140,7 +148,7 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
         <div className="pt-8 border-t border-white/5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-slate-500 text-sm">
-              © 2025 Mick Solutions. Tous droits réservés.
+              {copyrightTexte}
             </p>
             
             {/* Liens légaux dynamiques */}
@@ -160,7 +168,7 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
             
             <div className="flex items-center gap-2 text-slate-500 text-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Hébergé en Suisse
+              {paysHebergement}
             </div>
           </div>
         </div>

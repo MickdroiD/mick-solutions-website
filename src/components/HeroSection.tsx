@@ -3,16 +3,27 @@
 import { motion } from 'framer-motion';
 import AnimatedLogo from './AnimatedLogo';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import type { GlobalSettings } from '@/lib/baserow';
+import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
+import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
 
 interface HeroSectionProps {
-  globalSettings: GlobalSettings | null;
+  globalSettings: GlobalSettingsComplete;
 }
 
 export default function HeroSection({ globalSettings }: HeroSectionProps) {
-  // Valeurs par défaut si pas de données Baserow
-  const titreHero = globalSettings?.titreHero || 'Gagnez du temps. Économisez de l\'argent. Restez concentrés.';
-  const sousTitreHero = globalSettings?.sousTitreHero || 'L\'automatisation sur-mesure pour les PME suisses. Plus efficace qu\'un employé, 100% sécurisé à Genève.';
+  // Données dynamiques avec fallback
+  const settings = globalSettings || DEFAULT_SETTINGS;
+  const titreHero = settings.titreHero;
+  const sousTitreHero = settings.sousTitreHero;
+  const badgeHero = settings.badgeHero;
+  const ctaPrincipal = settings.ctaPrincipal;
+  const ctaSecondaire = settings.ctaSecondaire;
+  const trustStat1Value = settings.trustStat1Value;
+  const trustStat1Label = settings.trustStat1Label;
+  const trustStat2Value = settings.trustStat2Value;
+  const trustStat2Label = settings.trustStat2Label;
+  const trustStat3Value = settings.trustStat3Value;
+  const trustStat3Label = settings.trustStat3Label;
 
   // Parser le titre pour créer le gradient sur la 2e ligne
   const titreParts = titreHero.split('.');
@@ -59,7 +70,7 @@ export default function HeroSection({ globalSettings }: HeroSectionProps) {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-8"
             >
               <Sparkles className="w-4 h-4 text-primary-400" />
-              <span className="text-sm text-primary-300">Automatisation intelligente</span>
+              <span className="text-sm text-primary-300">{badgeHero}</span>
             </motion.div>
 
             {/* Main headline */}
@@ -87,7 +98,7 @@ export default function HeroSection({ globalSettings }: HeroSectionProps) {
                          shadow-xl shadow-primary-500/25 hover:shadow-primary-500/40
                          transition-all duration-300"
               >
-                Demander un audit gratuit
+                {ctaPrincipal}
                 <ArrowRight className="w-5 h-5" />
               </motion.a>
               <motion.a
@@ -98,25 +109,25 @@ export default function HeroSection({ globalSettings }: HeroSectionProps) {
                          bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20
                          transition-all duration-300"
               >
-                Découvrir nos services
+                {ctaSecondaire}
               </motion.a>
             </div>
 
             {/* Trust indicators */}
             <div className="mt-12 flex items-center gap-8 justify-center lg:justify-start">
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">100%</div>
-                <div className="text-xs text-slate-500">Données en Suisse</div>
+                <div className="text-2xl font-bold text-white">{trustStat1Value}</div>
+                <div className="text-xs text-slate-500">{trustStat1Label}</div>
               </div>
               <div className="w-px h-10 bg-slate-700" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">24/7</div>
-                <div className="text-xs text-slate-500">Automatisation</div>
+                <div className="text-2xl font-bold text-white">{trustStat2Value}</div>
+                <div className="text-xs text-slate-500">{trustStat2Label}</div>
               </div>
               <div className="w-px h-10 bg-slate-700" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">0</div>
-                <div className="text-xs text-slate-500">Coûts cachés</div>
+                <div className="text-2xl font-bold text-white">{trustStat3Value}</div>
+                <div className="text-xs text-slate-500">{trustStat3Label}</div>
               </div>
             </div>
           </motion.div>

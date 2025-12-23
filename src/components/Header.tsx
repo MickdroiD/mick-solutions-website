@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
 import Image from 'next/image';
-import type { GlobalSettings } from '@/lib/baserow';
+import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
+import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
 
 const navItems = [
   { name: 'Avantages', href: '#avantages', id: 'avantages' },
@@ -15,14 +16,18 @@ const navItems = [
 ];
 
 interface HeaderProps {
-  globalSettings: GlobalSettings | null;
+  globalSettings: GlobalSettingsComplete;
 }
 
 export default function Header({ globalSettings }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const lienBoutonAppel = globalSettings?.lienBoutonAppel || '#contact';
+  // Données dynamiques avec fallback
+  const settings = globalSettings || DEFAULT_SETTINGS;
+  const lienBoutonAppel = settings.lienBoutonAppel || '#contact';
+  const nomSite = settings.nomSite;
+  const logoUrl = settings.logoUrl;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -96,8 +101,8 @@ export default function Header({ globalSettings }: HeaderProps) {
             >
               <div className="relative bg-slate-900/90 rounded-xl p-1 sm:p-2">
                 <Image
-                  src="/logo.svg"
-                  alt="Mick Solutions"
+                  src={logoUrl}
+                  alt={nomSite}
                   width={48}
                   height={48}
                   className="h-7 w-7 sm:h-10 sm:w-10 relative z-10"
@@ -106,7 +111,7 @@ export default function Header({ globalSettings }: HeaderProps) {
               </div>
             </motion.div>
             <span className="text-xs sm:text-lg font-semibold text-white whitespace-nowrap">
-              Mick <span className="text-gradient">Solutions</span>
+              {nomSite.split(' ')[0]} <span className="text-gradient">{nomSite.split(' ').slice(1).join(' ')}</span>
             </span>
           </a>
 
@@ -149,7 +154,7 @@ export default function Header({ globalSettings }: HeaderProps) {
                        shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40
                        transition-all duration-300 hover:scale-105"
             >
-              Audit Gratuit
+              {settings.ctaPrincipal.split(' ').slice(-2).join(' ')}
             </a>
           </div>
 
@@ -204,7 +209,7 @@ export default function Header({ globalSettings }: HeaderProps) {
                          bg-gradient-to-r from-primary-500 to-accent-500 touch-manipulation
                          active:opacity-80 transition-opacity"
               >
-                Audit Gratuit
+                {settings.ctaPrincipal.split(' ').slice(-2).join(' ')}
               </a>
             </div>
           </motion.div>

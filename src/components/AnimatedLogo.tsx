@@ -27,14 +27,14 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
 
   return (
     <div className={`relative w-64 h-64 flex items-center justify-center ${className}`}>
-      {/* Glow effect behind */}
+      {/* Glow effect behind - uses CSS variables via Tailwind */}
       <motion.div
         className="absolute inset-0 blur-3xl opacity-30"
         animate={{
           background: [
-            "radial-gradient(circle, rgba(34,211,238,0.4) 0%, transparent 70%)",
-            "radial-gradient(circle, rgba(168,85,247,0.4) 0%, transparent 70%)",
-            "radial-gradient(circle, rgba(34,211,238,0.4) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--primary-400) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--accent-500) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--primary-400) 0%, transparent 70%)",
           ],
         }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -43,23 +43,23 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
       {/* Animated circles around the logo */}
       <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
         <defs>
-          {/* Main gradient */}
+          {/* Main gradient - uses CSS variables */}
           <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="50%" stopColor="#06b6d4" />
-            <stop offset="100%" stopColor="#a855f7" />
+            <stop offset="0%" style={{ stopColor: 'var(--primary-400)' }} />
+            <stop offset="50%" style={{ stopColor: 'var(--primary-500)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--accent-500)' }} />
           </linearGradient>
 
           {/* Animated glow gradient */}
           <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <motion.stop
               offset="0%"
-              animate={{ stopColor: ["#22d3ee", "#a855f7", "#22d3ee"] }}
+              animate={{ stopColor: ["var(--primary-400)", "var(--accent-500)", "var(--primary-400)"] }}
               transition={{ duration: 3, repeat: Infinity }}
             />
             <motion.stop
               offset="100%"
-              animate={{ stopColor: ["#a855f7", "#22d3ee", "#a855f7"] }}
+              animate={{ stopColor: ["var(--accent-500)", "var(--primary-400)", "var(--accent-500)"] }}
               transition={{ duration: 3, repeat: Infinity }}
             />
           </linearGradient>
@@ -86,7 +86,7 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
           cy="100"
           r="80"
           fill="none"
-          stroke="rgba(34,211,238,0.2)"
+          className="stroke-primary-400/20"
           strokeWidth="0.5"
           initial={{ scale: 0.95 }}
           animate={{ scale: [0.95, 1, 0.95] }}
@@ -162,7 +162,7 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
           transition={{ duration: 2, repeat: Infinity, delay: 0.8 }}
         />
 
-        {/* Connection nodes */}
+        {/* Connection nodes - uses CSS variable */}
         {[
           { cx: 60, cy: 40 },
           { cx: 140, cy: 40 },
@@ -176,7 +176,7 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
             cx={pos.cx}
             cy={pos.cy}
             r="3"
-            fill="#22d3ee"
+            className="fill-primary-400"
             initial={{ opacity: 0.3 }}
             animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
@@ -196,7 +196,7 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
           alt="Mick Solutions"
           width={140}
           height={140}
-          className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+          className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 drop-shadow-[0_0_30px_var(--primary-400)]"
         />
         
         {/* Pulse glow effect on logo */}
@@ -204,9 +204,9 @@ export default function AnimatedLogo({ className = "" }: { className?: string })
           className="absolute inset-0 rounded-full"
           animate={{
             boxShadow: [
-              "0 0 20px rgba(34,211,238,0.2)",
-              "0 0 40px rgba(168,85,247,0.3)",
-              "0 0 20px rgba(34,211,238,0.2)",
+              "0 0 20px color-mix(in srgb, var(--primary-400) 20%, transparent)",
+              "0 0 40px color-mix(in srgb, var(--accent-500) 30%, transparent)",
+              "0 0 20px color-mix(in srgb, var(--primary-400) 20%, transparent)",
             ],
           }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}

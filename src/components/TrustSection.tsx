@@ -3,36 +3,45 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Shield, MapPin, Eye, Banknote } from 'lucide-react';
+import { 
+  Shield, 
+  MapPin, 
+  Eye, 
+  Banknote,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react';
+import type { TrustPoint } from '@/lib/baserow';
 
-const trustPoints = [
-  {
-    icon: MapPin,
-    title: "100% hébergé en Suisse",
-    description: "Vos données ne quittent jamais le territoire suisse. Serveurs à Genève, conformité totale RGPD et LPD.",
-    badge: "Genève, CH",
-  },
-  {
-    icon: Shield,
-    title: "Sécurité bancaire",
-    description: "Chiffrement de bout en bout, sauvegardes quotidiennes, accès sécurisé. Vos informations sont protégées comme dans un coffre.",
-    badge: "Certifié",
-  },
-  {
-    icon: Eye,
-    title: "Transparence totale",
-    description: "Vous savez exactement ce qui est automatisé et comment. Accès complet aux logs et rapports en temps réel.",
-    badge: "Open Book",
-  },
-  {
-    icon: Banknote,
-    title: "Pas de coûts cachés",
-    description: "Un prix fixe, tout compris. Pas de surprise à la facture, pas d'options payantes déguisées. Ce qui est annoncé est ce que vous payez.",
-    badge: "Prix fixe",
-  },
-];
+// ============================================
+// ICON MAPPING
+// ============================================
+const iconMap: Record<string, LucideIcon> = {
+  'map-pin': MapPin,
+  mappin: MapPin,
+  shield: Shield,
+  shieldcheck: Shield,
+  eye: Eye,
+  banknote: Banknote,
+};
 
-export default function TrustSection() {
+function getIcon(iconName: string): LucideIcon {
+  if (!iconName) return HelpCircle;
+  const normalizedName = iconName.toLowerCase().replace(/[_\s]/g, '-').trim();
+  return iconMap[normalizedName] || HelpCircle;
+}
+
+// ============================================
+// PROPS INTERFACE
+// ============================================
+interface TrustSectionProps {
+  trustPoints: TrustPoint[];
+}
+
+// ============================================
+// COMPONENT
+// ============================================
+export default function TrustSection({ trustPoints }: TrustSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -70,39 +79,43 @@ export default function TrustSection() {
 
         {/* Trust points */}
         <div className="grid md:grid-cols-2 gap-8">
-          {trustPoints.map((point, index) => (
-            <motion.div
-              key={point.title}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group"
-            >
-              <div className="flex gap-6 p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary-500/20 transition-all duration-300">
-                {/* Icon */}
-                <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500/10 to-accent-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <point.icon className="w-7 h-7 text-primary-400" />
+          {trustPoints.map((point, index) => {
+            const IconComponent = getIcon(point.Icone);
+            
+            return (
+              <motion.div
+                key={point.id}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group"
+              >
+                <div className="flex gap-6 p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary-500/20 transition-all duration-300">
+                  {/* Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500/10 to-accent-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <IconComponent className="w-7 h-7 text-primary-400" />
+                    </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">
-                      {point.title}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-xs font-medium text-primary-300">
-                      {point.badge}
-                    </span>
+                  {/* Content */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-white">
+                        {point.Titre}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-xs font-medium text-primary-300">
+                        {point.Badge}
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      {point.Description}
+                    </p>
                   </div>
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    {point.description}
-                  </p>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Bottom CTA */}
@@ -131,4 +144,3 @@ export default function TrustSection() {
     </section>
   );
 }
-

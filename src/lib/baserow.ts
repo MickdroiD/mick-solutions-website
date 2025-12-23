@@ -1,6 +1,14 @@
 // ============================================
 // BASEROW API CLIENT - Mick Solutions Website
 // ============================================
+// Client API pour récupérer les données dynamiques.
+// Supporte le mode White Label avec GlobalSettingsComplete.
+
+import { 
+  GlobalSettingsComplete, 
+  GlobalSettingsLegacy,
+  DEFAULT_SETTINGS 
+} from './types/global-settings';
 
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
@@ -11,6 +19,7 @@ if (typeof window === 'undefined') {
 }
 
 // Table IDs
+// Note: Mettre 0 pour désactiver une table (utilise les fallback)
 const TABLE_IDS = {
   SERVICES: 748,
   PORTFOLIO: 749,
@@ -18,6 +27,8 @@ const TABLE_IDS = {
   GLOBAL: 751,
   FAQ: 752,
   LEGAL_DOCS: 753,
+  ADVANTAGES: 0,    // TODO: Créer la table et mettre l'ID ici
+  TRUST_POINTS: 0,  // TODO: Créer la table et mettre l'ID ici
 } as const;
 
 // ============================================
@@ -74,20 +85,35 @@ export interface Review {
   Afficher: boolean;
 }
 
-export interface GlobalSettings {
-  id: number;
-  email: string;
-  telephone: string;
-  lienLinkedin: string;
-  titreHero: string;
-  sousTitreHero: string;
-  lienBoutonAppel: string;
-}
+// Réexporter les types depuis le fichier dédié
+export type { GlobalSettingsComplete, GlobalSettingsLegacy } from './types/global-settings';
+export { DEFAULT_SETTINGS, isCompleteSettings } from './types/global-settings';
+
+// Alias pour rétro-compatibilité
+export type GlobalSettings = GlobalSettingsLegacy;
 
 export interface FAQ {
   id: number;
   Question: string;
   Reponse: string;
+  Ordre: string | null;
+}
+
+export interface Advantage {
+  id: number;
+  Titre: string;
+  Description: string;
+  Icone: string;
+  Highlight: string;
+  Ordre: string | null;
+}
+
+export interface TrustPoint {
+  id: number;
+  Titre: string;
+  Description: string;
+  Icone: string;
+  Badge: string;
   Ordre: string | null;
 }
 
@@ -126,10 +152,73 @@ interface BaserowReviewRow {
   Afficher: boolean;
 }
 
+/**
+ * Interface Baserow complète pour le mode White Label.
+ * Correspond exactement aux champs de la table 751 (SITEWEB Global_Infos).
+ */
+interface BaserowGlobalRowComplete {
+  id: number;
+  
+  // === Champs de base ===
+  Email: string;
+  'Lien Linkedin': string;
+  'Titre Hero': string;
+  'Sous-titre Hero': string;
+  'Lien Bouton Appel': string;
+  
+  // === Identité ===
+  'Nom Site'?: string;
+  'Slogan'?: string;
+  'Initiales Logo'?: string;
+  
+  // === Assets ===
+  'Logo URL'?: string;
+  'Logo Dark URL'?: string;
+  'Favicon URL'?: string;
+  'OG Image URL'?: string;
+  
+  // === SEO ===
+  'Meta Titre'?: string;
+  'Meta Description'?: string;
+  'Site URL'?: string;
+  'Mots Cles'?: string;
+  'Langue'?: string;
+  'Locale'?: string;  // Champ à créer dans Baserow
+  
+  // === Branding ===
+  'Couleur Primaire'?: string;
+  'Couleur Accent'?: string;
+  
+  // === Contact ===
+  'Adresse'?: string;
+  'Telephone'?: string;  // Champ à créer dans Baserow
+  
+  // === Hero ===
+  'Badge Hero'?: string;
+  'CTA Principal'?: string;
+  'CTA Secondaire'?: string;
+  
+  // === Trust Stats ===
+  'Trust Stat 1 Value'?: string;
+  'Trust Stat 1 Label'?: string;
+  'Trust Stat 2 Value'?: string;  // Champ à créer dans Baserow
+  'Trust Stat 2 Label'?: string;  // Champ à créer dans Baserow
+  'Trust Stat 3 Value'?: string;  // Champ à créer dans Baserow
+  'Trust Stat 3 Label'?: string;  // Champ à créer dans Baserow
+  
+  // === Analytics ===
+  'Umami Site ID'?: string;       // Champ à créer dans Baserow
+  'Umami Script URL'?: string;    // Champ à créer dans Baserow
+  
+  // === Footer ===
+  'Copyright Texte'?: string;
+  'Pays Hebergement'?: string;
+}
+
+// Alias pour rétro-compatibilité
 interface BaserowGlobalRow {
   id: number;
   Email: string;
-  'Téléphone': string;
   'Lien Linkedin': string;
   'Titre Hero': string;
   'Sous-titre Hero': string;
@@ -320,6 +409,7 @@ export async function getReviews(): Promise<Review[] | null> {
 
 /**
  * Récupère les paramètres globaux (première ligne de la table)
+ * @deprecated Utiliser getGlobalSettingsComplete() pour le mode White Label
  */
 export async function getGlobalSettings(): Promise<GlobalSettings | null> {
   const rawSettings = await fetchBaserow<BaserowGlobalRow>(TABLE_IDS.GLOBAL, {
@@ -332,12 +422,91 @@ export async function getGlobalSettings(): Promise<GlobalSettings | null> {
   return {
     id: row.id,
     email: row.Email,
-    telephone: row['Téléphone'],
+    telephone: '',  // Champ legacy, utiliser getGlobalSettingsComplete()
     lienLinkedin: row['Lien Linkedin'],
     titreHero: row['Titre Hero'],
     sousTitreHero: row['Sous-titre Hero'],
     lienBoutonAppel: row['Lien Bouton Appel'],
   };
+}
+
+/**
+ * Récupère les paramètres globaux complets pour le mode White Label.
+ * Fusionne les données Baserow avec les valeurs par défaut.
+ * Utilise un cache de 60 secondes pour les performances.
+ */
+export async function getGlobalSettingsComplete(): Promise<GlobalSettingsComplete> {
+  const rawSettings = await fetchBaserow<BaserowGlobalRowComplete>(TABLE_IDS.GLOBAL, {
+    size: 1,
+  });
+
+  // Si pas de données, retourner les valeurs par défaut
+  if (!rawSettings || rawSettings.length === 0) {
+    console.warn('[Baserow] Aucune donnée Global_Infos trouvée, utilisation des valeurs par défaut');
+    return DEFAULT_SETTINGS;
+  }
+
+  const row = rawSettings[0];
+  
+  // Fusionner avec les valeurs par défaut (fallback)
+  const settings: GlobalSettingsComplete = {
+    id: row.id,
+    
+    // Identité
+    nomSite: row['Nom Site'] || DEFAULT_SETTINGS.nomSite,
+    slogan: row['Slogan'] || DEFAULT_SETTINGS.slogan,
+    initialesLogo: row['Initiales Logo'] || DEFAULT_SETTINGS.initialesLogo,
+    
+    // Assets
+    logoUrl: row['Logo URL'] || DEFAULT_SETTINGS.logoUrl,
+    logoDarkUrl: row['Logo Dark URL'] || null,
+    faviconUrl: row['Favicon URL'] || null,
+    ogImageUrl: row['OG Image URL'] || null,
+    
+    // SEO
+    metaTitre: row['Meta Titre'] || DEFAULT_SETTINGS.metaTitre,
+    metaDescription: row['Meta Description'] || DEFAULT_SETTINGS.metaDescription,
+    siteUrl: row['Site URL'] || DEFAULT_SETTINGS.siteUrl,
+    motsCles: row['Mots Cles'] || DEFAULT_SETTINGS.motsCles,
+    langue: row['Langue'] || DEFAULT_SETTINGS.langue,
+    locale: row['Locale'] || DEFAULT_SETTINGS.locale,
+    
+    // Branding
+    couleurPrimaire: row['Couleur Primaire'] || DEFAULT_SETTINGS.couleurPrimaire,
+    couleurAccent: row['Couleur Accent'] || DEFAULT_SETTINGS.couleurAccent,
+    
+    // Contact
+    email: row.Email || DEFAULT_SETTINGS.email,
+    telephone: row['Telephone'] || DEFAULT_SETTINGS.telephone,
+    adresse: row['Adresse'] || DEFAULT_SETTINGS.adresse,
+    lienLinkedin: row['Lien Linkedin'] || DEFAULT_SETTINGS.lienLinkedin,
+    lienBoutonAppel: row['Lien Bouton Appel'] || DEFAULT_SETTINGS.lienBoutonAppel,
+    
+    // Hero
+    titreHero: row['Titre Hero'] || DEFAULT_SETTINGS.titreHero,
+    sousTitreHero: row['Sous-titre Hero'] || DEFAULT_SETTINGS.sousTitreHero,
+    badgeHero: row['Badge Hero'] || DEFAULT_SETTINGS.badgeHero,
+    ctaPrincipal: row['CTA Principal'] || DEFAULT_SETTINGS.ctaPrincipal,
+    ctaSecondaire: row['CTA Secondaire'] || DEFAULT_SETTINGS.ctaSecondaire,
+    
+    // Trust Stats
+    trustStat1Value: row['Trust Stat 1 Value'] || DEFAULT_SETTINGS.trustStat1Value,
+    trustStat1Label: row['Trust Stat 1 Label'] || DEFAULT_SETTINGS.trustStat1Label,
+    trustStat2Value: row['Trust Stat 2 Value'] || DEFAULT_SETTINGS.trustStat2Value,
+    trustStat2Label: row['Trust Stat 2 Label'] || DEFAULT_SETTINGS.trustStat2Label,
+    trustStat3Value: row['Trust Stat 3 Value'] || DEFAULT_SETTINGS.trustStat3Value,
+    trustStat3Label: row['Trust Stat 3 Label'] || DEFAULT_SETTINGS.trustStat3Label,
+    
+    // Analytics
+    umamiSiteId: row['Umami Site ID'] || null,
+    umamiScriptUrl: row['Umami Script URL'] || null,
+    
+    // Footer
+    copyrightTexte: row['Copyright Texte'] || DEFAULT_SETTINGS.copyrightTexte,
+    paysHebergement: row['Pays Hebergement'] || DEFAULT_SETTINGS.paysHebergement,
+  };
+
+  return settings;
 }
 
 /**
@@ -402,5 +571,133 @@ export async function getLegalDocBySlug(slug: string): Promise<LegalDoc | null> 
     console.error(`❌ Erreur getLegalDocBySlug (${slug}):`, error);
     return null;
   }
+}
+
+// ============================================
+// ADVANTAGES & TRUST POINTS (pour sections dynamiques)
+// ============================================
+
+/**
+ * Valeurs par défaut pour les Avantages.
+ * Utilisées si la table Baserow n'existe pas ou est vide.
+ */
+export const DEFAULT_ADVANTAGES: Advantage[] = [
+  {
+    id: 1,
+    Titre: "Récupérez vos heures",
+    Description: "Les tâches répétitives qui vous volent 10h/semaine ? Automatisées. Concentrez-vous sur ce qui fait grandir votre entreprise.",
+    Icone: "clock",
+    Highlight: "10h+ économisées/semaine",
+    Ordre: "1",
+  },
+  {
+    id: 2,
+    Titre: "Réduisez vos coûts",
+    Description: "Pas de salaire à payer, pas de congés, pas d'erreurs humaines. Un investissement unique pour des économies durables.",
+    Icone: "trending-down",
+    Highlight: "Jusqu'à 70% d'économies",
+    Ordre: "2",
+  },
+  {
+    id: 3,
+    Titre: "Zéro complexité",
+    Description: "Pas de jargon technique, pas de formation interminable. On s'occupe de tout, vous profitez des résultats.",
+    Icone: "target",
+    Highlight: "Clé en main",
+    Ordre: "3",
+  },
+  {
+    id: 4,
+    Titre: "Résultats immédiats",
+    Description: "Dès le premier jour, vos processus tournent tout seuls. Facturation, emails, relances — tout est géré automatiquement.",
+    Icone: "zap",
+    Highlight: "Opérationnel en 48h",
+    Ordre: "4",
+  },
+];
+
+/**
+ * Valeurs par défaut pour les Points de Confiance.
+ * Utilisées si la table Baserow n'existe pas ou est vide.
+ */
+export const DEFAULT_TRUST_POINTS: TrustPoint[] = [
+  {
+    id: 1,
+    Titre: "100% hébergé en Suisse",
+    Description: "Vos données ne quittent jamais le territoire suisse. Serveurs à Genève, conformité totale RGPD et LPD.",
+    Icone: "map-pin",
+    Badge: "Genève, CH",
+    Ordre: "1",
+  },
+  {
+    id: 2,
+    Titre: "Sécurité bancaire",
+    Description: "Chiffrement de bout en bout, sauvegardes quotidiennes, accès sécurisé. Vos informations sont protégées comme dans un coffre.",
+    Icone: "shield",
+    Badge: "Certifié",
+    Ordre: "2",
+  },
+  {
+    id: 3,
+    Titre: "Transparence totale",
+    Description: "Vous savez exactement ce qui est automatisé et comment. Accès complet aux logs et rapports en temps réel.",
+    Icone: "eye",
+    Badge: "Open Book",
+    Ordre: "3",
+  },
+  {
+    id: 4,
+    Titre: "Pas de coûts cachés",
+    Description: "Un prix fixe, tout compris. Pas de surprise à la facture, pas d'options payantes déguisées. Ce qui est annoncé est ce que vous payez.",
+    Icone: "banknote",
+    Badge: "Prix fixe",
+    Ordre: "4",
+  },
+];
+
+/**
+ * Récupère les avantages depuis Baserow.
+ * Retourne les valeurs par défaut si la table n'existe pas.
+ */
+export async function getAdvantages(): Promise<Advantage[]> {
+  // Si l'ID de table est 0, utiliser les valeurs par défaut
+  if (TABLE_IDS.ADVANTAGES === 0) {
+    console.log('[Baserow] Table ADVANTAGES non configurée, utilisation des valeurs par défaut');
+    return DEFAULT_ADVANTAGES;
+  }
+
+  const rawAdvantages = await fetchBaserow<Advantage>(TABLE_IDS.ADVANTAGES, {
+    orderBy: 'Ordre',
+  });
+
+  if (!rawAdvantages || rawAdvantages.length === 0) {
+    console.warn('[Baserow] Aucun avantage trouvé, utilisation des valeurs par défaut');
+    return DEFAULT_ADVANTAGES;
+  }
+
+  return rawAdvantages;
+}
+
+/**
+ * Récupère les points de confiance depuis Baserow.
+ * Retourne les valeurs par défaut si la table n'existe pas.
+ */
+export async function getTrustPoints(): Promise<TrustPoint[]> {
+  // Si l'ID de table est 0, utiliser les valeurs par défaut
+  if (TABLE_IDS.TRUST_POINTS === 0) {
+    console.log('[Baserow] Table TRUST_POINTS non configurée, utilisation des valeurs par défaut');
+    return DEFAULT_TRUST_POINTS;
+  }
+
+  const rawTrustPoints = await fetchBaserow<TrustPoint>(TABLE_IDS.TRUST_POINTS, {
+    orderBy: 'Ordre',
+  });
+
+  if (!rawTrustPoints || rawTrustPoints.length === 0) {
+    console.warn('[Baserow] Aucun point de confiance trouvé, utilisation des valeurs par défaut');
+    return DEFAULT_TRUST_POINTS;
+  }
+
+  return rawTrustPoints;
 }
 

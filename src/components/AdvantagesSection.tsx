@@ -3,36 +3,44 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { Clock, TrendingDown, Target, Zap } from 'lucide-react';
+import { 
+  Clock, 
+  TrendingDown, 
+  Target, 
+  Zap,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react';
+import type { Advantage } from '@/lib/baserow';
 
-const advantages = [
-  {
-    icon: Clock,
-    title: "Récupérez vos heures",
-    description: "Les tâches répétitives qui vous volent 10h/semaine ? Automatisées. Concentrez-vous sur ce qui fait grandir votre entreprise.",
-    highlight: "10h+ économisées/semaine",
-  },
-  {
-    icon: TrendingDown,
-    title: "Réduisez vos coûts",
-    description: "Pas de salaire à payer, pas de congés, pas d'erreurs humaines. Un investissement unique pour des économies durables.",
-    highlight: "Jusqu'à 70% d'économies",
-  },
-  {
-    icon: Target,
-    title: "Zéro complexité",
-    description: "Pas de jargon technique, pas de formation interminable. On s'occupe de tout, vous profitez des résultats.",
-    highlight: "Clé en main",
-  },
-  {
-    icon: Zap,
-    title: "Résultats immédiats",
-    description: "Dès le premier jour, vos processus tournent tout seuls. Facturation, emails, relances — tout est géré automatiquement.",
-    highlight: "Opérationnel en 48h",
-  },
-];
+// ============================================
+// ICON MAPPING
+// ============================================
+const iconMap: Record<string, LucideIcon> = {
+  clock: Clock,
+  'trending-down': TrendingDown,
+  trendingdown: TrendingDown,
+  target: Target,
+  zap: Zap,
+};
 
-export default function AdvantagesSection() {
+function getIcon(iconName: string): LucideIcon {
+  if (!iconName) return HelpCircle;
+  const normalizedName = iconName.toLowerCase().replace(/[_\s]/g, '-').trim();
+  return iconMap[normalizedName] || HelpCircle;
+}
+
+// ============================================
+// PROPS INTERFACE
+// ============================================
+interface AdvantagesSectionProps {
+  advantages: Advantage[];
+}
+
+// ============================================
+// COMPONENT
+// ============================================
+export default function AdvantagesSection({ advantages }: AdvantagesSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -62,43 +70,46 @@ export default function AdvantagesSection() {
 
         {/* Advantages grid */}
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-          {advantages.map((advantage, index) => (
-            <motion.div
-              key={advantage.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group relative"
-            >
-              <div className="relative h-full p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary-500/30 transition-all duration-500">
-                {/* Hover glow */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/10 to-accent-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                
-                <div className="relative z-10">
-                  {/* Icon */}
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <advantage.icon className="w-7 h-7 text-primary-400" />
-                  </div>
+          {advantages.map((advantage, index) => {
+            const IconComponent = getIcon(advantage.Icone);
+            
+            return (
+              <motion.div
+                key={advantage.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group relative"
+              >
+                <div className="relative h-full p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary-500/30 transition-all duration-500">
+                  {/* Hover glow */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/10 to-accent-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <div className="relative z-10">
+                    {/* Icon */}
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <IconComponent className="w-7 h-7 text-primary-400" />
+                    </div>
 
-                  {/* Highlight badge */}
-                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
-                    <span className="text-xs font-medium text-primary-300">{advantage.highlight}</span>
-                  </div>
+                    {/* Highlight badge */}
+                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
+                      <span className="text-xs font-medium text-primary-300">{advantage.Highlight}</span>
+                    </div>
 
-                  {/* Content */}
-                  <h3 className="text-xl font-semibold text-white mb-3">
-                    {advantage.title}
-                  </h3>
-                  <p className="text-slate-400 leading-relaxed">
-                    {advantage.description}
-                  </p>
+                    {/* Content */}
+                    <h3 className="text-xl font-semibold text-white mb-3">
+                      {advantage.Titre}
+                    </h3>
+                    <p className="text-slate-400 leading-relaxed">
+                      {advantage.Description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
-
