@@ -36,12 +36,16 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   mail: Mail,
   database: Database,
   shield: ShieldCheck,
+  shieldcheck: ShieldCheck,
   file: FileText,
+  filetext: FileText,
   users: Users,
   chart: BarChart3,
+  barchart3: BarChart3,
   server: Server,
   bot: Bot,
   code: Code2,
+  code2: Code2,
   zap: Zap,
   globe: Globe,
   settings: Settings,
@@ -51,16 +55,6 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   workflow: Workflow,
   calendar: Calendar,
   creditcard: CreditCard,
-  // Noms Lucide (PascalCase -> lowercase mapping)
-  server: Server,
-  bot: Bot,
-  code2: Code2,
-  mail: Mail,
-  database: Database,
-  shieldcheck: ShieldCheck,
-  filetext: FileText,
-  users: Users,
-  barchart3: BarChart3,
 };
 
 // Fonction pour obtenir l'icône par nom

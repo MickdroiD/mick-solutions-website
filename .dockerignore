@@ -1,0 +1,43 @@
+# Dépendances
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build Next.js (on le rebuild dans Docker)
+.next
+out
+
+# Fichiers de test
+coverage
+.nyc_output
+
+# IDE et éditeurs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Variables d'environnement locales
+.env*.local
+.env.development
+.env.test
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Fichiers de documentation
+README.md
+*.md
+!package.json
+
