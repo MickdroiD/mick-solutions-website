@@ -1,192 +1,422 @@
 // ============================================
-// GLOBAL SETTINGS - Types pour White Label
+// GLOBAL SETTINGS - White Label Factory 2025
 // ============================================
-// Ces types définissent la structure complète des données
-// nécessaires pour personnaliser le site par client.
+// Types complets pour l'architecture modulaire.
+// 140 champs configurables via Baserow.
 
-/**
- * Interface complète pour les paramètres globaux du site.
- * Tous ces champs viennent de la table Baserow "SITEWEB Global_Infos".
- */
+// ============================================
+// TYPES DE VARIANTES (4 choix + AI)
+// ============================================
+
+export type VariantStyle = 'Minimal' | 'Corporate' | 'Electric' | 'Bold' | 'AI' | 'Custom';
+export type AnimationSpeed = 'Slow' | 'Normal' | 'Fast' | 'Instant';
+export type ScrollEffect = 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Parallax';
+export type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake';
+export type LoadingStyle = 'None' | 'Skeleton' | 'Spinner' | 'Progress';
+export type ImageStyle = 'Square' | 'Rounded' | 'Circle' | 'Custom';
+export type ImageFilter = 'None' | 'Grayscale' | 'Sepia' | 'Contrast' | 'Blur';
+export type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+export type BorderRadius = 'None' | 'Small' | 'Medium' | 'Large' | 'Full';
+export type FontFamily = 'Inter' | 'Poppins' | 'Space-Grotesk' | 'Outfit' | 'Montserrat' | 'DM-Sans' | 'Custom';
+export type PatternBackground = 'None' | 'Grid' | 'Dots' | 'Circuit' | 'Gradient' | 'Custom';
+export type LogoSize = 'Small' | 'Medium' | 'Large' | 'XLarge';
+export type HeroHeight = 'Short' | 'Medium' | 'Tall' | 'FullScreen';
+export type SectionSpacing = 'Compact' | 'Normal' | 'Spacious' | 'Ultra';
+export type AIMode = 'Disabled' | 'Placeholder' | 'Live';
+export type AIProvider = 'OpenAI' | 'Anthropic' | 'n8n' | 'Custom';
+export type AITone = 'Professional' | 'Friendly' | 'Casual' | 'Formal';
+export type AIIndustry = 'Tech' | 'Finance' | 'Health' | 'Retail' | 'Services' | 'Other';
+export type VoiceLanguage = 'fr-FR' | 'en-US' | 'de-DE' | 'it-IT';
+export type GalleryColumns = '2' | '3' | '4' | 'Auto';
+
+// Variantes spécifiques par module
+export type ServicesVariant = 'Grid' | 'Accordion' | 'Cards' | 'Showcase';
+export type GalleryVariant = 'Grid' | 'Slider' | 'Masonry' | 'AI';
+export type TestimonialsVariant = 'Minimal' | 'Carousel' | 'Cards' | 'Video';
+export type FAQVariant = 'Minimal' | 'Accordion' | 'Tabs' | 'Search';
+export type ContactVariant = 'Minimal' | 'Form' | 'Calendar' | 'Chat';
+export type AIAssistantStyle = 'Chat' | 'Voice' | 'Banner' | 'Hidden';
+
+// ============================================
+// INTERFACE PRINCIPALE
+// ============================================
+
 export interface GlobalSettingsComplete {
   id: number;
 
-  // === IDENTITÉ DU SITE ===
-  /** Nom du site/entreprise (ex: "Mick Solutions") */
+  // ========== A. IDENTITÉ DU SITE ==========
   nomSite: string;
-  /** Slogan court (ex: "Automatisation sur-mesure...") */
   slogan: string;
-  /** Initiales pour le logo généré (ex: "MS") */
   initialesLogo: string;
 
-  // === ASSETS VISUELS ===
-  /** URL du logo principal (SVG recommandé) */
+  // ========== B. ASSETS VISUELS ==========
   logoUrl: string;
-  /** URL du logo version claire (optionnel) */
   logoDarkUrl: string | null;
-  /** URL du favicon personnalisé (optionnel, sinon utilise /favicon.ico) */
   faviconUrl: string | null;
-  /** URL de l'image OpenGraph personnalisée (optionnel) */
   ogImageUrl: string | null;
+  heroBackgroundUrl: string | null;
+  heroVideoUrl: string | null;
 
-  // === SEO & MÉTA ===
-  /** Titre SEO principal (balise <title>) */
+  // ========== C. SEO & MÉTA ==========
   metaTitre: string;
-  /** Meta description principale */
   metaDescription: string;
-  /** URL canonique du site (ex: "https://www.mick-solutions.ch") */
   siteUrl: string;
-  /** Mots-clés SEO séparés par des virgules */
   motsCles: string;
-  /** Langue du site (ex: "fr") */
   langue: string;
-  /** Locale pour OpenGraph (ex: "fr_CH") */
   locale: string;
+  robotsIndex: boolean;
+  sitemapPriority: number | null;
 
-  // === BRANDING / COULEURS ===
-  /** Couleur primaire en hexadécimal (ex: "#06b6d4") */
+  // ========== D. BRANDING / COULEURS ==========
   couleurPrimaire: string;
-  /** Couleur d'accent en hexadécimal (ex: "#a855f7") */
   couleurAccent: string;
+  couleurBackground: string;
+  couleurText: string;
+  fontPrimary: FontFamily | null;
+  fontHeading: FontFamily | null;
+  fontCustomUrl: string | null;
+  borderRadius: BorderRadius | null;
+  patternBackground: PatternBackground | null;
 
-  // === INFORMATIONS DE CONTACT ===
-  /** Email de contact principal */
+  // ========== E. CONTACT ==========
   email: string;
-  /** Numéro de téléphone */
-  telephone: string;
-  /** Adresse affichée (ex: "Genève, Suisse") */
+  telephone: string | null;
   adresse: string;
-  /** URL de la page LinkedIn */
+  adresseCourte: string | null;
   lienLinkedin: string;
-  /** URL du bouton "Réserver un appel" (Calendly, Cal.com, etc.) */
+  lienInstagram: string | null;
+  lienTwitter: string | null;
+  lienYoutube: string | null;
+  lienGithub: string | null;
+  lienCalendly: string | null;
+  lienWhatsapp: string | null;
   lienBoutonAppel: string;
 
-  // === SECTION HERO ===
-  /** Titre principal du Hero (peut contenir des "." pour le split) */
+  // ========== F. SECTION HERO ==========
   titreHero: string;
-  /** Sous-titre du Hero */
   sousTitreHero: string;
-  /** Badge au-dessus du titre (ex: "Automatisation intelligente") */
   badgeHero: string;
-  /** Texte du bouton CTA principal */
   ctaPrincipal: string;
-  /** Texte du bouton CTA secondaire */
+  ctaPrincipalUrl: string | null;
   ctaSecondaire: string;
+  ctaSecondaireUrl: string | null;
+  heroAiPrompt: string | null;
 
-  // === TRUST INDICATORS (3 stats) ===
-  /** Valeur de la stat 1 (ex: "100%") */
+  // ========== G. TRUST STATS ==========
   trustStat1Value: string;
-  /** Label de la stat 1 (ex: "Données en Suisse") */
   trustStat1Label: string;
-  /** Valeur de la stat 2 (ex: "24/7") */
   trustStat2Value: string;
-  /** Label de la stat 2 (ex: "Automatisation") */
   trustStat2Label: string;
-  /** Valeur de la stat 3 (ex: "0") */
   trustStat3Value: string;
-  /** Label de la stat 3 (ex: "Coûts cachés") */
   trustStat3Label: string;
 
-  // === ANALYTICS ===
-  /** ID du site Umami (optionnel) */
-  umamiSiteId: string | null;
-  /** URL du script Umami (optionnel) */
-  umamiScriptUrl: string | null;
-
-  // === FOOTER / LEGAL ===
-  /** Texte de copyright (ex: "© 2025 Mick Solutions") */
+  // ========== H. FOOTER ==========
   copyrightTexte: string;
-  /** Badge de localisation (ex: "Hébergé en Suisse") */
   paysHebergement: string;
+  showLegalLinks: boolean;
+  customFooterText: string | null;
+  footerCtaText: string | null;
+  footerCtaUrl: string | null;
+
+  // ========== I. ANALYTICS ==========
+  umamiSiteId: string | null;
+  umamiScriptUrl: string | null;
+  gaMeasurementId: string | null;
+  gtmContainerId: string | null;
+  hotjarSiteId: string | null;
+  facebookPixelId: string | null;
+
+  // ========== J. MODULES - ACTIVATION ==========
+  showNavbar: boolean;
+  showHero: boolean;
+  showAdvantages: boolean;
+  showServices: boolean;
+  showGallery: boolean;
+  showPortfolio: boolean;
+  showTestimonials: boolean;
+  showTrust: boolean;
+  showFaq: boolean;
+  showBlog: boolean;
+  showContact: boolean;
+  showAiAssistant: boolean;
+  showCookieBanner: boolean;
+  showAnalytics: boolean;
+
+  // ========== K. MODULES - VARIANTES ==========
+  themeGlobal: VariantStyle | null;
+  heroVariant: VariantStyle | null;
+  navbarVariant: VariantStyle | null;
+  servicesVariant: ServicesVariant | null;
+  galleryVariant: GalleryVariant | null;
+  testimonialsVariant: TestimonialsVariant | null;
+  faqVariant: FAQVariant | null;
+  contactVariant: ContactVariant | null;
+  footerVariant: VariantStyle | null;
+  aiAssistantStyle: AIAssistantStyle | null;
+
+  // ========== L. TAILLES & DIMENSIONS ==========
+  logoSize: LogoSize | null;
+  heroHeight: HeroHeight | null;
+  sectionSpacing: SectionSpacing | null;
+  cardStyle: CardStyle | null;
+
+  // ========== M. ANIMATIONS & EFFETS ==========
+  enableAnimations: boolean;
+  animationSpeed: AnimationSpeed | null;
+  scrollEffect: ScrollEffect | null;
+  hoverEffect: HoverEffect | null;
+  loadingStyle: LoadingStyle | null;
+
+  // ========== N. PHOTOS & MÉDIAS ==========
+  imageStyle: ImageStyle | null;
+  imageFilter: ImageFilter | null;
+  galleryColumns: GalleryColumns | null;
+  videoAutoplay: boolean;
+  lazyLoading: boolean;
+
+  // ========== O. MODULE IA ==========
+  aiMode: AIMode | null;
+  aiProvider: AIProvider | null;
+  aiApiKey: string | null;
+  aiModel: string | null;
+  aiSystemPrompt: string | null;
+  aiWebhookUrl: string | null;
+  aiImageWebhook: string | null;
+  aiMaxTokens: number | null;
+  aiTemperature: number | null;
+  chatbotWelcomeMessage: string | null;
+  chatbotPlaceholder: string | null;
+  chatbotAvatarUrl: string | null;
+  voiceEnabled: boolean;
+  voiceLanguage: VoiceLanguage | null;
+
+  // ========== P. MODULE IA AVANCÉ ==========
+  aiGenerateHero: boolean;
+  aiGenerateServices: boolean;
+  aiGenerateFaq: boolean;
+  aiTone: AITone | null;
+  aiIndustry: AIIndustry | null;
+  aiTargetAudience: string | null;
+  aiKeywords: string | null;
+  aiLastGeneration: string | null;
+
+  // ========== Q. INTÉGRATIONS EXTERNES ==========
+  n8nWebhookContact: string | null;
+  n8nWebhookNewsletter: string | null;
+  stripePublicKey: string | null;
+  mailchimpListId: string | null;
+  sendgridApiKey: string | null;
+  notionDatabaseId: string | null;
+  airtableBaseId: string | null;
+
+  // ========== R. PREMIUM ==========
+  isPremium: boolean;
+  premiumUntil: string | null;
+  customDomain: string | null;
+  customCss: string | null;
+  customJs: string | null;
+  featureFlags: string[];
+  rateLimitApi: number | null;
 }
 
-/**
- * Interface legacy pour rétro-compatibilité.
- * À utiliser pendant la migration.
- */
-export interface GlobalSettingsLegacy {
-  id: number;
-  email: string;
-  telephone: string;
-  lienLinkedin: string;
-  titreHero: string;
-  sousTitreHero: string;
-  lienBoutonAppel: string;
-}
+// ============================================
+// VALEURS PAR DÉFAUT
+// ============================================
 
-/**
- * Type union pour la transition progressive.
- */
-export type GlobalSettings = GlobalSettingsComplete | GlobalSettingsLegacy;
-
-/**
- * Type guard pour vérifier si on a les settings complets.
- */
-export function isCompleteSettings(
-  settings: GlobalSettings | null
-): settings is GlobalSettingsComplete {
-  if (!settings) return false;
-  return 'nomSite' in settings && 'siteUrl' in settings;
-}
-
-/**
- * Valeurs par défaut (fallback) pour le mode White Label.
- * Ces valeurs sont utilisées si Baserow ne renvoie pas les données.
- */
 export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   id: 0,
-  
+
   // Identité
-  nomSite: 'Mick Solutions',
-  slogan: 'Automatisation sur-mesure pour PME',
+  nomSite: 'Mon Site',
+  slogan: 'Slogan par défaut',
   initialesLogo: 'MS',
-  
+
   // Assets
   logoUrl: '/logo.svg',
   logoDarkUrl: null,
   faviconUrl: null,
   ogImageUrl: null,
-  
+  heroBackgroundUrl: null,
+  heroVideoUrl: null,
+
   // SEO
-  metaTitre: 'Automatisation sur-mesure pour PME Suisses',
-  metaDescription: 'Expert DevOps et Automation en Suisse. Gain de temps, Zéro dette technique et Données sécurisées.',
-  siteUrl: 'https://www.mick-solutions.ch',
-  motsCles: 'DevOps, Automation, n8n, Suisse, Genève, PME',
+  metaTitre: 'Mon Site - Titre SEO',
+  metaDescription: 'Description SEO par défaut',
+  siteUrl: 'https://example.com',
+  motsCles: '',
   langue: 'fr',
   locale: 'fr_CH',
-  
+  robotsIndex: true,
+  sitemapPriority: 0.8,
+
   // Branding
   couleurPrimaire: '#06b6d4',
   couleurAccent: '#a855f7',
-  
+  couleurBackground: '#0a0a0f',
+  couleurText: '#ffffff',
+  fontPrimary: 'Inter',
+  fontHeading: 'Inter',
+  fontCustomUrl: null,
+  borderRadius: 'Medium',
+  patternBackground: 'Grid',
+
   // Contact
-  email: 'contact@mick-solutions.ch',
-  telephone: '',
-  adresse: 'Genève, Suisse',
-  lienLinkedin: 'https://linkedin.com/company/mick-solutions',
+  email: 'contact@example.com',
+  telephone: null,
+  adresse: 'Adresse, Pays',
+  adresseCourte: null,
+  lienLinkedin: '',
+  lienInstagram: null,
+  lienTwitter: null,
+  lienYoutube: null,
+  lienGithub: null,
+  lienCalendly: null,
+  lienWhatsapp: null,
   lienBoutonAppel: '',
-  
+
   // Hero
-  titreHero: 'Gagnez du temps. Économisez de l\'argent. Restez concentrés.',
-  sousTitreHero: 'L\'automatisation sur-mesure pour les PME suisses. Plus efficace qu\'un employé, 100% sécurisé.',
-  badgeHero: 'Automatisation intelligente',
-  ctaPrincipal: 'Demander un audit gratuit',
-  ctaSecondaire: 'Découvrir nos services',
-  
-  // Trust
+  titreHero: 'Titre Principal. Deuxième ligne. Troisième ligne.',
+  sousTitreHero: 'Sous-titre descriptif de votre activité.',
+  badgeHero: 'Badge',
+  ctaPrincipal: 'Action Principale',
+  ctaPrincipalUrl: '#contact',
+  ctaSecondaire: 'En savoir plus',
+  ctaSecondaireUrl: '#services',
+  heroAiPrompt: null,
+
+  // Trust Stats
   trustStat1Value: '100%',
-  trustStat1Label: 'Données en Suisse',
+  trustStat1Label: 'Stat 1',
   trustStat2Value: '24/7',
-  trustStat2Label: 'Automatisation',
+  trustStat2Label: 'Stat 2',
   trustStat3Value: '0',
-  trustStat3Label: 'Coûts cachés',
-  
+  trustStat3Label: 'Stat 3',
+
+  // Footer
+  copyrightTexte: `© ${new Date().getFullYear()} Mon Site. Tous droits réservés.`,
+  paysHebergement: 'Hébergé en Suisse',
+  showLegalLinks: true,
+  customFooterText: null,
+  footerCtaText: null,
+  footerCtaUrl: null,
+
   // Analytics
   umamiSiteId: null,
   umamiScriptUrl: null,
-  
-  // Footer
-  copyrightTexte: `© ${new Date().getFullYear()} Mick Solutions. Tous droits réservés.`,
-  paysHebergement: 'Hébergé en Suisse',
+  gaMeasurementId: null,
+  gtmContainerId: null,
+  hotjarSiteId: null,
+  facebookPixelId: null,
+
+  // Modules - Activation
+  showNavbar: true,
+  showHero: true,
+  showAdvantages: true,
+  showServices: true,
+  showGallery: false,
+  showPortfolio: true,
+  showTestimonials: true,
+  showTrust: true,
+  showFaq: false,
+  showBlog: false,
+  showContact: true,
+  showAiAssistant: false,
+  showCookieBanner: true,
+  showAnalytics: false,
+
+  // Modules - Variantes
+  themeGlobal: 'Electric',
+  heroVariant: 'Electric',
+  navbarVariant: 'Electric',
+  servicesVariant: 'Cards',
+  galleryVariant: 'Grid',
+  testimonialsVariant: 'Cards',
+  faqVariant: 'Accordion',
+  contactVariant: 'Form',
+  footerVariant: 'Electric',
+  aiAssistantStyle: 'Chat',
+
+  // Tailles
+  logoSize: 'Medium',
+  heroHeight: 'Tall',
+  sectionSpacing: 'Normal',
+  cardStyle: 'Shadow',
+
+  // Animations
+  enableAnimations: true,
+  animationSpeed: 'Normal',
+  scrollEffect: 'Fade',
+  hoverEffect: 'Scale',
+  loadingStyle: 'Skeleton',
+
+  // Photos
+  imageStyle: 'Rounded',
+  imageFilter: 'None',
+  galleryColumns: '3',
+  videoAutoplay: false,
+  lazyLoading: true,
+
+  // IA
+  aiMode: 'Disabled',
+  aiProvider: 'OpenAI',
+  aiApiKey: null,
+  aiModel: 'gpt-4o',
+  aiSystemPrompt: null,
+  aiWebhookUrl: null,
+  aiImageWebhook: null,
+  aiMaxTokens: 1000,
+  aiTemperature: 0.7,
+  chatbotWelcomeMessage: 'Bonjour ! Comment puis-je vous aider ?',
+  chatbotPlaceholder: 'Posez votre question...',
+  chatbotAvatarUrl: null,
+  voiceEnabled: false,
+  voiceLanguage: 'fr-FR',
+
+  // IA Avancé
+  aiGenerateHero: false,
+  aiGenerateServices: false,
+  aiGenerateFaq: false,
+  aiTone: 'Professional',
+  aiIndustry: 'Services',
+  aiTargetAudience: null,
+  aiKeywords: null,
+  aiLastGeneration: null,
+
+  // Intégrations
+  n8nWebhookContact: null,
+  n8nWebhookNewsletter: null,
+  stripePublicKey: null,
+  mailchimpListId: null,
+  sendgridApiKey: null,
+  notionDatabaseId: null,
+  airtableBaseId: null,
+
+  // Premium
+  isPremium: false,
+  premiumUntil: null,
+  customDomain: null,
+  customCss: null,
+  customJs: null,
+  featureFlags: [],
+  rateLimitApi: 1000,
 };
 
+// ============================================
+// HELPERS
+// ============================================
+
+export function isCompleteSettings(
+  settings: unknown
+): settings is GlobalSettingsComplete {
+  if (!settings || typeof settings !== 'object') return false;
+  return 'nomSite' in settings && 'showNavbar' in settings;
+}
+
+/**
+ * Fusionne les settings Baserow avec les valeurs par défaut
+ */
+export function mergeWithDefaults(
+  partial: Partial<GlobalSettingsComplete>
+): GlobalSettingsComplete {
+  return { ...DEFAULT_SETTINGS, ...partial };
+}

@@ -1,25 +1,49 @@
 // ============================================
-// BASEROW API CLIENT - Mick Solutions Website
+// BASEROW API CLIENT - White Label Factory 2025
 // ============================================
-// Client API pour récupérer les données dynamiques.
-// Supporte le mode White Label avec GlobalSettingsComplete.
+// Client API complet pour l'architecture modulaire.
+// 140+ champs configurables.
 
 import { 
   GlobalSettingsComplete, 
-  GlobalSettingsLegacy,
-  DEFAULT_SETTINGS 
+  DEFAULT_SETTINGS,
+  mergeWithDefaults,
+  type VariantStyle,
+  type ServicesVariant,
+  type GalleryVariant,
+  type TestimonialsVariant,
+  type FAQVariant,
+  type ContactVariant,
+  type AIAssistantStyle,
+  type FontFamily,
+  type BorderRadius,
+  type PatternBackground,
+  type LogoSize,
+  type HeroHeight,
+  type SectionSpacing,
+  type CardStyle,
+  type AnimationSpeed,
+  type ScrollEffect,
+  type HoverEffect,
+  type LoadingStyle,
+  type ImageStyle,
+  type ImageFilter,
+  type GalleryColumns,
+  type AIMode,
+  type AIProvider,
+  type AITone,
+  type AIIndustry,
+  type VoiceLanguage,
 } from './types/global-settings';
 
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 
-// Debug en production : log si le token est défini (sans révéler le token)
 if (typeof window === 'undefined') {
-  console.log(`[Baserow] Token status: ${BASEROW_TOKEN ? '✅ Configured' : '❌ MISSING - Set BASEROW_API_TOKEN env var'}`);
+  console.log(`[Baserow] Token: ${BASEROW_TOKEN ? '✅' : '❌ MISSING'}`);
 }
 
 // Table IDs
-// Note: Mettre 0 pour désactiver une table (utilise les fallback)
 const TABLE_IDS = {
   SERVICES: 748,
   PORTFOLIO: 749,
@@ -27,22 +51,21 @@ const TABLE_IDS = {
   GLOBAL: 751,
   FAQ: 752,
   LEGAL_DOCS: 753,
-  ADVANTAGES: 0,    // TODO: Créer la table et mettre l'ID ici
-  TRUST_POINTS: 0,  // TODO: Créer la table et mettre l'ID ici
+  ADVANTAGES: 757,
+  TRUST_POINTS: 758,
+  GALLERY: 781,
 } as const;
 
 // ============================================
 // INTERFACES
 // ============================================
 
-// Tag Baserow (format renvoyé par l'API pour les select multiple)
 export interface BaserowTag {
   id: number;
   value: string;
   color: string;
 }
 
-// Type Baserow (format renvoyé par l'API pour les select simple)
 export interface BaserowSelectOption {
   id: number;
   value: string;
@@ -55,7 +78,6 @@ export interface Service {
   Description: string;
   Icone: string;
   Ordre: string | null;
-  // Nouveaux champs
   Tagline: string | null;
   tags: BaserowTag[];
   points_cle: string | null;
@@ -67,11 +89,11 @@ export interface Project {
   id: number;
   Nom: string;
   Slug: string;
-  Tags: { id: number; value: string; color: string }[];
+  Tags: BaserowTag[];
   DescriptionCourte: string;
   ImageCouverture: { url: string; name: string }[];
   LienSite: string;
-  Statut: { id: number; value: string; color: string };
+  Statut: BaserowSelectOption;
   Ordre: string | null;
 }
 
@@ -85,13 +107,6 @@ export interface Review {
   Afficher: boolean;
 }
 
-// Réexporter les types depuis le fichier dédié
-export type { GlobalSettingsComplete, GlobalSettingsLegacy } from './types/global-settings';
-export { DEFAULT_SETTINGS, isCompleteSettings } from './types/global-settings';
-
-// Alias pour rétro-compatibilité
-export type GlobalSettings = GlobalSettingsLegacy;
-
 export interface FAQ {
   id: number;
   Question: string;
@@ -104,7 +119,7 @@ export interface Advantage {
   Titre: string;
   Description: string;
   Icone: string;
-  Highlight: string;
+  Badge: string;
   Ordre: string | null;
 }
 
@@ -126,20 +141,502 @@ export interface LegalDoc {
   IsActive: boolean;
 }
 
+export interface GalleryItem {
+  id: number;
+  Titre: string;
+  Image: { url: string; name: string }[];
+  Ordre: string | null;
+  TypeAffichage: string | null;
+}
+
+// Réexporter les types
+export type { GlobalSettingsComplete } from './types/global-settings';
+export { DEFAULT_SETTINGS, isCompleteSettings } from './types/global-settings';
+
 // ============================================
-// RAW BASEROW RESPONSE TYPES (snake_case)
+// RAW BASEROW TYPES
 // ============================================
+
+interface BaserowGlobalRowComplete {
+  id: number;
+  
+  // Identité
+  'Nom Site'?: string;
+  'Slogan'?: string;
+  'Initiales Logo'?: string;
+  
+  // Assets
+  'Logo URL'?: string;
+  'Logo Dark URL'?: string;
+  'Favicon URL'?: string;
+  'OG Image URL'?: string;
+  'Hero_Background_URL'?: string;
+  'Hero_Video_URL'?: string;
+  
+  // SEO
+  'Meta Titre'?: string;
+  'Meta Description'?: string;
+  'Site URL'?: string;
+  'Mots Cles'?: string;
+  'Langue'?: string;
+  'Locale'?: string;
+  'Robots_Index'?: boolean;
+  'Sitemap_Priority'?: number;
+  
+  // Branding
+  'Couleur Primaire'?: string;
+  'Couleur Accent'?: string;
+  'Couleur_Background'?: string;
+  'Couleur_Text'?: string;
+  'Font_Primary'?: BaserowSelectOption | null;
+  'Font_Heading'?: BaserowSelectOption | null;
+  'Font_Custom_URL'?: string;
+  'Border_Radius'?: BaserowSelectOption | null;
+  'Pattern_Background'?: BaserowSelectOption | null;
+  
+  // Contact
+  'Email': string;
+  'Telephone'?: string;
+  'Adresse'?: string;
+  'Adresse_Courte'?: string;
+  'Lien Linkedin'?: string;
+  'Lien_Instagram'?: string;
+  'Lien_Twitter'?: string;
+  'Lien_Youtube'?: string;
+  'Lien_Github'?: string;
+  'Lien_Calendly'?: string;
+  'Lien_Whatsapp'?: string;
+  'Lien Bouton Appel'?: string;
+  
+  // Hero
+  'Titre Hero'?: string;
+  'Sous-titre Hero'?: string;
+  'Badge Hero'?: string;
+  'CTA Principal'?: string;
+  'CTA_Principal_URL'?: string;
+  'CTA Secondaire'?: string;
+  'CTA_Secondaire_URL'?: string;
+  'Hero_AI_Prompt'?: string;
+  
+  // Trust Stats
+  'Trust Stat 1 Value'?: string;
+  'Trust Stat 1 Label'?: string;
+  'Trust_Stat_2_Value'?: string;
+  'Trust_Stat_2_Label'?: string;
+  'Trust_Stat_3_Value'?: string;
+  'Trust_Stat_3_Label'?: string;
+  
+  // Footer
+  'Copyright Texte'?: string;
+  'Pays Hebergement'?: string;
+  'Show_Legal_Links'?: boolean;
+  'Custom_Footer_Text'?: string;
+  'Footer_CTA_Text'?: string;
+  'Footer_CTA_URL'?: string;
+  
+  // Analytics
+  'Umami_Site_ID'?: string;
+  'Umami_Script_URL'?: string;
+  'GA_Measurement_ID'?: string;
+  'GTM_Container_ID'?: string;
+  'Hotjar_Site_ID'?: string;
+  'Facebook_Pixel_ID'?: string;
+  
+  // Modules - Activation
+  'Show_Navbar'?: boolean;
+  'Show_Hero'?: boolean;
+  'Show_Advantages'?: boolean;
+  'Show_Services'?: boolean;
+  'Show_Gallery'?: boolean;
+  'Show_Portfolio'?: boolean;
+  'Show_Testimonials'?: boolean;
+  'Show_Trust'?: boolean;
+  'Show_FAQ'?: boolean;
+  'Show_Blog'?: boolean;
+  'Show_Contact'?: boolean;
+  'Show_AI_Assistant'?: boolean;
+  'Show_Cookie_Banner'?: boolean;
+  'Show_Analytics'?: boolean;
+  
+  // Modules - Variantes
+  'Theme_Global'?: BaserowSelectOption | null;
+  'Hero_Variant'?: BaserowSelectOption | null;
+  'Navbar_Variant'?: BaserowSelectOption | null;
+  'Services_Variant'?: BaserowSelectOption | null;
+  'Gallery_Variant'?: BaserowSelectOption | null;
+  'Testimonials_Variant'?: BaserowSelectOption | null;
+  'FAQ_Variant'?: BaserowSelectOption | null;
+  'Contact_Variant'?: BaserowSelectOption | null;
+  'Footer_Variant'?: BaserowSelectOption | null;
+  'AI_Assistant_Style'?: BaserowSelectOption | null;
+  
+  // Tailles
+  'Logo_Size'?: BaserowSelectOption | null;
+  'Hero_Height'?: BaserowSelectOption | null;
+  'Section_Spacing'?: BaserowSelectOption | null;
+  'Card_Style'?: BaserowSelectOption | null;
+  
+  // Animations
+  'Enable_Animations'?: boolean;
+  'Animation_Speed'?: BaserowSelectOption | null;
+  'Scroll_Effect'?: BaserowSelectOption | null;
+  'Hover_Effect'?: BaserowSelectOption | null;
+  'Loading_Style'?: BaserowSelectOption | null;
+  
+  // Photos
+  'Image_Style'?: BaserowSelectOption | null;
+  'Image_Filter'?: BaserowSelectOption | null;
+  'Gallery_Columns'?: BaserowSelectOption | null;
+  'Video_Autoplay'?: boolean;
+  'Lazy_Loading'?: boolean;
+  
+  // IA
+  'AI_Mode'?: BaserowSelectOption | null;
+  'AI_Provider'?: BaserowSelectOption | null;
+  'AI_API_Key'?: string;
+  'AI_Model'?: string;
+  'AI_System_Prompt'?: string;
+  'AI_Webhook_URL'?: string;
+  'AI_Image_Webhook'?: string;
+  'AI_Max_Tokens'?: number;
+  'AI_Temperature'?: number;
+  'Chatbot_Welcome_Message'?: string;
+  'Chatbot_Placeholder'?: string;
+  'Chatbot_Avatar_URL'?: string;
+  'Voice_Enabled'?: boolean;
+  'Voice_Language'?: BaserowSelectOption | null;
+  
+  // IA Avancé
+  'AI_Generate_Hero'?: boolean;
+  'AI_Generate_Services'?: boolean;
+  'AI_Generate_FAQ'?: boolean;
+  'AI_Tone'?: BaserowSelectOption | null;
+  'AI_Industry'?: BaserowSelectOption | null;
+  'AI_Target_Audience'?: string;
+  'AI_Keywords'?: string;
+  'AI_Last_Generation'?: string;
+  
+  // Intégrations
+  'N8N_Webhook_Contact'?: string;
+  'N8N_Webhook_Newsletter'?: string;
+  'Stripe_Public_Key'?: string;
+  'Mailchimp_List_ID'?: string;
+  'Sendgrid_API_Key'?: string;
+  'Notion_Database_ID'?: string;
+  'Airtable_Base_ID'?: string;
+  
+  // Premium
+  'Is_Premium'?: boolean;
+  'Premium_Until'?: string;
+  'Custom_Domain'?: string;
+  'Custom_CSS'?: string;
+  'Custom_JS'?: string;
+  'Feature_Flags'?: BaserowTag[];
+  'Rate_Limit_API'?: number;
+}
+
+// ============================================
+// GENERIC FETCH
+// ============================================
+
+async function fetchBaserow<T>(
+  tableId: number,
+  options?: { filters?: string; orderBy?: string; size?: number }
+): Promise<T[] | null> {
+  if (!BASEROW_TOKEN) {
+    console.error('❌ [Baserow] BASEROW_API_TOKEN manquant');
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams({ user_field_names: 'true' });
+    if (options?.filters) params.append('filters', options.filters);
+    if (options?.orderBy) params.append('order_by', options.orderBy);
+    if (options?.size) params.append('size', options.size.toString());
+
+    const response = await fetch(`${BASEROW_BASE_URL}/${tableId}/?${params}`, {
+      headers: { 'Authorization': `Token ${BASEROW_TOKEN}` },
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.results as T[];
+  } catch (error) {
+    console.error(`❌ [Baserow] Table ${tableId}:`, error);
+    return null;
+  }
+}
+
+// ============================================
+// HELPER: Extract select value
+// ============================================
+
+function getSelectValue<T extends string>(opt: BaserowSelectOption | null | undefined): T | null {
+  return opt?.value as T || null;
+}
+
+// ============================================
+// API FUNCTIONS
+// ============================================
+
+export async function getGlobalSettingsComplete(): Promise<GlobalSettingsComplete> {
+  const rows = await fetchBaserow<BaserowGlobalRowComplete>(TABLE_IDS.GLOBAL, { size: 1 });
+  
+  if (!rows || rows.length === 0) {
+    console.warn('[Baserow] Aucune donnée, utilisation des valeurs par défaut');
+    return DEFAULT_SETTINGS;
+  }
+
+  const r = rows[0];
+  
+  const settings: Partial<GlobalSettingsComplete> = {
+    id: r.id,
+
+    // Identité
+    nomSite: r['Nom Site'] || DEFAULT_SETTINGS.nomSite,
+    slogan: r['Slogan'] || DEFAULT_SETTINGS.slogan,
+    initialesLogo: r['Initiales Logo'] || DEFAULT_SETTINGS.initialesLogo,
+
+    // Assets
+    logoUrl: r['Logo URL'] || DEFAULT_SETTINGS.logoUrl,
+    logoDarkUrl: r['Logo Dark URL'] || null,
+    faviconUrl: r['Favicon URL'] || null,
+    ogImageUrl: r['OG Image URL'] || null,
+    heroBackgroundUrl: r['Hero_Background_URL'] || null,
+    heroVideoUrl: r['Hero_Video_URL'] || null,
+
+    // SEO
+    metaTitre: r['Meta Titre'] || DEFAULT_SETTINGS.metaTitre,
+    metaDescription: r['Meta Description'] || DEFAULT_SETTINGS.metaDescription,
+    siteUrl: r['Site URL'] || DEFAULT_SETTINGS.siteUrl,
+    motsCles: r['Mots Cles'] || DEFAULT_SETTINGS.motsCles,
+    langue: r['Langue'] || DEFAULT_SETTINGS.langue,
+    locale: r['Locale'] || DEFAULT_SETTINGS.locale,
+    robotsIndex: r['Robots_Index'] ?? DEFAULT_SETTINGS.robotsIndex,
+    sitemapPriority: r['Sitemap_Priority'] ?? DEFAULT_SETTINGS.sitemapPriority,
+
+    // Branding
+    couleurPrimaire: r['Couleur Primaire'] || DEFAULT_SETTINGS.couleurPrimaire,
+    couleurAccent: r['Couleur Accent'] || DEFAULT_SETTINGS.couleurAccent,
+    couleurBackground: r['Couleur_Background'] || DEFAULT_SETTINGS.couleurBackground,
+    couleurText: r['Couleur_Text'] || DEFAULT_SETTINGS.couleurText,
+    fontPrimary: getSelectValue<FontFamily>(r['Font_Primary']),
+    fontHeading: getSelectValue<FontFamily>(r['Font_Heading']),
+    fontCustomUrl: r['Font_Custom_URL'] || null,
+    borderRadius: getSelectValue<BorderRadius>(r['Border_Radius']),
+    patternBackground: getSelectValue<PatternBackground>(r['Pattern_Background']),
+
+    // Contact
+    email: r['Email'] || DEFAULT_SETTINGS.email,
+    telephone: r['Telephone'] || null,
+    adresse: r['Adresse'] || DEFAULT_SETTINGS.adresse,
+    adresseCourte: r['Adresse_Courte'] || null,
+    lienLinkedin: r['Lien Linkedin'] || DEFAULT_SETTINGS.lienLinkedin,
+    lienInstagram: r['Lien_Instagram'] || null,
+    lienTwitter: r['Lien_Twitter'] || null,
+    lienYoutube: r['Lien_Youtube'] || null,
+    lienGithub: r['Lien_Github'] || null,
+    lienCalendly: r['Lien_Calendly'] || null,
+    lienWhatsapp: r['Lien_Whatsapp'] || null,
+    lienBoutonAppel: r['Lien Bouton Appel'] || DEFAULT_SETTINGS.lienBoutonAppel,
+
+    // Hero
+    titreHero: r['Titre Hero'] || DEFAULT_SETTINGS.titreHero,
+    sousTitreHero: r['Sous-titre Hero'] || DEFAULT_SETTINGS.sousTitreHero,
+    badgeHero: r['Badge Hero'] || DEFAULT_SETTINGS.badgeHero,
+    ctaPrincipal: r['CTA Principal'] || DEFAULT_SETTINGS.ctaPrincipal,
+    ctaPrincipalUrl: r['CTA_Principal_URL'] || DEFAULT_SETTINGS.ctaPrincipalUrl,
+    ctaSecondaire: r['CTA Secondaire'] || DEFAULT_SETTINGS.ctaSecondaire,
+    ctaSecondaireUrl: r['CTA_Secondaire_URL'] || DEFAULT_SETTINGS.ctaSecondaireUrl,
+    heroAiPrompt: r['Hero_AI_Prompt'] || null,
+
+    // Trust Stats
+    trustStat1Value: r['Trust Stat 1 Value'] || DEFAULT_SETTINGS.trustStat1Value,
+    trustStat1Label: r['Trust Stat 1 Label'] || DEFAULT_SETTINGS.trustStat1Label,
+    trustStat2Value: r['Trust_Stat_2_Value'] || DEFAULT_SETTINGS.trustStat2Value,
+    trustStat2Label: r['Trust_Stat_2_Label'] || DEFAULT_SETTINGS.trustStat2Label,
+    trustStat3Value: r['Trust_Stat_3_Value'] || DEFAULT_SETTINGS.trustStat3Value,
+    trustStat3Label: r['Trust_Stat_3_Label'] || DEFAULT_SETTINGS.trustStat3Label,
+
+    // Footer
+    copyrightTexte: r['Copyright Texte'] || DEFAULT_SETTINGS.copyrightTexte,
+    paysHebergement: r['Pays Hebergement'] || DEFAULT_SETTINGS.paysHebergement,
+    showLegalLinks: r['Show_Legal_Links'] ?? DEFAULT_SETTINGS.showLegalLinks,
+    customFooterText: r['Custom_Footer_Text'] || null,
+    footerCtaText: r['Footer_CTA_Text'] || null,
+    footerCtaUrl: r['Footer_CTA_URL'] || null,
+
+    // Analytics
+    umamiSiteId: r['Umami_Site_ID'] || null,
+    umamiScriptUrl: r['Umami_Script_URL'] || null,
+    gaMeasurementId: r['GA_Measurement_ID'] || null,
+    gtmContainerId: r['GTM_Container_ID'] || null,
+    hotjarSiteId: r['Hotjar_Site_ID'] || null,
+    facebookPixelId: r['Facebook_Pixel_ID'] || null,
+
+    // Modules - Activation
+    showNavbar: r['Show_Navbar'] ?? DEFAULT_SETTINGS.showNavbar,
+    showHero: r['Show_Hero'] ?? DEFAULT_SETTINGS.showHero,
+    showAdvantages: r['Show_Advantages'] ?? DEFAULT_SETTINGS.showAdvantages,
+    showServices: r['Show_Services'] ?? DEFAULT_SETTINGS.showServices,
+    showGallery: r['Show_Gallery'] ?? DEFAULT_SETTINGS.showGallery,
+    showPortfolio: r['Show_Portfolio'] ?? DEFAULT_SETTINGS.showPortfolio,
+    showTestimonials: r['Show_Testimonials'] ?? DEFAULT_SETTINGS.showTestimonials,
+    showTrust: r['Show_Trust'] ?? DEFAULT_SETTINGS.showTrust,
+    showFaq: r['Show_FAQ'] ?? DEFAULT_SETTINGS.showFaq,
+    showBlog: r['Show_Blog'] ?? DEFAULT_SETTINGS.showBlog,
+    showContact: r['Show_Contact'] ?? DEFAULT_SETTINGS.showContact,
+    showAiAssistant: r['Show_AI_Assistant'] ?? DEFAULT_SETTINGS.showAiAssistant,
+    showCookieBanner: r['Show_Cookie_Banner'] ?? DEFAULT_SETTINGS.showCookieBanner,
+    showAnalytics: r['Show_Analytics'] ?? DEFAULT_SETTINGS.showAnalytics,
+
+    // Modules - Variantes
+    themeGlobal: getSelectValue<VariantStyle>(r['Theme_Global']),
+    heroVariant: getSelectValue<VariantStyle>(r['Hero_Variant']),
+    navbarVariant: getSelectValue<VariantStyle>(r['Navbar_Variant']),
+    servicesVariant: getSelectValue<ServicesVariant>(r['Services_Variant']),
+    galleryVariant: getSelectValue<GalleryVariant>(r['Gallery_Variant']),
+    testimonialsVariant: getSelectValue<TestimonialsVariant>(r['Testimonials_Variant']),
+    faqVariant: getSelectValue<FAQVariant>(r['FAQ_Variant']),
+    contactVariant: getSelectValue<ContactVariant>(r['Contact_Variant']),
+    footerVariant: getSelectValue<VariantStyle>(r['Footer_Variant']),
+    aiAssistantStyle: getSelectValue<AIAssistantStyle>(r['AI_Assistant_Style']),
+
+    // Tailles
+    logoSize: getSelectValue<LogoSize>(r['Logo_Size']),
+    heroHeight: getSelectValue<HeroHeight>(r['Hero_Height']),
+    sectionSpacing: getSelectValue<SectionSpacing>(r['Section_Spacing']),
+    cardStyle: getSelectValue<CardStyle>(r['Card_Style']),
+
+    // Animations
+    enableAnimations: r['Enable_Animations'] ?? DEFAULT_SETTINGS.enableAnimations,
+    animationSpeed: getSelectValue<AnimationSpeed>(r['Animation_Speed']),
+    scrollEffect: getSelectValue<ScrollEffect>(r['Scroll_Effect']),
+    hoverEffect: getSelectValue<HoverEffect>(r['Hover_Effect']),
+    loadingStyle: getSelectValue<LoadingStyle>(r['Loading_Style']),
+
+    // Photos
+    imageStyle: getSelectValue<ImageStyle>(r['Image_Style']),
+    imageFilter: getSelectValue<ImageFilter>(r['Image_Filter']),
+    galleryColumns: getSelectValue<GalleryColumns>(r['Gallery_Columns']),
+    videoAutoplay: r['Video_Autoplay'] ?? DEFAULT_SETTINGS.videoAutoplay,
+    lazyLoading: r['Lazy_Loading'] ?? DEFAULT_SETTINGS.lazyLoading,
+
+    // IA
+    aiMode: getSelectValue<AIMode>(r['AI_Mode']),
+    aiProvider: getSelectValue<AIProvider>(r['AI_Provider']),
+    aiApiKey: r['AI_API_Key'] || null,
+    aiModel: r['AI_Model'] || DEFAULT_SETTINGS.aiModel,
+    aiSystemPrompt: r['AI_System_Prompt'] || null,
+    aiWebhookUrl: r['AI_Webhook_URL'] || null,
+    aiImageWebhook: r['AI_Image_Webhook'] || null,
+    aiMaxTokens: r['AI_Max_Tokens'] ?? DEFAULT_SETTINGS.aiMaxTokens,
+    aiTemperature: r['AI_Temperature'] ?? DEFAULT_SETTINGS.aiTemperature,
+    chatbotWelcomeMessage: r['Chatbot_Welcome_Message'] || DEFAULT_SETTINGS.chatbotWelcomeMessage,
+    chatbotPlaceholder: r['Chatbot_Placeholder'] || DEFAULT_SETTINGS.chatbotPlaceholder,
+    chatbotAvatarUrl: r['Chatbot_Avatar_URL'] || null,
+    voiceEnabled: r['Voice_Enabled'] ?? DEFAULT_SETTINGS.voiceEnabled,
+    voiceLanguage: getSelectValue<VoiceLanguage>(r['Voice_Language']),
+
+    // IA Avancé
+    aiGenerateHero: r['AI_Generate_Hero'] ?? DEFAULT_SETTINGS.aiGenerateHero,
+    aiGenerateServices: r['AI_Generate_Services'] ?? DEFAULT_SETTINGS.aiGenerateServices,
+    aiGenerateFaq: r['AI_Generate_FAQ'] ?? DEFAULT_SETTINGS.aiGenerateFaq,
+    aiTone: getSelectValue<AITone>(r['AI_Tone']),
+    aiIndustry: getSelectValue<AIIndustry>(r['AI_Industry']),
+    aiTargetAudience: r['AI_Target_Audience'] || null,
+    aiKeywords: r['AI_Keywords'] || null,
+    aiLastGeneration: r['AI_Last_Generation'] || null,
+
+    // Intégrations
+    n8nWebhookContact: r['N8N_Webhook_Contact'] || null,
+    n8nWebhookNewsletter: r['N8N_Webhook_Newsletter'] || null,
+    stripePublicKey: r['Stripe_Public_Key'] || null,
+    mailchimpListId: r['Mailchimp_List_ID'] || null,
+    sendgridApiKey: r['Sendgrid_API_Key'] || null,
+    notionDatabaseId: r['Notion_Database_ID'] || null,
+    airtableBaseId: r['Airtable_Base_ID'] || null,
+
+    // Premium
+    isPremium: r['Is_Premium'] ?? DEFAULT_SETTINGS.isPremium,
+    premiumUntil: r['Premium_Until'] || null,
+    customDomain: r['Custom_Domain'] || null,
+    customCss: r['Custom_CSS'] || null,
+    customJs: r['Custom_JS'] || null,
+    featureFlags: r['Feature_Flags']?.map(t => t.value) || [],
+    rateLimitApi: r['Rate_Limit_API'] ?? DEFAULT_SETTINGS.rateLimitApi,
+  };
+
+  return mergeWithDefaults(settings);
+}
+
+// ============================================
+// AUTRES FONCTIONS API
+// ============================================
+
+interface BaserowServiceRow {
+  id: number;
+  Titre: string;
+  Description: string;
+  Icone: string;
+  Ordre: string | null;
+  Tagline?: string;
+  tags?: BaserowTag[];
+  'Points Clés'?: string;
+  'Type:'?: BaserowSelectOption;
+  'Tarif (indicatif):'?: string;
+}
+
+export async function getServices(): Promise<Service[] | null> {
+  const rows = await fetchBaserow<BaserowServiceRow>(TABLE_IDS.SERVICES, { orderBy: 'Ordre' });
+  if (!rows) return null;
+  return rows.map(r => ({
+    id: r.id,
+    Titre: r.Titre,
+    Description: r.Description,
+    Icone: r.Icone,
+    Ordre: r.Ordre,
+    Tagline: r.Tagline || null,
+    tags: r.tags || [],
+    points_cle: r['Points Clés'] || null,
+    type: r['Type:'] || null,
+    tarif: r['Tarif (indicatif):'] || null,
+  }));
+}
 
 interface BaserowProjectRow {
   id: number;
   Nom: string;
   Slug: string;
-  Tags: { id: number; value: string; color: string }[];
+  Tags: BaserowTag[];
   'Description courte': string;
   'Image de couverture': { url: string; name: string }[];
   'Lien du site': string;
-  Statut: { id: number; value: string; color: string };
+  Statut: BaserowSelectOption;
   Ordre: string | null;
+}
+
+export async function getProjects(): Promise<Project[] | null> {
+  const rows = await fetchBaserow<BaserowProjectRow>(TABLE_IDS.PORTFOLIO, {
+    filters: JSON.stringify({
+      filter_type: 'AND',
+      filters: [{ type: 'single_select_equal', field: 'Statut', value: '3068' }],
+    }),
+    orderBy: 'Ordre',
+  });
+  if (!rows) return null;
+  return rows.map(r => ({
+    id: r.id,
+    Nom: r.Nom,
+    Slug: r.Slug,
+    Tags: r.Tags,
+    DescriptionCourte: r['Description courte'],
+    ImageCouverture: r['Image de couverture'],
+    LienSite: r['Lien du site'],
+    Statut: r.Statut,
+    Ordre: r.Ordre,
+  }));
 }
 
 interface BaserowReviewRow {
@@ -152,77 +649,27 @@ interface BaserowReviewRow {
   Afficher: boolean;
 }
 
-/**
- * Interface Baserow complète pour le mode White Label.
- * Correspond exactement aux champs de la table 751 (SITEWEB Global_Infos).
- */
-interface BaserowGlobalRowComplete {
-  id: number;
-  
-  // === Champs de base ===
-  Email: string;
-  'Lien Linkedin': string;
-  'Titre Hero': string;
-  'Sous-titre Hero': string;
-  'Lien Bouton Appel': string;
-  
-  // === Identité ===
-  'Nom Site'?: string;
-  'Slogan'?: string;
-  'Initiales Logo'?: string;
-  
-  // === Assets ===
-  'Logo URL'?: string;
-  'Logo Dark URL'?: string;
-  'Favicon URL'?: string;
-  'OG Image URL'?: string;
-  
-  // === SEO ===
-  'Meta Titre'?: string;
-  'Meta Description'?: string;
-  'Site URL'?: string;
-  'Mots Cles'?: string;
-  'Langue'?: string;
-  'Locale'?: string;  // Champ à créer dans Baserow
-  
-  // === Branding ===
-  'Couleur Primaire'?: string;
-  'Couleur Accent'?: string;
-  
-  // === Contact ===
-  'Adresse'?: string;
-  'Telephone'?: string;  // Champ à créer dans Baserow
-  
-  // === Hero ===
-  'Badge Hero'?: string;
-  'CTA Principal'?: string;
-  'CTA Secondaire'?: string;
-  
-  // === Trust Stats ===
-  'Trust Stat 1 Value'?: string;
-  'Trust Stat 1 Label'?: string;
-  'Trust Stat 2 Value'?: string;  // Champ à créer dans Baserow
-  'Trust Stat 2 Label'?: string;  // Champ à créer dans Baserow
-  'Trust Stat 3 Value'?: string;  // Champ à créer dans Baserow
-  'Trust Stat 3 Label'?: string;  // Champ à créer dans Baserow
-  
-  // === Analytics ===
-  'Umami Site ID'?: string;       // Champ à créer dans Baserow
-  'Umami Script URL'?: string;    // Champ à créer dans Baserow
-  
-  // === Footer ===
-  'Copyright Texte'?: string;
-  'Pays Hebergement'?: string;
+export async function getReviews(): Promise<Review[] | null> {
+  const rows = await fetchBaserow<BaserowReviewRow>(TABLE_IDS.REVIEWS, {
+    filters: JSON.stringify({
+      filter_type: 'AND',
+      filters: [{ type: 'boolean', field: 'Afficher', value: 'true' }],
+    }),
+  });
+  if (!rows) return null;
+  return rows.map(r => ({
+    id: r.id,
+    NomClient: r['Nom du client'],
+    PosteEntreprise: r['Poste / Entreprise'],
+    Photo: r.Photo,
+    Message: r.Message,
+    Note: r.Note,
+    Afficher: r.Afficher,
+  }));
 }
 
-// Alias pour rétro-compatibilité
-interface BaserowGlobalRow {
-  id: number;
-  Email: string;
-  'Lien Linkedin': string;
-  'Titre Hero': string;
-  'Sous-titre Hero': string;
-  'Lien Bouton Appel': string;
+export async function getFAQ(): Promise<FAQ[] | null> {
+  return fetchBaserow<FAQ>(TABLE_IDS.FAQ, { orderBy: 'Ordre' });
 }
 
 interface BaserowLegalDocRow {
@@ -234,470 +681,65 @@ interface BaserowLegalDocRow {
   Is_Active: boolean;
 }
 
-// ============================================
-// GENERIC FETCH FUNCTION
-// ============================================
-
-async function fetchBaserow<T>(
-  tableId: number,
-  options?: {
-    filters?: string;
-    orderBy?: string;
-    size?: number;
-  }
-): Promise<T[] | null> {
-  if (!BASEROW_TOKEN) {
-    console.error('❌ [Baserow] BASEROW_API_TOKEN non défini dans les variables d\'environnement');
-    console.error('   → Sur Vercel: Settings > Environment Variables > Ajouter BASEROW_API_TOKEN');
-    return null;
-  }
-
-  try {
-    const params = new URLSearchParams({ user_field_names: 'true' });
-    
-    if (options?.filters) {
-      params.append('filters', options.filters);
-    }
-    if (options?.orderBy) {
-      params.append('order_by', options.orderBy);
-    }
-    if (options?.size) {
-      params.append('size', options.size.toString());
-    }
-
-    const url = `${BASEROW_BASE_URL}/${tableId}/?${params.toString()}`;
-    
-    console.log(`[Baserow] Fetching table ${tableId}...`);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Token ${BASEROW_TOKEN}`,
-        'Accept': 'application/json',
-      },
-      next: { revalidate: 60 }, // Cache 1 minute (réduit pour rafraîchir plus souvent)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ [Baserow] Erreur table ${tableId}: HTTP ${response.status}`);
-      console.error(`   → Response: ${errorText.substring(0, 200)}`);
-      return null;
-    }
-
-    const data = await response.json();
-    console.log(`✅ [Baserow] Table ${tableId}: ${data.results?.length ?? 0} rows fetched`);
-    return data.results as T[];
-  } catch (error) {
-    console.error(`❌ [Baserow] Exception table ${tableId}:`, error);
-    return null;
-  }
+export async function getAllLegalDocs(): Promise<LegalDoc[] | null> {
+  const rows = await fetchBaserow<BaserowLegalDocRow>(TABLE_IDS.LEGAL_DOCS);
+  if (!rows) return null;
+  return rows.filter(r => r.Is_Active).map(r => ({
+    id: r.id,
+    Titre: r.Titre,
+    Slug: r.Slug,
+    Contenu: r.Contenu,
+    DateMiseAJour: r.Date_Mise_a_jour,
+    IsActive: r.Is_Active,
+  }));
 }
 
-// ============================================
-// API FUNCTIONS
-// ============================================
+export async function getLegalDocBySlug(slug: string): Promise<LegalDoc | null> {
+  const docs = await getAllLegalDocs();
+  return docs?.find(d => d.Slug === slug) || null;
+}
 
-// ============================================
-// RAW BASEROW SERVICE ROW TYPE
-// ============================================
+// Valeurs par défaut
+export const DEFAULT_ADVANTAGES: Advantage[] = [
+  { id: 1, Titre: "Récupérez vos heures", Description: "Les tâches répétitives automatisées.", Icone: "clock", Badge: "10h+ économisées/semaine", Ordre: "1" },
+  { id: 2, Titre: "Réduisez vos coûts", Description: "Un investissement unique pour des économies durables.", Icone: "trending-down", Badge: "Jusqu'à 70% d'économies", Ordre: "2" },
+  { id: 3, Titre: "Zéro complexité", Description: "On s'occupe de tout, vous profitez des résultats.", Icone: "target", Badge: "Clé en main", Ordre: "3" },
+  { id: 4, Titre: "Résultats immédiats", Description: "Vos processus tournent dès le premier jour.", Icone: "zap", Badge: "Opérationnel en 48h", Ordre: "4" },
+];
 
-interface BaserowServiceRow {
+export const DEFAULT_TRUST_POINTS: TrustPoint[] = [
+  { id: 1, Titre: "100% hébergé en Suisse", Description: "Vos données ne quittent jamais le territoire suisse.", Icone: "map-pin", Badge: "Genève, CH", Ordre: "1" },
+  { id: 2, Titre: "Sécurité bancaire", Description: "Chiffrement de bout en bout, sauvegardes quotidiennes.", Icone: "shield", Badge: "Certifié", Ordre: "2" },
+  { id: 3, Titre: "Transparence totale", Description: "Accès complet aux logs et rapports en temps réel.", Icone: "eye", Badge: "Open Book", Ordre: "3" },
+  { id: 4, Titre: "Pas de coûts cachés", Description: "Un prix fixe, tout compris.", Icone: "banknote", Badge: "Prix fixe", Ordre: "4" },
+];
+
+export async function getAdvantages(): Promise<Advantage[]> {
+  const rows = await fetchBaserow<Advantage>(TABLE_IDS.ADVANTAGES, { orderBy: 'Ordre' });
+  return rows && rows.length > 0 ? rows : DEFAULT_ADVANTAGES;
+}
+
+export async function getTrustPoints(): Promise<TrustPoint[]> {
+  const rows = await fetchBaserow<TrustPoint>(TABLE_IDS.TRUST_POINTS, { orderBy: 'Ordre' });
+  return rows && rows.length > 0 ? rows : DEFAULT_TRUST_POINTS;
+}
+
+interface BaserowGalleryRow {
   id: number;
   Titre: string;
-  Description: string;
-  Icone: string;
+  Image: { url: string; name: string }[];
   Ordre: string | null;
-  Tagline: string | null;
-  tags: BaserowTag[];
-  points_cle: string | null;
-  type: BaserowSelectOption | null;
-  tarif: string | null;
+  'Type Affichage'?: BaserowSelectOption | null;
 }
 
-/**
- * Récupère les services depuis Baserow
- */
-export async function getServices(): Promise<Service[] | null> {
-  const rawServices = await fetchBaserow<BaserowServiceRow>(TABLE_IDS.SERVICES, {
-    orderBy: 'Ordre',
-  });
-
-  if (!rawServices) return null;
-
-  // Mapper les champs avec des valeurs par défaut pour les nouveaux champs
-  return rawServices.map((row) => ({
-    id: row.id,
-    Titre: row.Titre,
-    Description: row.Description,
-    Icone: row.Icone,
-    Ordre: row.Ordre,
-    Tagline: row.Tagline || null,
-    tags: row.tags || [],
-    points_cle: row.points_cle || null,
-    type: row.type || null,
-    tarif: row.tarif || null,
+export async function getGalleryItems(): Promise<GalleryItem[]> {
+  const rows = await fetchBaserow<BaserowGalleryRow>(TABLE_IDS.GALLERY, { orderBy: 'Ordre' });
+  if (!rows) return [];
+  return rows.filter(r => r.Image?.length > 0).map(r => ({
+    id: r.id,
+    Titre: r.Titre,
+    Image: r.Image,
+    Ordre: r.Ordre,
+    TypeAffichage: r['Type Affichage']?.value || null,
   }));
 }
-
-/**
- * Récupère les projets publiés, triés par ordre
- * Filtre: Statut = "Publié" (id: 3068)
- */
-export async function getProjects(): Promise<Project[] | null> {
-  const rawProjects = await fetchBaserow<BaserowProjectRow>(TABLE_IDS.PORTFOLIO, {
-    filters: JSON.stringify({
-      filter_type: 'AND',
-      filters: [
-        {
-          type: 'single_select_equal',
-          field: 'Statut',
-          value: '3068', // ID de "Publié"
-        },
-      ],
-    }),
-    orderBy: 'Ordre',
-  });
-
-  if (!rawProjects) return null;
-
-  // Mapper les noms de champs Baserow vers notre interface
-  return rawProjects.map((row) => ({
-    id: row.id,
-    Nom: row.Nom,
-    Slug: row.Slug,
-    Tags: row.Tags,
-    DescriptionCourte: row['Description courte'],
-    ImageCouverture: row['Image de couverture'],
-    LienSite: row['Lien du site'],
-    Statut: row.Statut,
-    Ordre: row.Ordre,
-  }));
-}
-
-/**
- * Récupère les témoignages à afficher
- * Filtre: Afficher = true
- */
-export async function getReviews(): Promise<Review[] | null> {
-  const rawReviews = await fetchBaserow<BaserowReviewRow>(TABLE_IDS.REVIEWS, {
-    filters: JSON.stringify({
-      filter_type: 'AND',
-      filters: [
-        {
-          type: 'boolean',
-          field: 'Afficher',
-          value: 'true',
-        },
-      ],
-    }),
-  });
-
-  if (!rawReviews) return null;
-
-  // Mapper les noms de champs Baserow vers notre interface
-  return rawReviews.map((row) => ({
-    id: row.id,
-    NomClient: row['Nom du client'],
-    PosteEntreprise: row['Poste / Entreprise'],
-    Photo: row.Photo,
-    Message: row.Message,
-    Note: row.Note,
-    Afficher: row.Afficher,
-  }));
-}
-
-/**
- * Récupère les paramètres globaux (première ligne de la table)
- * @deprecated Utiliser getGlobalSettingsComplete() pour le mode White Label
- */
-export async function getGlobalSettings(): Promise<GlobalSettings | null> {
-  const rawSettings = await fetchBaserow<BaserowGlobalRow>(TABLE_IDS.GLOBAL, {
-    size: 1,
-  });
-
-  if (!rawSettings || rawSettings.length === 0) return null;
-
-  const row = rawSettings[0];
-  return {
-    id: row.id,
-    email: row.Email,
-    telephone: '',  // Champ legacy, utiliser getGlobalSettingsComplete()
-    lienLinkedin: row['Lien Linkedin'],
-    titreHero: row['Titre Hero'],
-    sousTitreHero: row['Sous-titre Hero'],
-    lienBoutonAppel: row['Lien Bouton Appel'],
-  };
-}
-
-/**
- * Récupère les paramètres globaux complets pour le mode White Label.
- * Fusionne les données Baserow avec les valeurs par défaut.
- * Utilise un cache de 60 secondes pour les performances.
- */
-export async function getGlobalSettingsComplete(): Promise<GlobalSettingsComplete> {
-  const rawSettings = await fetchBaserow<BaserowGlobalRowComplete>(TABLE_IDS.GLOBAL, {
-    size: 1,
-  });
-
-  // Si pas de données, retourner les valeurs par défaut
-  if (!rawSettings || rawSettings.length === 0) {
-    console.warn('[Baserow] Aucune donnée Global_Infos trouvée, utilisation des valeurs par défaut');
-    return DEFAULT_SETTINGS;
-  }
-
-  const row = rawSettings[0];
-  
-  // Fusionner avec les valeurs par défaut (fallback)
-  const settings: GlobalSettingsComplete = {
-    id: row.id,
-    
-    // Identité
-    nomSite: row['Nom Site'] || DEFAULT_SETTINGS.nomSite,
-    slogan: row['Slogan'] || DEFAULT_SETTINGS.slogan,
-    initialesLogo: row['Initiales Logo'] || DEFAULT_SETTINGS.initialesLogo,
-    
-    // Assets
-    logoUrl: row['Logo URL'] || DEFAULT_SETTINGS.logoUrl,
-    logoDarkUrl: row['Logo Dark URL'] || null,
-    faviconUrl: row['Favicon URL'] || null,
-    ogImageUrl: row['OG Image URL'] || null,
-    
-    // SEO
-    metaTitre: row['Meta Titre'] || DEFAULT_SETTINGS.metaTitre,
-    metaDescription: row['Meta Description'] || DEFAULT_SETTINGS.metaDescription,
-    siteUrl: row['Site URL'] || DEFAULT_SETTINGS.siteUrl,
-    motsCles: row['Mots Cles'] || DEFAULT_SETTINGS.motsCles,
-    langue: row['Langue'] || DEFAULT_SETTINGS.langue,
-    locale: row['Locale'] || DEFAULT_SETTINGS.locale,
-    
-    // Branding
-    couleurPrimaire: row['Couleur Primaire'] || DEFAULT_SETTINGS.couleurPrimaire,
-    couleurAccent: row['Couleur Accent'] || DEFAULT_SETTINGS.couleurAccent,
-    
-    // Contact
-    email: row.Email || DEFAULT_SETTINGS.email,
-    telephone: row['Telephone'] || DEFAULT_SETTINGS.telephone,
-    adresse: row['Adresse'] || DEFAULT_SETTINGS.adresse,
-    lienLinkedin: row['Lien Linkedin'] || DEFAULT_SETTINGS.lienLinkedin,
-    lienBoutonAppel: row['Lien Bouton Appel'] || DEFAULT_SETTINGS.lienBoutonAppel,
-    
-    // Hero
-    titreHero: row['Titre Hero'] || DEFAULT_SETTINGS.titreHero,
-    sousTitreHero: row['Sous-titre Hero'] || DEFAULT_SETTINGS.sousTitreHero,
-    badgeHero: row['Badge Hero'] || DEFAULT_SETTINGS.badgeHero,
-    ctaPrincipal: row['CTA Principal'] || DEFAULT_SETTINGS.ctaPrincipal,
-    ctaSecondaire: row['CTA Secondaire'] || DEFAULT_SETTINGS.ctaSecondaire,
-    
-    // Trust Stats
-    trustStat1Value: row['Trust Stat 1 Value'] || DEFAULT_SETTINGS.trustStat1Value,
-    trustStat1Label: row['Trust Stat 1 Label'] || DEFAULT_SETTINGS.trustStat1Label,
-    trustStat2Value: row['Trust Stat 2 Value'] || DEFAULT_SETTINGS.trustStat2Value,
-    trustStat2Label: row['Trust Stat 2 Label'] || DEFAULT_SETTINGS.trustStat2Label,
-    trustStat3Value: row['Trust Stat 3 Value'] || DEFAULT_SETTINGS.trustStat3Value,
-    trustStat3Label: row['Trust Stat 3 Label'] || DEFAULT_SETTINGS.trustStat3Label,
-    
-    // Analytics
-    umamiSiteId: row['Umami Site ID'] || null,
-    umamiScriptUrl: row['Umami Script URL'] || null,
-    
-    // Footer
-    copyrightTexte: row['Copyright Texte'] || DEFAULT_SETTINGS.copyrightTexte,
-    paysHebergement: row['Pays Hebergement'] || DEFAULT_SETTINGS.paysHebergement,
-  };
-
-  return settings;
-}
-
-/**
- * Récupère les FAQ triées par ordre
- */
-export async function getFAQ(): Promise<FAQ[] | null> {
-  return fetchBaserow<FAQ>(TABLE_IDS.FAQ, {
-    orderBy: 'Ordre',
-  });
-}
-
-/**
- * Récupère tous les documents légaux actifs (pour menus/liens)
- * Filtre: Is_Active = true
- */
-export async function getAllLegalDocs(): Promise<LegalDoc[] | null> {
-  try {
-    const rawDocs = await fetchBaserow<BaserowLegalDocRow>(TABLE_IDS.LEGAL_DOCS);
-
-    if (!rawDocs) return null;
-
-    // Filtrer les documents actifs côté serveur
-    return rawDocs
-      .filter((row) => row.Is_Active === true)
-      .map((row) => ({
-        id: row.id,
-        Titre: row.Titre,
-        Slug: row.Slug,
-        Contenu: row.Contenu,
-        DateMiseAJour: row.Date_Mise_a_jour,
-        IsActive: row.Is_Active,
-      }));
-  } catch (error) {
-    console.error('❌ Erreur getAllLegalDocs:', error);
-    return null;
-  }
-}
-
-/**
- * Récupère un document légal spécifique par son slug
- */
-export async function getLegalDocBySlug(slug: string): Promise<LegalDoc | null> {
-  try {
-    const rawDocs = await fetchBaserow<BaserowLegalDocRow>(TABLE_IDS.LEGAL_DOCS);
-
-    if (!rawDocs) return null;
-
-    // Trouver le document par slug et vérifiant qu'il est actif
-    const row = rawDocs.find((doc) => doc.Slug === slug && doc.Is_Active === true);
-    
-    if (!row) return null;
-
-    return {
-      id: row.id,
-      Titre: row.Titre,
-      Slug: row.Slug,
-      Contenu: row.Contenu,
-      DateMiseAJour: row.Date_Mise_a_jour,
-      IsActive: row.Is_Active,
-    };
-  } catch (error) {
-    console.error(`❌ Erreur getLegalDocBySlug (${slug}):`, error);
-    return null;
-  }
-}
-
-// ============================================
-// ADVANTAGES & TRUST POINTS (pour sections dynamiques)
-// ============================================
-
-/**
- * Valeurs par défaut pour les Avantages.
- * Utilisées si la table Baserow n'existe pas ou est vide.
- */
-export const DEFAULT_ADVANTAGES: Advantage[] = [
-  {
-    id: 1,
-    Titre: "Récupérez vos heures",
-    Description: "Les tâches répétitives qui vous volent 10h/semaine ? Automatisées. Concentrez-vous sur ce qui fait grandir votre entreprise.",
-    Icone: "clock",
-    Highlight: "10h+ économisées/semaine",
-    Ordre: "1",
-  },
-  {
-    id: 2,
-    Titre: "Réduisez vos coûts",
-    Description: "Pas de salaire à payer, pas de congés, pas d'erreurs humaines. Un investissement unique pour des économies durables.",
-    Icone: "trending-down",
-    Highlight: "Jusqu'à 70% d'économies",
-    Ordre: "2",
-  },
-  {
-    id: 3,
-    Titre: "Zéro complexité",
-    Description: "Pas de jargon technique, pas de formation interminable. On s'occupe de tout, vous profitez des résultats.",
-    Icone: "target",
-    Highlight: "Clé en main",
-    Ordre: "3",
-  },
-  {
-    id: 4,
-    Titre: "Résultats immédiats",
-    Description: "Dès le premier jour, vos processus tournent tout seuls. Facturation, emails, relances — tout est géré automatiquement.",
-    Icone: "zap",
-    Highlight: "Opérationnel en 48h",
-    Ordre: "4",
-  },
-];
-
-/**
- * Valeurs par défaut pour les Points de Confiance.
- * Utilisées si la table Baserow n'existe pas ou est vide.
- */
-export const DEFAULT_TRUST_POINTS: TrustPoint[] = [
-  {
-    id: 1,
-    Titre: "100% hébergé en Suisse",
-    Description: "Vos données ne quittent jamais le territoire suisse. Serveurs à Genève, conformité totale RGPD et LPD.",
-    Icone: "map-pin",
-    Badge: "Genève, CH",
-    Ordre: "1",
-  },
-  {
-    id: 2,
-    Titre: "Sécurité bancaire",
-    Description: "Chiffrement de bout en bout, sauvegardes quotidiennes, accès sécurisé. Vos informations sont protégées comme dans un coffre.",
-    Icone: "shield",
-    Badge: "Certifié",
-    Ordre: "2",
-  },
-  {
-    id: 3,
-    Titre: "Transparence totale",
-    Description: "Vous savez exactement ce qui est automatisé et comment. Accès complet aux logs et rapports en temps réel.",
-    Icone: "eye",
-    Badge: "Open Book",
-    Ordre: "3",
-  },
-  {
-    id: 4,
-    Titre: "Pas de coûts cachés",
-    Description: "Un prix fixe, tout compris. Pas de surprise à la facture, pas d'options payantes déguisées. Ce qui est annoncé est ce que vous payez.",
-    Icone: "banknote",
-    Badge: "Prix fixe",
-    Ordre: "4",
-  },
-];
-
-/**
- * Récupère les avantages depuis Baserow.
- * Retourne les valeurs par défaut si la table n'existe pas.
- */
-export async function getAdvantages(): Promise<Advantage[]> {
-  // Si l'ID de table est 0, utiliser les valeurs par défaut
-  if (TABLE_IDS.ADVANTAGES === 0) {
-    console.log('[Baserow] Table ADVANTAGES non configurée, utilisation des valeurs par défaut');
-    return DEFAULT_ADVANTAGES;
-  }
-
-  const rawAdvantages = await fetchBaserow<Advantage>(TABLE_IDS.ADVANTAGES, {
-    orderBy: 'Ordre',
-  });
-
-  if (!rawAdvantages || rawAdvantages.length === 0) {
-    console.warn('[Baserow] Aucun avantage trouvé, utilisation des valeurs par défaut');
-    return DEFAULT_ADVANTAGES;
-  }
-
-  return rawAdvantages;
-}
-
-/**
- * Récupère les points de confiance depuis Baserow.
- * Retourne les valeurs par défaut si la table n'existe pas.
- */
-export async function getTrustPoints(): Promise<TrustPoint[]> {
-  // Si l'ID de table est 0, utiliser les valeurs par défaut
-  if (TABLE_IDS.TRUST_POINTS === 0) {
-    console.log('[Baserow] Table TRUST_POINTS non configurée, utilisation des valeurs par défaut');
-    return DEFAULT_TRUST_POINTS;
-  }
-
-  const rawTrustPoints = await fetchBaserow<TrustPoint>(TABLE_IDS.TRUST_POINTS, {
-    orderBy: 'Ordre',
-  });
-
-  if (!rawTrustPoints || rawTrustPoints.length === 0) {
-    console.warn('[Baserow] Aucun point de confiance trouvé, utilisation des valeurs par défaut');
-    return DEFAULT_TRUST_POINTS;
-  }
-
-  return rawTrustPoints;
-}
-

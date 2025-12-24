@@ -93,7 +93,7 @@ export default function AdvantagesSection({ advantages }: AdvantagesSectionProps
 
                     {/* Highlight badge */}
                     <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
-                      <span className="text-xs font-medium text-primary-300">{advantage.Highlight}</span>
+                      <span className="text-xs font-medium text-primary-300">{advantage.Badge}</span>
                     </div>
 
                     {/* Content */}

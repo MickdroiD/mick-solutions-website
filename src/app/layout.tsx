@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { getGlobalSettingsComplete } from "@/lib/baserow";
-import { GlobalStylesSSR } from "@/components/GlobalStyles";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // ============================================
 // GÉNÉRATION DYNAMIQUE DES MÉTADONNÉES (SEO)
@@ -160,8 +160,8 @@ export default async function RootLayout({
   return (
     <html lang={settings.langue} className="scroll-smooth">
       <head>
-        {/* Injection des couleurs dynamiques (SSR) */}
-        <GlobalStylesSSR settings={settings} />
+        {/* Theme Engine - Injection des CSS variables dynamiques */}
+        <ThemeProvider settings={settings} />
         
         {/* Analytics Umami (si configuré) */}
         {settings.umamiScriptUrl && settings.umamiSiteId && (

@@ -1,0 +1,29 @@
+services:
+  website:
+    build: .
+    container_name: mick-web
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - BASEROW_API_TOKEN=${BASEROW_API_TOKEN}
+      - BASEROW_SERVICES_TABLE_ID=${BASEROW_SERVICES_TABLE_ID}
+      - NEXT_PUBLIC_BASEROW_API_URL=https://baserow.mick-solutions.ch
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # Route pour www.mick-solutions.ch ET mick-solutions.ch
+      - "traefik.http.routers.website.rule=Host(`www.mick-solutions.ch`) || Host(`mick-solutions.ch`)"
+      - "traefik.http.routers.website.entrypoints=websecure"
+      - "traefik.http.routers.website.tls.certresolver=myresolver"
+      - "traefik.http.services.website.loadbalancer.server.port=3000"
+      # Redirection de mick-solutions.ch vers www.mick-solutions.ch
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://mick-solutions\\.ch/(.*)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://www.mick-solutions.ch/$${1}"
+      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.website.middlewares=www-redirect"
+
+networks:
+  proxy:
+    external: true
+

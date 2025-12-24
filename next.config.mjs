@@ -7,7 +7,17 @@ const nextConfig = {
         protocol: "https",
         hostname: "baserow.mick-solutions.ch",
       },
+      {
+        protocol: "https",
+        hostname: "**.mick-solutions.ch",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
     ],
+    // Autoriser les images locales uploadées
+    unoptimized: false,
   },
 };
 
