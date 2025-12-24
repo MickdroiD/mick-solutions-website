@@ -1,21 +1,25 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Linkedin, Mail, MapPin, Phone } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
 import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
 import type { LegalDoc } from '@/lib/baserow';
+import DynamicLogo from './DynamicLogo';
 
-const navItems = [
-  { name: 'Avantages', id: 'avantages' },
-  { name: 'Services', id: 'services' },
-  { name: 'Portfolio', id: 'portfolio' },
-  { name: 'Confiance', id: 'confiance' },
-  { name: 'Contact', id: 'contact' },
-];
+// ============================================
+// CONFIGURATION NAVIGATION (White Label Ready)
+// ============================================
+// Réutilise la même structure que Header pour cohérence
+const NAV_SECTIONS = [
+  { id: 'avantages', defaultLabel: 'Avantages' },
+  { id: 'services', defaultLabel: 'Services' },
+  { id: 'portfolio', defaultLabel: 'Portfolio' },
+  { id: 'confiance', defaultLabel: 'Confiance' },
+  { id: 'contact', defaultLabel: 'Contact' },
+] as const;
 
 interface FooterProps {
   globalSettings: GlobalSettingsComplete;
@@ -31,9 +35,18 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
   const adresse = settings.adresse;
   const nomSite = settings.nomSite;
   const logoUrl = settings.logoUrl;
+  const logoSvgCode = settings.logoSvgCode;
   const slogan = settings.slogan;
   const copyrightTexte = settings.copyrightTexte;
   const paysHebergement = settings.paysHebergement;
+
+  // Navigation items avec labels (prêt pour dynamisation future)
+  const navItems = useMemo(() => 
+    NAV_SECTIONS.map(section => ({
+      name: section.defaultLabel,
+      id: section.id,
+    })), 
+  []);
 
   // Navigation programmatique compatible tous navigateurs
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -64,8 +77,9 @@ export default function Footer({ globalSettings, legalDocs }: FooterProps) {
               onClick={handleLogoClick}
               className="flex items-center gap-3 mb-4 group touch-manipulation"
             >
-              <Image
-                src={logoUrl}
+              <DynamicLogo
+                svgCode={logoSvgCode}
+                logoUrl={logoUrl}
                 alt={nomSite}
                 width={40}
                 height={40}

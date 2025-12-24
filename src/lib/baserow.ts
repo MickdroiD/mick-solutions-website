@@ -7,29 +7,84 @@
 import { 
   GlobalSettingsComplete, 
   GlobalSettingsLegacy,
-  DEFAULT_SETTINGS 
+  DEFAULT_SETTINGS,
+  AnimationStyleType,
+  ANIMATION_STYLES
 } from './types/global-settings';
 
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+const DATABASE_ID = process.env.NEXT_PUBLIC_BASEROW_DATABASE_ID || '52';
 
 // Debug en production : log si le token est défini (sans révéler le token)
 if (typeof window === 'undefined') {
   console.log(`[Baserow] Token status: ${BASEROW_TOKEN ? '✅ Configured' : '❌ MISSING - Set BASEROW_API_TOKEN env var'}`);
+  console.log(`[Baserow] Database ID: ${DATABASE_ID}`);
 }
 
-// Table IDs
-// Note: Mettre 0 pour désactiver une table (utilise les fallback)
-const TABLE_IDS = {
-  SERVICES: 748,
-  PORTFOLIO: 749,
-  REVIEWS: 750,
-  GLOBAL: 751,
-  FAQ: 752,
-  LEGAL_DOCS: 753,
-  ADVANTAGES: 0,    // TODO: Créer la table et mettre l'ID ici
-  TRUST_POINTS: 0,  // TODO: Créer la table et mettre l'ID ici
-} as const;
+// ============================================
+// TABLE IDS PAR DATABASE (Multi-tenant / White Label)
+// ============================================
+// Mapping des IDs de tables pour chaque database client.
+// Ajouter une nouvelle entrée pour chaque nouveau client.
+
+type TableIds = {
+  SERVICES: number;
+  PORTFOLIO: number;
+  REVIEWS: number;
+  GLOBAL: number;
+  FAQ: number;
+  LEGAL_DOCS: number;
+  ADVANTAGES: number;
+  TRUST_POINTS: number;
+  GALLERY: number;
+};
+
+const DATABASE_TABLE_IDS: Record<string, TableIds> = {
+  // Database 52 - Mick Solutions (principal)
+  '52': {
+    SERVICES: 748,
+    PORTFOLIO: 749,
+    REVIEWS: 750,
+    GLOBAL: 751,
+    FAQ: 752,
+    LEGAL_DOCS: 753,
+    ADVANTAGES: 757,
+    TRUST_POINTS: 758,
+    GALLERY: 781,
+  },
+  // Database 199 - Client S-VF (Sécurité Voie Ferrée)
+  '199': {
+    SERVICES: 785,
+    PORTFOLIO: 786,
+    REVIEWS: 787,
+    GLOBAL: 788,
+    FAQ: 789,
+    LEGAL_DOCS: 790,
+    ADVANTAGES: 792,
+    TRUST_POINTS: 793,
+    GALLERY: 794,
+  },
+  // Database 200 - Template pour nouveaux clients
+  '200': {
+    SERVICES: 795,
+    PORTFOLIO: 796,
+    REVIEWS: 797,
+    GLOBAL: 798,
+    FAQ: 799,
+    LEGAL_DOCS: 800,
+    ADVANTAGES: 802,
+    TRUST_POINTS: 803,
+    GALLERY: 804,
+  },
+};
+
+// Sélectionner les bons TABLE_IDs selon la database configurée
+const TABLE_IDS: TableIds = DATABASE_TABLE_IDS[DATABASE_ID] || DATABASE_TABLE_IDS['52'];
+
+if (typeof window === 'undefined' && !DATABASE_TABLE_IDS[DATABASE_ID]) {
+  console.warn(`[Baserow] ⚠️ Database ID "${DATABASE_ID}" non configurée, fallback sur DB 52 (Mick Solutions)`);
+}
 
 // ============================================
 // INTERFACES
@@ -126,6 +181,17 @@ export interface LegalDoc {
   IsActive: boolean;
 }
 
+// Types d'affichage pour la galerie
+export type GalleryDisplayType = 'Slider' | 'Grille' | 'Zoom';
+
+export interface GalleryItem {
+  id: number;
+  Titre: string;
+  Image: { url: string; name: string }[];
+  Ordre: string | null;
+  TypeAffichage: GalleryDisplayType | null;
+}
+
 // ============================================
 // RAW BASEROW RESPONSE TYPES (snake_case)
 // ============================================
@@ -213,6 +279,10 @@ interface BaserowGlobalRowComplete {
   // === Footer ===
   'Copyright Texte'?: string;
   'Pays Hebergement'?: string;
+
+  // === Animation & Branding dynamique ===
+  'Animation Style'?: { id: number; value: string; color: string } | null;
+  'Logo SVG Code'?: string;
 }
 
 // Alias pour rétro-compatibilité
@@ -232,6 +302,14 @@ interface BaserowLegalDocRow {
   Contenu: string;
   Date_Mise_a_jour: string | null;
   Is_Active: boolean;
+}
+
+interface BaserowGalleryRow {
+  id: number;
+  Titre: string;
+  Image: { url: string; name: string }[];
+  Ordre: string | null;
+  'Type Affichage': { id: number; value: string; color: string } | null;
 }
 
 // ============================================
@@ -504,9 +582,28 @@ export async function getGlobalSettingsComplete(): Promise<GlobalSettingsComplet
     // Footer
     copyrightTexte: row['Copyright Texte'] || DEFAULT_SETTINGS.copyrightTexte,
     paysHebergement: row['Pays Hebergement'] || DEFAULT_SETTINGS.paysHebergement,
+
+    // Animation & Branding dynamique
+    animationStyle: parseAnimationStyle(row['Animation Style']?.value),
+    logoSvgCode: row['Logo SVG Code'] || null,
   };
 
   return settings;
+}
+
+/**
+ * Parse et valide le style d'animation depuis Baserow.
+ * Retourne 'Mick Electric' si la valeur n'est pas valide.
+ */
+function parseAnimationStyle(value: string | undefined): AnimationStyleType {
+  if (!value) return DEFAULT_SETTINGS.animationStyle;
+  
+  // Vérifier si la valeur est un style valide
+  if (ANIMATION_STYLES.includes(value as AnimationStyleType)) {
+    return value as AnimationStyleType;
+  }
+  
+  return DEFAULT_SETTINGS.animationStyle;
 }
 
 /**
@@ -699,5 +796,59 @@ export async function getTrustPoints(): Promise<TrustPoint[]> {
   }
 
   return rawTrustPoints;
+}
+
+// ============================================
+// GALLERY (Section Galerie dynamique)
+// ============================================
+
+/**
+ * Récupère les éléments de la galerie depuis Baserow.
+ * Filtre les éléments sans image.
+ * Retourne un tableau vide si aucune image n'est disponible.
+ */
+export async function getGalleryItems(): Promise<GalleryItem[]> {
+  const rawGallery = await fetchBaserow<BaserowGalleryRow>(TABLE_IDS.GALLERY, {
+    orderBy: 'Ordre',
+  });
+
+  if (!rawGallery) {
+    console.warn('[Baserow] Erreur lors de la récupération de la galerie');
+    return [];
+  }
+
+  // Filtrer les éléments qui ont au moins une image
+  const itemsWithImages = rawGallery.filter(
+    (row) => row.Image && row.Image.length > 0
+  );
+
+  if (itemsWithImages.length === 0) {
+    console.log('[Baserow] Aucune image trouvée dans la galerie');
+    return [];
+  }
+
+  // Mapper les données Baserow vers notre interface
+  return itemsWithImages.map((row) => ({
+    id: row.id,
+    Titre: row.Titre,
+    Image: row.Image,
+    Ordre: row.Ordre,
+    TypeAffichage: parseGalleryDisplayType(row['Type Affichage']?.value),
+  }));
+}
+
+/**
+ * Parse le type d'affichage depuis Baserow.
+ * Retourne 'Grille' par défaut si la valeur n'est pas valide.
+ */
+function parseGalleryDisplayType(value: string | undefined): GalleryDisplayType {
+  if (!value) return 'Grille';
+  
+  const validTypes: GalleryDisplayType[] = ['Slider', 'Grille', 'Zoom'];
+  if (validTypes.includes(value as GalleryDisplayType)) {
+    return value as GalleryDisplayType;
+  }
+  
+  return 'Grille';
 }
 

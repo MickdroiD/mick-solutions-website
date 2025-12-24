@@ -5,6 +5,22 @@
 // nécessaires pour personnaliser le site par client.
 
 /**
+ * Types d'animation disponibles pour le site.
+ * Configurable via Baserow pour le mode White Label.
+ */
+export type AnimationStyleType = 'Mick Electric' | 'Elegant Fade' | 'Dynamic Slide' | 'Minimal';
+
+/**
+ * Liste des styles d'animation valides.
+ */
+export const ANIMATION_STYLES: AnimationStyleType[] = [
+  'Mick Electric',
+  'Elegant Fade', 
+  'Dynamic Slide',
+  'Minimal'
+];
+
+/**
  * Interface complète pour les paramètres globaux du site.
  * Tous ces champs viennent de la table Baserow "SITEWEB Global_Infos".
  */
@@ -98,6 +114,12 @@ export interface GlobalSettingsComplete {
   copyrightTexte: string;
   /** Badge de localisation (ex: "Hébergé en Suisse") */
   paysHebergement: string;
+
+  // === ANIMATION & BRANDING DYNAMIQUE ===
+  /** Style d'animation du site ('Mick Electric' | 'Elegant Fade' | 'Dynamic Slide' | 'Minimal') */
+  animationStyle: AnimationStyleType;
+  /** Code SVG brut pour un logo animé personnalisé (optionnel) */
+  logoSvgCode: string | null;
 }
 
 /**
@@ -188,5 +210,9 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   // Footer
   copyrightTexte: `© ${new Date().getFullYear()} Mick Solutions. Tous droits réservés.`,
   paysHebergement: 'Hébergé en Suisse',
+
+  // Animation & Branding dynamique
+  animationStyle: 'Mick Electric' as AnimationStyleType,
+  logoSvgCode: null,
 };
 

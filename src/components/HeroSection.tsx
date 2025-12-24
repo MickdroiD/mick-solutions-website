@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import AnimatedLogo from './AnimatedLogo';
+import DynamicLogo from './DynamicLogo';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
 import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
@@ -24,6 +24,9 @@ export default function HeroSection({ globalSettings }: HeroSectionProps) {
   const trustStat2Label = settings.trustStat2Label;
   const trustStat3Value = settings.trustStat3Value;
   const trustStat3Label = settings.trustStat3Label;
+  const logoSvgCode = settings.logoSvgCode;
+  const logoUrl = settings.logoUrl;
+  const nomSite = settings.nomSite;
 
   // Parser le titre pour créer le gradient sur la 2e ligne
   const titreParts = titreHero.split('.');
@@ -132,14 +135,22 @@ export default function HeroSection({ globalSettings }: HeroSectionProps) {
             </div>
           </motion.div>
 
-          {/* Animated Logo */}
+          {/* Dynamic Logo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="flex justify-center lg:justify-end"
           >
-            <AnimatedLogo className="w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96" />
+            <div className="w-full max-w-[400px] md:max-w-[600px] h-auto flex items-center justify-center relative z-10 [&>div]:w-full [&>div]:h-auto [&_svg]:w-full [&_svg]:h-auto">
+              <DynamicLogo 
+                svgCode={logoSvgCode} 
+                logoUrl={logoUrl} 
+                alt={nomSite}
+                width={600}
+                height={600}
+              />
+            </div>
           </motion.div>
         </div>
       </div>

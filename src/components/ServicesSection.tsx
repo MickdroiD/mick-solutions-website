@@ -333,7 +333,8 @@ function ServiceModal({
                 </div>
               )}
 
-              {/* CTA Button */}
+              {/* CTA Button - Le texte est hardcodé ici car le modal n'a pas accès aux labels */}
+              {/* TODO: Passer les labels via Context si besoin de dynamisation */}
               <div className="mt-6 pt-4 border-t border-white/5">
                 <a
                   href="#contact"
@@ -355,14 +356,45 @@ function ServiceModal({
 }
 
 // ============================================
+// SECTION LABELS (White Label Ready)
+// ============================================
+// Ces labels peuvent être surchargés via les props
+// pour une personnalisation complète par client
+interface SectionLabels {
+  sectionTitle: string;
+  sectionTitleHighlight: string;
+  sectionSubtitle: string;
+  ctaQuestion: string;
+  ctaLink: string;
+  modalCtaText: string;
+}
+
+const DEFAULT_LABELS: SectionLabels = {
+  sectionTitle: 'Nos',
+  sectionTitleHighlight: 'services',
+  sectionSubtitle: 'Des solutions concrètes qui s\'adaptent à votre façon de travailler, pas l\'inverse.',
+  ctaQuestion: 'Vous avez un besoin spécifique ?',
+  ctaLink: 'Parlons-en ensemble',
+  modalCtaText: 'Demander un devis',
+};
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
-export default function ServicesSection({ services }: { services?: Service[] }) {
+interface ServicesSectionProps {
+  services?: Service[];
+  labels?: Partial<SectionLabels>;
+}
+
+export default function ServicesSection({ services, labels }: ServicesSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Fusionner les labels par défaut avec les labels personnalisés
+  const sectionLabels = { ...DEFAULT_LABELS, ...labels };
+  
   const displayServices = services && services.length > 0 ? services : defaultServices;
 
   const openModal = (service: Service) => {
@@ -393,12 +425,10 @@ export default function ServicesSection({ services }: { services?: Service[] }) 
           className="text-center mb-16"
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Nos <span className="text-gradient">services</span>
+            {sectionLabels.sectionTitle} <span className="text-gradient">{sectionLabels.sectionTitleHighlight}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Des solutions concrètes qui s&apos;adaptent à votre façon de travailler,
-            <br className="hidden sm:block" />
-            pas l&apos;inverse.
+            {sectionLabels.sectionSubtitle}
           </p>
         </motion.div>
 
@@ -422,12 +452,12 @@ export default function ServicesSection({ services }: { services?: Service[] }) 
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-12"
         >
-          <p className="text-slate-500 mb-4">Vous avez un besoin spécifique ?</p>
+          <p className="text-slate-500 mb-4">{sectionLabels.ctaQuestion}</p>
           <a
             href="#contact"
             className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 font-medium transition-colors"
           >
-            Parlons-en ensemble
+            {sectionLabels.ctaLink}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

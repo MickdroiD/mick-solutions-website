@@ -171,3 +171,315 @@ section[id] {
   animation: spin-glow 3s linear infinite;
   opacity: 0.6;
 }
+
+/* ============================================
+   LOGO FRAME - 4 STYLES D'ANIMATION WHITE LABEL
+   ============================================ */
+
+/* ===========================================
+   STYLE 1: ELECTRIC (Mick Electric)
+   - Bordure conic-gradient qui tourne
+   - Effet néon/électrique
+   =========================================== */
+.logo-frame-electric {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.logo-frame-electric::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary-400),
+    var(--primary-500),
+    var(--accent-500),
+    var(--accent-400),
+    var(--primary-400)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin-glow 3s linear infinite;
+}
+
+.logo-frame-electric::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1rem;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    color-mix(in srgb, var(--primary-400) 40%, transparent),
+    transparent,
+    color-mix(in srgb, var(--accent-500) 40%, transparent),
+    transparent
+  );
+  filter: blur(8px);
+  animation: spin-glow 3s linear infinite;
+  opacity: 0.6;
+}
+
+/* ===========================================
+   STYLE 2: ELEGANT (Elegant Fade)
+   - Carré FIXE (pas de rotation)
+   - Glow qui "respire" (pulse) lentement
+   - Pour clients Luxe/Sobres
+   =========================================== */
+@keyframes elegant-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.7;
+    filter: blur(12px);
+  }
+}
+
+.logo-frame-elegant {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.logo-frame-elegant::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-400),
+    var(--primary-500),
+    var(--accent-500),
+    var(--accent-400)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.6;
+}
+
+.logo-frame-elegant::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 1.25rem;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--primary-400) 50%, transparent),
+    color-mix(in srgb, var(--accent-500) 30%, transparent),
+    transparent
+  );
+  animation: elegant-pulse 4s ease-in-out infinite;
+}
+
+/* ===========================================
+   STYLE 3: DYNAMIC (Dynamic Slide)
+   - Carré FIXE
+   - Bordure colorée avec effet slide-in
+   - Pour clients Tech/Modernes
+   =========================================== */
+@keyframes dynamic-slide {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes dynamic-border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.logo-frame-dynamic {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  animation: dynamic-slide 0.6s ease-out forwards;
+}
+
+.logo-frame-dynamic::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--primary-400),
+    var(--accent-500),
+    var(--primary-400)
+  );
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: dynamic-border-flow 3s ease-in-out infinite;
+}
+
+.logo-frame-dynamic::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary-400) 30%, transparent),
+    color-mix(in srgb, var(--accent-500) 30%, transparent),
+    color-mix(in srgb, var(--primary-400) 30%, transparent)
+  );
+  background-size: 200% 100%;
+  filter: blur(6px);
+  opacity: 0.5;
+  animation: dynamic-border-flow 3s ease-in-out infinite;
+}
+
+/* ===========================================
+   STYLE 4: MINIMAL
+   - Aucun effet, juste le logo propre
+   - Bordure très discrète ou invisible
+   - Pour clients BTP/Industrie
+   =========================================== */
+.logo-frame-minimal {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.logo-frame-minimal::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 0.8rem;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-500) 40%, transparent),
+    color-mix(in srgb, var(--accent-500) 20%, transparent)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+}
+
+/* Pas de ::after pour le style minimal - pas de glow */
+
+/* ===========================================
+   LEGACY: logo-frame (alias vers electric)
+   Pour rétro-compatibilité
+   =========================================== */
+.logo-frame {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.logo-frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary-400),
+    var(--primary-500),
+    var(--accent-500),
+    var(--accent-400),
+    var(--primary-400)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin-glow 3s linear infinite;
+}
+
+.logo-frame::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1rem;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    color-mix(in srgb, var(--primary-400) 40%, transparent),
+    transparent,
+    color-mix(in srgb, var(--accent-500) 40%, transparent),
+    transparent
+  );
+  filter: blur(8px);
+  animation: spin-glow 3s linear infinite;
+  opacity: 0.6;
+}
+
+/* LEGACY: logo-frame-static (alias vers elegant) */
+.logo-frame-static {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.logo-frame-static::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-400),
+    var(--primary-500),
+    var(--accent-500),
+    var(--accent-400)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.logo-frame-static::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 1rem;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--primary-400) 30%, transparent),
+    color-mix(in srgb, var(--accent-500) 20%, transparent),
+    transparent
+  );
+  filter: blur(8px);
+  opacity: 0.6;
+}
