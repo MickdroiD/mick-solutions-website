@@ -1,19 +1,41 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
-import Image from 'next/image';
-import type { GlobalSettingsComplete } from '@/lib/types/global-settings';
+import type { GlobalSettingsComplete, AnimationStyleType } from '@/lib/types/global-settings';
 import { DEFAULT_SETTINGS } from '@/lib/types/global-settings';
+import DynamicLogo from './DynamicLogo';
 
-const navItems = [
-  { name: 'Avantages', href: '#avantages', id: 'avantages' },
-  { name: 'Services', href: '#services', id: 'services' },
-  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
-  { name: 'Confiance', href: '#confiance', id: 'confiance' },
-  { name: 'Contact', href: '#contact', id: 'contact' },
-];
+// ============================================
+// CONFIGURATION NAVIGATION (White Label Ready)
+// ============================================
+// Ces items sont les sections du site - les labels pourraient
+// être dynamiques via Baserow dans une future version
+const NAV_SECTIONS = [
+  { id: 'avantages', defaultLabel: 'Avantages' },
+  { id: 'services', defaultLabel: 'Services' },
+  { id: 'portfolio', defaultLabel: 'Portfolio' },
+  { id: 'confiance', defaultLabel: 'Confiance' },
+  { id: 'contact', defaultLabel: 'Contact' },
+] as const;
+
+// ============================================
+// MAPPING ANIMATION STYLE → CSS CLASS
+// ============================================
+const LOGO_FRAME_CLASSES: Record<AnimationStyleType, string> = {
+  'Mick Electric': 'logo-frame-electric',
+  'Elegant Fade': 'logo-frame-elegant',
+  'Dynamic Slide': 'logo-frame-dynamic',
+  'Minimal': 'logo-frame-minimal',
+};
+
+/**
+ * Retourne la classe CSS du logo-frame selon le style d'animation.
+ */
+function getLogoFrameClass(style: AnimationStyleType): string {
+  return LOGO_FRAME_CLASSES[style] || LOGO_FRAME_CLASSES['Mick Electric'];
+}
 
 interface HeaderProps {
   globalSettings: GlobalSettingsComplete;
@@ -28,6 +50,20 @@ export default function Header({ globalSettings }: HeaderProps) {
   const lienBoutonAppel = settings.lienBoutonAppel || '#contact';
   const nomSite = settings.nomSite;
   const logoUrl = settings.logoUrl;
+  const logoSvgCode = settings.logoSvgCode;
+  const animationStyle = settings.animationStyle;
+  
+  // Classe CSS dynamique pour le logo frame
+  const logoFrameClass = useMemo(() => getLogoFrameClass(animationStyle), [animationStyle]);
+  
+  // Navigation items avec labels (prêt pour dynamisation future)
+  const navItems = useMemo(() => 
+    NAV_SECTIONS.map(section => ({
+      name: section.defaultLabel,
+      href: `#${section.id}`,
+      id: section.id,
+    })), 
+  []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,20 +124,21 @@ export default function Header({ globalSettings }: HeaderProps) {
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
+          {/* Logo avec style d'animation dynamique */}
           <a 
             href="#" 
             onClick={handleLogoClick}
             className="flex items-center gap-2 sm:gap-3 group touch-manipulation"
           >
             <motion.div 
-              className="logo-frame flex-shrink-0"
+              className={`flex-shrink-0 ${logoFrameClass}`}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             >
               <div className="relative bg-slate-900/90 rounded-xl p-1 sm:p-2">
-                <Image
-                  src={logoUrl}
+                <DynamicLogo
+                  svgCode={logoSvgCode}
+                  logoUrl={logoUrl}
                   alt={nomSite}
                   width={48}
                   height={48}
@@ -142,7 +179,7 @@ export default function Header({ globalSettings }: HeaderProps) {
                          transition-all duration-300"
               >
                 <Phone className="w-4 h-4" />
-                Réserver un appel
+                {settings.ctaSecondaire?.includes('appel') ? settings.ctaSecondaire : 'Réserver un appel'}
               </a>
             )}
             <a
@@ -199,7 +236,7 @@ export default function Header({ globalSettings }: HeaderProps) {
                   className="flex items-center gap-2 py-3 px-2 text-slate-400 hover:text-white transition-colors touch-manipulation text-base"
                 >
                   <Phone className="w-4 h-4" />
-                  Réserver un appel
+                  {settings.ctaSecondaire?.includes('appel') ? settings.ctaSecondaire : 'Réserver un appel'}
                 </a>
               )}
               <a

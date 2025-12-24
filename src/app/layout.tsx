@@ -3,6 +3,9 @@ import "./globals.css";
 import { getGlobalSettingsComplete } from "@/lib/baserow";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
+// Force le rendu dynamique (SSR) pour le mode multi-tenant
+export const dynamic = 'force-dynamic';
+
 // ============================================
 // GÉNÉRATION DYNAMIQUE DES MÉTADONNÉES (SEO)
 // ============================================
