@@ -3,12 +3,68 @@
 // ============================================
 // Types complets pour l'architecture modulaire.
 // 140 champs configurables via Baserow.
+//
+// ⚠️  DEPRECATED - Ce fichier est en cours de migration
+// ============================================
+// Cette architecture "flat-table" à 140+ colonnes est remplacée par
+// l'architecture Block-Based Factory V2 (relationnelle).
+//
+// NOUVEAU FICHIER: src/lib/schemas/factory.ts
+// - GlobalConfigSchema (settings structurés en sous-objets JSON)
+// - SectionSchema (union discriminée par type)
+//
+// Ce fichier reste disponible pour compatibilité ascendante.
+// Migration prévue: Q1 2025
+// ============================================
+
+// ============================================
+// BASEROW FILE TYPE
+// ============================================
+// Structure d'un fichier uploadé dans Baserow (File field).
+// Utilisé pour Logo URL, Favicon, OG Image, etc.
+
+export interface BaserowFile {
+  /** URL complète du fichier */
+  url: string;
+  /** Nom affiché dans l'interface Baserow */
+  visible_name: string;
+  /** Nom technique du fichier (avec hash) */
+  name: string;
+  /** Taille du fichier en octets */
+  size: number;
+  /** Type MIME (ex: image/svg+xml, image/png) */
+  mime_type: string;
+  /** true si c'est une image reconnue par Baserow */
+  is_image: boolean;
+  /** Largeur en pixels (si is_image = true) */
+  image_width: number | null;
+  /** Hauteur en pixels (si is_image = true) */
+  image_height: number | null;
+  /** Date d'upload ISO 8601 */
+  uploaded_at: string;
+  /** Miniatures générées (peut être null pour SVG) */
+  thumbnails: BaserowThumbnails | null;
+}
+
+export interface BaserowThumbnails {
+  tiny?: { url: string; width: number; height: number };
+  small?: { url: string; width: number; height: number };
+  card_cover?: { url: string; width: number; height: number };
+}
+
+/**
+ * Type helper pour les champs File Baserow
+ * Dans les données brutes: BaserowFile[] | null
+ * Après transformation: string | null (URL extraite)
+ */
+export type BaserowFileField = BaserowFile[] | null;
 
 // ============================================
 // TYPES DE VARIANTES (4 choix + AI)
 // ============================================
 
 export type VariantStyle = 'Minimal' | 'Corporate' | 'Electric' | 'Bold' | 'AI' | 'Custom';
+export type AnimationStyleType = 'Mick Electric' | 'Mick-Electrique' | 'Elegant Fade' | 'Dynamic Slide' | 'minimal' | 'Minimal' | null | undefined;
 export type AnimationSpeed = 'Slow' | 'Normal' | 'Fast' | 'Instant';
 export type ScrollEffect = 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Parallax';
 export type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake';
@@ -28,6 +84,23 @@ export type AITone = 'Professional' | 'Friendly' | 'Casual' | 'Formal';
 export type AIIndustry = 'Tech' | 'Finance' | 'Health' | 'Retail' | 'Services' | 'Other';
 export type VoiceLanguage = 'fr-FR' | 'en-US' | 'de-DE' | 'it-IT';
 export type GalleryColumns = '2' | '3' | '4' | 'Auto';
+export type LogoAnimation = 
+  | 'none'
+  | 'spin'
+  | 'pulse'
+  | 'bounce'
+  | 'electric'
+  | 'lightning_circle'
+  | 'rotate'
+  | 'spin_glow'
+  // Legacy values (backward compatibility)
+  | 'Spin-Glow'
+  | 'Pulse'
+  | 'Bounce'
+  | 'None';
+export type LogoFrameStyle = 'Square' | 'Circle' | 'ThickCircle' | 'None';
+export type TextAnimation = 'Gradient' | 'Typing' | 'Fade' | 'None';
+export type GalleryAnimation = 'Fade' | 'Slide' | 'Zoom' | 'Flip' | 'None';
 
 // Variantes spécifiques par module
 export type ServicesVariant = 'Grid' | 'Accordion' | 'Cards' | 'Showcase';
@@ -50,8 +123,10 @@ export interface GlobalSettingsComplete {
   initialesLogo: string;
 
   // ========== B. ASSETS VISUELS ==========
-  logoUrl: string;
+  /** URL du logo principal (null = utiliser initiales) */
+  logoUrl: string | null;
   logoDarkUrl: string | null;
+  logoSvgCode: string | null;
   faviconUrl: string | null;
   ogImageUrl: string | null;
   heroBackgroundUrl: string | null;
@@ -117,6 +192,8 @@ export interface GlobalSettingsComplete {
   customFooterText: string | null;
   footerCtaText: string | null;
   footerCtaUrl: string | null;
+  footerLogoSize: number | null;
+  footerLogoAnimation: LogoAnimation | null;
 
   // ========== I. ANALYTICS ==========
   umamiSiteId: string | null;
@@ -162,15 +239,26 @@ export interface GlobalSettingsComplete {
 
   // ========== M. ANIMATIONS & EFFETS ==========
   enableAnimations: boolean;
+  animationStyle: AnimationStyleType;
   animationSpeed: AnimationSpeed | null;
   scrollEffect: ScrollEffect | null;
   hoverEffect: HoverEffect | null;
   loadingStyle: LoadingStyle | null;
+  logoAnimation: LogoAnimation | null;  // Legacy: fallback général
+  logoFrameStyle: LogoFrameStyle | null;
+  textAnimation: TextAnimation | null;
+  galleryAnimation: GalleryAnimation | null;
+  headerLogoSize: number | null;  // Taille logo header en pixels (20-300)
+  headerLogoAnimation: LogoAnimation | null;  // Animation logo menu header
+  heroLogoAnimation: LogoAnimation | null;  // Animation logo central hero
+  heroLogoSize: number | null;  // Taille logo hero en pixels (100-600)
 
   // ========== N. PHOTOS & MÉDIAS ==========
   imageStyle: ImageStyle | null;
   imageFilter: ImageFilter | null;
   galleryColumns: GalleryColumns | null;
+  galleryTitle: string | null;
+  gallerySubtitle: string | null;
   videoAutoplay: boolean;
   lazyLoading: boolean;
 
@@ -217,6 +305,29 @@ export interface GlobalSettingsComplete {
   customJs: string | null;
   featureFlags: string[];
   rateLimitApi: number | null;
+
+  // ========== S. LAYOUT & ORDER ==========
+  /** Ordre des sections JSON array: ["hero", "services", "portfolio", "contact"] */
+  sectionOrder: string[] | null;
+
+  // ... dans GlobalSettingsComplete ...
+
+  // ========== T. GRID BLOCKS ==========
+  /** Structure JSON de la grille Hero : [{ id, width, type, content, animation }] */
+  heroBlocks: GridBlock[] | null;
+}
+
+// ============================================
+// HERO GRID BLOCK TYPE
+// ============================================
+
+export interface GridBlock {
+  id: string;
+  type: 'image' | 'text' | 'logo' | 'shape';
+  width: '25%' | '50%' | '100%';
+  content: string;
+  animation?: string;
+  style?: Record<string, unknown>;
 }
 
 // ============================================
@@ -231,9 +342,10 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   slogan: 'Slogan par défaut',
   initialesLogo: 'MS',
 
-  // Assets
-  logoUrl: '/logo.svg',
+  // Assets - White Label: pas de logo par défaut
+  logoUrl: null,
   logoDarkUrl: null,
+  logoSvgCode: null,
   faviconUrl: null,
   ogImageUrl: null,
   heroBackgroundUrl: null,
@@ -299,6 +411,8 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   customFooterText: null,
   footerCtaText: null,
   footerCtaUrl: null,
+  footerLogoSize: 40,
+  footerLogoAnimation: 'none',
 
   // Analytics
   umamiSiteId: null,
@@ -344,15 +458,26 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
 
   // Animations
   enableAnimations: true,
+  animationStyle: 'Mick Electric',
   animationSpeed: 'Normal',
   scrollEffect: 'Fade',
   hoverEffect: 'Scale',
   loadingStyle: 'Skeleton',
+  logoAnimation: 'Spin-Glow',  // Legacy fallback
+  logoFrameStyle: 'Square',
+  textAnimation: 'Gradient',
+  galleryAnimation: 'Fade',
+  headerLogoSize: 40,
+  headerLogoAnimation: 'spin',  // Animation logo header (menu)
+  heroLogoAnimation: 'electric',  // Animation logo hero (big center)
+  heroLogoSize: 280,  // Taille logo hero en pixels
 
   // Photos
   imageStyle: 'Rounded',
   imageFilter: 'None',
   galleryColumns: '3',
+  galleryTitle: null,
+  gallerySubtitle: null,
   videoAutoplay: false,
   lazyLoading: true,
 
@@ -399,6 +524,12 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   customJs: null,
   featureFlags: [],
   rateLimitApi: 1000,
+
+  // Layout
+  sectionOrder: null, // null = ordre par défaut défini dans page.tsx
+
+  // Hero Blocks
+  heroBlocks: null, // null = pas de blocs de grille
 };
 
 // ============================================

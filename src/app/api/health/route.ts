@@ -1,59 +1,78 @@
-// Health check endpoint pour diagnostiquer la connexion Baserow
+// ============================================
+// Health Check Endpoint - Factory V2
+// ============================================
 // URL: /api/health
+// Used by Docker healthcheck and monitoring
 
 import { NextResponse } from 'next/server';
+import { isFactoryV2Configured } from '@/lib/factory-client';
 
-export const dynamic = 'force-dynamic'; // Pas de cache pour ce endpoint
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const startTime = Date.now();
+  
   const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+  const GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID;
+  const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID;
   
   const status = {
+    status: 'ok' as 'ok' | 'degraded' | 'error',
     timestamp: new Date().toISOString(),
+    version: 'factory-v2',
     environment: process.env.NODE_ENV,
-    baserow: {
-      tokenConfigured: !!BASEROW_TOKEN,
-      tokenLength: BASEROW_TOKEN?.length ?? 0,
-      connection: 'untested' as string,
-      data: null as unknown,
+    responseTimeMs: 0,
+    checks: {
+      factoryConfigured: isFactoryV2Configured(),
+      baserowToken: !!BASEROW_TOKEN,
+      globalTableId: !!GLOBAL_TABLE_ID,
+      sectionsTableId: !!SECTIONS_TABLE_ID,
+      adminPassword: !!process.env.ADMIN_PASSWORD,
+      baserowConnection: 'untested' as string,
     },
   };
 
-  // Test de connexion Baserow
-  if (BASEROW_TOKEN) {
+  // Quick Baserow connection test
+  if (BASEROW_TOKEN && GLOBAL_TABLE_ID) {
     try {
       const response = await fetch(
-        'https://baserow.mick-solutions.ch/api/database/rows/table/751/?user_field_names=true&size=1',
+        `https://baserow.mick-solutions.ch/api/database/rows/table/${GLOBAL_TABLE_ID}/?user_field_names=true&size=1`,
         {
           headers: {
             'Authorization': `Token ${BASEROW_TOKEN}`,
             'Accept': 'application/json',
           },
+          signal: AbortSignal.timeout(5000), // 5s timeout
         }
       );
 
       if (response.ok) {
-        const data = await response.json();
-        status.baserow.connection = 'success';
-        status.baserow.data = {
-          count: data.count,
-          hasResults: data.results?.length > 0,
-          firstRowFields: data.results?.[0] ? Object.keys(data.results[0]) : [],
-        };
+        status.checks.baserowConnection = 'ok';
       } else {
-        status.baserow.connection = `error: HTTP ${response.status}`;
+        status.checks.baserowConnection = `http_${response.status}`;
+        status.status = 'degraded';
       }
     } catch (error) {
-      status.baserow.connection = `exception: ${error instanceof Error ? error.message : 'unknown'}`;
+      status.checks.baserowConnection = error instanceof Error ? error.message : 'error';
+      status.status = 'degraded';
     }
   } else {
-    status.baserow.connection = 'skipped: no token';
+    status.checks.baserowConnection = 'skipped';
+    if (!status.checks.factoryConfigured) {
+      status.status = 'error';
+    }
   }
 
+  // Calculate response time
+  status.responseTimeMs = Date.now() - startTime;
+
+  // Determine HTTP status code
+  const httpStatus = status.status === 'error' ? 503 : 200;
+
   return NextResponse.json(status, {
+    status: httpStatus,
     headers: {
       'Cache-Control': 'no-store, max-age=0',
     },
   });
 }
-

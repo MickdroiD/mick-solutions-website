@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
-import Image from 'next/image';
 import type { NavbarModuleProps, NavItem } from '../types';
+import AnimatedMedia from '../../AnimatedMedia';
 
 const defaultNavItems: NavItem[] = [
   { name: 'Avantages', href: '#avantages', id: 'avantages' },
@@ -15,10 +15,12 @@ const defaultNavItems: NavItem[] = [
 ];
 
 /**
- * NavbarElectric - Variante dynamique et moderne (style Mick Solutions).
+ * NavbarElectric - Variante dynamique "Electric" pour White Label Factory.
  * 
  * @description Navigation futuriste avec glass effect, logo animé,
  * gradient sur le CTA, sticky avec blur. Idéal pour tech, startups, SaaS.
+ * 
+ * Logo Source Priority: logoSvgCode > logoUrl > initiales (fallback)
  */
 export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarModuleProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,42 +46,57 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  // Configuration du logo header depuis Baserow
+  const headerLogoSize = Number(config.headerLogoSize) || 40; // Taille en pixels
+  const clampedLogoSize = Math.min(Math.max(headerLogoSize, 32), 80); // Clamp entre 32-80px pour le header
+  const headerLogoAnimation = config.headerLogoAnimation || 'electric';
+  const hasLogoSvg = Boolean(config.logoSvgCode && String(config.logoSvgCode).trim());
+  const hasLogoUrl = Boolean(config.logoUrl && config.logoUrl.trim());
+  const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
+
   return (
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-background/80 backdrop-blur-xl border-b border-white/5'
-          : 'bg-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{ 
+        backgroundColor: isScrolled ? '#0a0a0f' : 'rgba(10, 10, 15, 0.9)',
+        borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.05)' : 'none'
+      }}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo avec frame animée */}
+          {/* Logo avec animation configurable depuis Baserow */}
           <a 
             href="#" 
             onClick={handleLogoClick}
             className="flex items-center gap-2 sm:gap-3 group touch-manipulation"
           >
-            <motion.div 
-              className="logo-frame flex-shrink-0"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="relative bg-slate-900/90 rounded-xl p-1 sm:p-2">
-                <Image
-                  src={config.logoUrl}
-                  alt={config.nomSite}
-                  width={48}
-                  height={48}
-                  className="h-7 w-7 sm:h-10 sm:w-10 relative z-10"
-                  priority
-                />
+            {/* Logo animé via AnimatedMedia (SVG/Image/Fallback) */}
+            {(hasLogoSvg || hasLogoUrl) ? (
+              <AnimatedMedia
+                svgCode={hasLogoSvg ? config.logoSvgCode : undefined}
+                imageUrl={!hasLogoSvg && hasLogoUrl ? config.logoUrl : undefined}
+                animationType={headerLogoAnimation}
+                size={clampedLogoSize}
+                alt={config.nomSite}
+                fallback={
+                  <span className="text-lg font-bold text-gradient">{initiales}</span>
+                }
+                primaryColor="var(--primary-400)"
+                accentColor="var(--accent-400)"
+              />
+            ) : (
+              // Fallback: Initiales avec gradient
+              <div 
+                className="flex items-center justify-center rounded-lg bg-gradient-to-br from-primary-500/20 to-accent-500/20 border border-primary-500/30"
+                style={{ width: clampedLogoSize, height: clampedLogoSize }}
+              >
+                <span className="text-lg font-bold text-gradient">{initiales}</span>
               </div>
-            </motion.div>
-            <span className="text-xs sm:text-lg font-semibold text-foreground whitespace-nowrap">
+            )}
+            <span className="text-xs sm:text-lg font-semibold text-white whitespace-nowrap">
               {config.nomSite.split(' ')[0]} <span className="text-gradient">{config.nomSite.split(' ').slice(1).join(' ')}</span>
             </span>
           </a>
@@ -146,7 +163,8 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-background/95 backdrop-blur-xl border-b border-white/5"
+            className="md:hidden backdrop-blur-xl border-b border-white/5"
+            style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)' }}
           >
             <div className="px-4 py-4 space-y-1">
               {navItems.map((item) => (

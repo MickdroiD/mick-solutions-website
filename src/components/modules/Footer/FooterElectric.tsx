@@ -1,15 +1,130 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, Transition, TargetAndTransition } from 'framer-motion';
 import { ArrowRight, Mail, Linkedin, Github, Instagram } from 'lucide-react';
 import Image from 'next/image';
 import type { FooterModuleProps } from '../types';
+import type { LogoAnimation } from '@/lib/types/global-settings';
+import AnimatedLogoFrame from '../../AnimatedLogoFrame';
+import { CSSProperties } from 'react';
+
+// ============================================
+// LOGO WITH ANIMATION (Local to this file)
+// ============================================
+interface AnimationVariants {
+  animate: TargetAndTransition;
+  transition: Transition;
+  style?: CSSProperties;
+}
+
+function FooterLogoWithAnimation({ 
+  logoUrl, 
+  logoSvgCode,
+  nomSite, 
+  animation, 
+  size = 40 
+}: { 
+  logoUrl: string; 
+  logoSvgCode?: string | null;
+  nomSite: string; 
+  animation?: LogoAnimation | null; 
+  size?: number | null;
+}) {
+  const logoSize = size || 40;
+  const normalizedAnimation = animation?.toLowerCase() || 'none';
+  
+  const getAnimationVariants = (): AnimationVariants => {
+    switch (normalizedAnimation) {
+      case 'spin-glow':
+      case 'spin_glow':
+        return {
+          animate: { rotate: 360 },
+          transition: { duration: 8, repeat: Infinity, ease: 'linear' as const },
+          style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' }
+        };
+      case 'spin':
+      case 'rotate':
+        return {
+          animate: { rotate: 360 },
+          transition: { duration: 8, repeat: Infinity, ease: 'linear' as const }
+        };
+      case 'pulse':
+        return {
+          animate: { scale: [1, 1.05, 1] },
+          transition: { duration: 2, repeat: Infinity }
+        };
+      case 'bounce':
+        return {
+          animate: { y: [0, -5, 0] },
+          transition: { duration: 1.5, repeat: Infinity }
+        };
+      case 'electric':
+      case 'lightning_circle':
+        return {
+          animate: {},
+          transition: {},
+          style: { filter: 'drop-shadow(0 0 12px rgba(34, 211, 238, 0.6))' }
+        };
+      case 'none':
+      default:
+        return { animate: {}, transition: {} };
+    }
+  };
+
+  const animProps = getAnimationVariants();
+  const isElectric = normalizedAnimation === 'electric' || normalizedAnimation === 'lightning_circle';
+
+  return (
+    <motion.div
+      className="flex-shrink-0 relative"
+      whileHover={{ scale: 1.05 }}
+      animate={animProps.animate}
+      transition={animProps.transition}
+      style={animProps.style}
+    >
+      {logoSvgCode ? (
+        // ✅ SVG Inline prioritaire
+        <div
+          className="object-contain"
+          style={{ width: `${logoSize}px`, height: `${logoSize}px` }}
+          dangerouslySetInnerHTML={{ __html: logoSvgCode }}
+        />
+      ) : (
+        // Fallback: Image classique
+        <Image
+          src={logoUrl}
+          alt={nomSite}
+          width={logoSize}
+          height={logoSize}
+          className="object-contain"
+          style={{ width: `${logoSize}px`, height: `${logoSize}px` }}
+          unoptimized
+        />
+      )}
+      {isElectric && (
+        <motion.div
+          className="absolute inset-0 rounded-lg pointer-events-none"
+          animate={{
+            boxShadow: [
+              '0 0 10px rgba(34, 211, 238, 0.3)',
+              '0 0 20px rgba(168, 139, 250, 0.4)',
+              '0 0 10px rgba(34, 211, 238, 0.3)',
+            ],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+    </motion.div>
+  );
+}
 
 /**
- * FooterElectric - Variante dynamique et moderne (style Mick Solutions).
+ * FooterElectric - Variante dynamique "Electric" pour White Label Factory.
  * 
  * @description Footer avec gradient animé, CTA final, effet glass.
  * Idéal pour tech, startups, SaaS.
+ * 
+ * Logo Source Priority: logoSvgCode > logoDarkUrl > logoUrl > initiales (fallback)
  */
 export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
   const currentYear = new Date().getFullYear();
@@ -71,15 +186,21 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
           >
             <div className="flex items-center gap-3 mb-4">
-              {config.logoUrl && (
-                <div className="relative p-2 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/20">
-                  <Image
-                    src={config.logoUrl}
-                    alt={config.nomSite}
-                    width={40}
-                    height={40}
-                  />
-                </div>
+              {/* Logo: SVG inline prioritaire, sinon Image, sinon initiales */}
+              {(config.logoSvgCode || config.logoDarkUrl || config.logoUrl) ? (
+                <FooterLogoWithAnimation 
+                  logoUrl={config.logoDarkUrl || config.logoUrl || ''}
+                  logoSvgCode={config.logoSvgCode}
+                  nomSite={config.nomSite}
+                  animation={config.footerLogoAnimation}
+                  size={config.footerLogoSize}
+                />
+              ) : (
+                <AnimatedLogoFrame 
+                  initiales={config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('')} 
+                  size="md"
+                  variant={config.logoFrameStyle}
+                />
               )}
               <span className="text-xl font-bold">
                 {config.nomSite.split(' ')[0]}{' '}

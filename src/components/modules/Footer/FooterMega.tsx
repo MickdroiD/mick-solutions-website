@@ -1,10 +1,90 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, CSSProperties } from 'react';
+import { motion, Transition, TargetAndTransition } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, ChevronRight, Linkedin, Instagram, Twitter, Youtube } from 'lucide-react';
 import Image from 'next/image';
 import type { FooterModuleProps } from '../types';
+import type { LogoAnimation } from '@/lib/types/global-settings';
+
+// ============================================
+// LOGO WITH ANIMATION
+// ============================================
+interface AnimationVariants {
+  animate: TargetAndTransition;
+  transition: Transition;
+  style?: CSSProperties;
+}
+
+function FooterLogoWithAnimation({ 
+  logoUrl, 
+  nomSite, 
+  animation, 
+  size = 48 
+}: { 
+  logoUrl: string; 
+  nomSite: string; 
+  animation?: LogoAnimation | null; 
+  size?: number | null;
+}) {
+  const logoSize = size || 48;
+  const normalizedAnimation = animation?.toLowerCase() || 'none';
+  
+  const getAnimationVariants = (): AnimationVariants => {
+    switch (normalizedAnimation) {
+      case 'spin-glow':
+      case 'spin_glow':
+        return {
+          animate: { rotate: 360 },
+          transition: { duration: 8, repeat: Infinity, ease: 'linear' as const },
+          style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' }
+        };
+      case 'spin':
+      case 'rotate':
+        return {
+          animate: { rotate: 360 },
+          transition: { duration: 8, repeat: Infinity, ease: 'linear' as const }
+        };
+      case 'pulse':
+        return {
+          animate: { scale: [1, 1.05, 1] },
+          transition: { duration: 2, repeat: Infinity }
+        };
+      case 'electric':
+      case 'lightning_circle':
+        return {
+          animate: {},
+          transition: {},
+          style: { filter: 'drop-shadow(0 0 12px rgba(34, 211, 238, 0.6))' }
+        };
+      case 'none':
+      default:
+        return { animate: {}, transition: {} };
+    }
+  };
+
+  const animProps = getAnimationVariants();
+
+  return (
+    <motion.div
+      className="flex-shrink-0 relative"
+      whileHover={{ scale: 1.05 }}
+      animate={animProps.animate}
+      transition={animProps.transition}
+      style={animProps.style}
+    >
+      <Image
+        src={logoUrl}
+        alt={nomSite}
+        width={logoSize}
+        height={logoSize}
+        className="object-contain"
+        style={{ width: `${logoSize}px`, height: `${logoSize}px` }}
+        unoptimized
+      />
+    </motion.div>
+  );
+}
 
 /**
  * FooterMega - Variante XXL avec beaucoup d'informations.
@@ -35,26 +115,27 @@ export function FooterMega({ config, legalDocs = [] }: FooterModuleProps) {
     setEmail('');
   };
 
+  // Navigation dynamique basée sur les modules activés dans la config
+  const dynamicNavLinks = [
+    config.showAdvantages && { name: 'Avantages', href: '#avantages' },
+    config.showServices && { name: 'Services', href: '#services' },
+    config.showPortfolio && { name: 'Portfolio', href: '#portfolio' },
+    config.showContact && { name: 'Contact', href: '#contact' },
+  ].filter((link): link is { name: string; href: string } => Boolean(link));
+
   const navSections = [
     {
       title: 'Navigation',
-      links: [
-        { name: 'Avantages', href: '#avantages' },
-        { name: 'Services', href: '#services' },
-        { name: 'Portfolio', href: '#portfolio' },
-        { name: 'Contact', href: '#contact' },
-      ],
+      links: dynamicNavLinks,
     },
-    {
-      title: 'Services',
+    // Services secondaires (à personnaliser via Baserow dans une future version)
+    config.showServices ? {
+      title: 'Nos Offres',
       links: [
-        { name: 'Automatisation', href: '#services' },
-        { name: 'Sites Web', href: '#services' },
-        { name: 'Support', href: '#services' },
-        { name: 'Consulting', href: '#services' },
+        { name: 'Voir nos services', href: '#services' },
       ],
-    },
-  ];
+    } : null,
+  ].filter((section): section is { title: string; links: { name: string; href: string }[] } => section !== null);
 
   const socialLinks = [
     { icon: Linkedin, url: config.lienLinkedin, label: 'LinkedIn', color: '#0077B5' },
@@ -123,15 +204,14 @@ export function FooterMega({ config, legalDocs = [] }: FooterModuleProps) {
             className="lg:col-span-2"
           >
             <div className="flex items-center gap-3 mb-6">
-              {config.logoUrl && (
-                <Image
-                  src={config.logoUrl}
-                  alt={config.nomSite}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12"
+              {(config.logoDarkUrl || config.logoUrl) ? (
+                <FooterLogoWithAnimation 
+                  logoUrl={config.logoDarkUrl || config.logoUrl || ''}
+                  nomSite={config.nomSite}
+                  animation={config.footerLogoAnimation}
+                  size={config.footerLogoSize || 48}
                 />
-              )}
+              ) : null}
               <div>
                 <p className="font-bold text-xl text-primary-900 dark:text-foreground">
                   {config.nomSite}

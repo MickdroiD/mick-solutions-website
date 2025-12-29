@@ -1,0 +1,108 @@
+# ============================================
+# FACTORY V2 - Production Docker Compose
+# ============================================
+# Template pour déployer un client Factory V2
+#
+# Usage:
+#   1. Copier ce fichier et .env.example vers le dossier du client
+#   2. Renommer en docker-compose.yml
+#   3. Configurer le .env avec les variables du client
+#   4. docker compose up -d
+#
+# Variables requises dans .env:
+#   - BASEROW_API_TOKEN
+#   - BASEROW_FACTORY_GLOBAL_ID
+#   - BASEROW_FACTORY_SECTIONS_ID
+#   - ADMIN_PASSWORD
+
+services:
+  # ============================================
+  # APPLICATION NEXT.JS
+  # ============================================
+  website-client:
+    image: factory-v2:latest
+    # Ou build depuis source:
+    # build:
+    #   context: .
+    #   args:
+    #     - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+    container_name: ${CONTAINER_NAME:-factory-client}
+    restart: unless-stopped
+    
+    # ============================================
+    # PORT MAPPING
+    # ============================================
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    
+    # ============================================
+    # ENVIRONMENT VARIABLES
+    # ============================================
+    environment:
+      # === REQUIRED ===
+      - NODE_ENV=production
+      - BASEROW_API_TOKEN=${BASEROW_API_TOKEN}
+      - BASEROW_FACTORY_GLOBAL_ID=${BASEROW_FACTORY_GLOBAL_ID}
+      - BASEROW_FACTORY_SECTIONS_ID=${BASEROW_FACTORY_SECTIONS_ID}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      
+      # === OPTIONAL ===
+      - SITE_NAME=${SITE_NAME:-Factory V2}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-}
+      - BASEROW_API_URL=${BASEROW_API_URL:-https://baserow.mick-solutions.ch/api}
+      
+      # === JWT (auto-generated if not set) ===
+      - JWT_SECRET=${JWT_SECRET:-}
+      
+      # === AI FEATURES (optional) ===
+      - DEFAULT_AI_API_KEY=${DEFAULT_AI_API_KEY:-}
+    
+    # ============================================
+    # HEALTH CHECK
+    # ============================================
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # ============================================
+    # RESOURCES (optional, ajuster selon le VPS)
+    # ============================================
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 512M
+    #     reservations:
+    #       cpus: '0.25'
+    #       memory: 256M
+    
+    # ============================================
+    # NETWORKS
+    # ============================================
+    networks:
+      - proxy
+    
+    # ============================================
+    # TRAEFIK LABELS (si utilisation de Traefik)
+    # ============================================
+    labels:
+      - "traefik.enable=true"
+      # Route principale
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.entrypoints=websecure"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.tls.certresolver=myresolver"
+      - "traefik.http.services.${TRAEFIK_ROUTER_NAME:-factory-client}.loadbalancer.server.port=3000"
+      # Redirection www (optionnel)
+      # - "traefik.http.middlewares.www-redirect-${TRAEFIK_ROUTER_NAME:-factory-client}.redirectregex.regex=^https://${DOMAIN_WITHOUT_WWW}/(.*)"
+      # - "traefik.http.middlewares.www-redirect-${TRAEFIK_ROUTER_NAME:-factory-client}.redirectregex.replacement=https://www.${DOMAIN_WITHOUT_WWW}/$${1}"
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  proxy:
+    external: true
+

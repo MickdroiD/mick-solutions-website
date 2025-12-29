@@ -1,13 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getGlobalSettingsComplete } from "@/lib/baserow";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import MaintenanceGuard from "@/components/MaintenanceGuard";
 
 // Force le rendu dynamique (SSR) pour le mode multi-tenant
 export const dynamic = 'force-dynamic';
 
+// 🎯 VIEWPORT - Critical pour l'affichage mobile correct
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Empêche le zoom accidentel sur mobile
+  themeColor: '#0a0a0a',
+};
+
 // ============================================
 // GÉNÉRATION DYNAMIQUE DES MÉTADONNÉES (SEO)
+// White Label - Toutes les données depuis Baserow
 // ============================================
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getGlobalSettingsComplete();
@@ -17,6 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
     .map(k => k.trim())
     .filter(Boolean);
 
+  // Favicon dynamique depuis Baserow (ou génération via API route)
+  const faviconUrl = settings.faviconUrl || settings.logoUrl || null;
+  
   return {
     metadataBase: new URL(settings.siteUrl),
     title: {
@@ -40,47 +54,33 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: settings.nomSite,
       locale: settings.locale,
       type: "website",
-      images: settings.ogImageUrl
-        ? [{ url: settings.ogImageUrl, width: 1200, height: 630, alt: settings.nomSite }]
-        : [{ url: "/og-image.png", width: 1200, height: 630, alt: settings.nomSite }],
+      // L'image OG sera générée dynamiquement par opengraph-image.tsx
     },
     twitter: {
       card: "summary_large_image",
       title: `${settings.nomSite} | ${settings.metaTitre}`,
       description: settings.metaDescription,
-      images: settings.ogImageUrl ? [settings.ogImageUrl] : ["/og-image.png"],
+      // L'image Twitter sera générée dynamiquement par twitter-image.tsx
     },
     robots: {
-      index: true,
-      follow: true,
+      index: settings.robotsIndex,
+      follow: settings.robotsIndex,
       googleBot: {
-        index: true,
-        follow: true,
+        index: settings.robotsIndex,
+        follow: settings.robotsIndex,
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,
       },
     },
-    icons: {
-      icon: settings.faviconUrl
-        ? [{ url: settings.faviconUrl }]
-        : [
-            { url: "/favicon.ico", sizes: "48x48" },
-            { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-            { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-            { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
-            { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-            { url: "/favicon-144x144.png", sizes: "144x144", type: "image/png" },
-            { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
-            { url: "/favicon-512x512.png", sizes: "512x512", type: "image/png" },
-            { url: "/icon.svg", type: "image/svg+xml" },
-          ],
-      apple: [
-        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-      ],
-      shortcut: settings.faviconUrl || "/favicon.ico",
-    },
-    manifest: "/manifest.json",
+    // Icons dynamiques depuis Baserow
+    icons: faviconUrl ? {
+      icon: [{ url: faviconUrl }],
+      apple: [{ url: faviconUrl }],
+      shortcut: faviconUrl,
+    } : undefined,
+    // Manifest dynamique via API route
+    manifest: "/api/manifest",
     alternates: {
       canonical: settings.siteUrl,
     },
@@ -88,43 +88,46 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // ============================================
-// LAYOUT PRINCIPAL
+// LAYOUT PRINCIPAL - WHITE LABEL
 // ============================================
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Récupérer les settings pour le JSON-LD et les styles
   const settings = await getGlobalSettingsComplete();
 
-  // Schema.org JSON-LD pour l'organisation
+  // Schema.org JSON-LD dynamique pour l'organisation
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: settings.nomSite,
     url: settings.siteUrl,
-    logo: settings.logoUrl.startsWith('http') 
+    logo: settings.logoUrl?.startsWith('http') 
       ? settings.logoUrl 
-      : `${settings.siteUrl}${settings.logoUrl}`,
-    image: settings.ogImageUrl || `${settings.siteUrl}/og-image.png`,
+      : settings.logoUrl 
+        ? `${settings.siteUrl}${settings.logoUrl}`
+        : undefined,
+    image: settings.ogImageUrl || undefined,
     description: settings.metaDescription,
-    address: {
+    address: settings.adresse ? {
       "@type": "PostalAddress",
       addressLocality: settings.adresse.split(',')[0]?.trim() || settings.adresse,
       addressCountry: "CH",
-    },
-    contactPoint: {
+    } : undefined,
+    contactPoint: settings.email ? {
       "@type": "ContactPoint",
       email: settings.email,
       contactType: "customer service",
       availableLanguage: ["French", "English"],
-    },
-    sameAs: settings.lienLinkedin ? [settings.lienLinkedin] : [],
-    areaServed: {
-      "@type": "Country",
-      name: "Switzerland",
-    },
+    } : undefined,
+    sameAs: [
+      settings.lienLinkedin,
+      settings.lienInstagram,
+      settings.lienTwitter,
+      settings.lienYoutube,
+      settings.lienGithub,
+    ].filter(Boolean),
   };
 
   // Schema.org pour le site web
@@ -140,25 +143,26 @@ export default async function RootLayout({
     },
   };
 
-  // Schema.org LocalBusiness pour le SEO local
-  const localBusinessJsonLd = {
+  // Schema.org LocalBusiness (optionnel si adresse présente)
+  const localBusinessJsonLd = settings.adresse ? {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: settings.nomSite,
-    image: settings.logoUrl.startsWith('http')
+    image: settings.logoUrl?.startsWith('http')
       ? settings.logoUrl
-      : `${settings.siteUrl}${settings.logoUrl}`,
+      : settings.logoUrl
+        ? `${settings.siteUrl}${settings.logoUrl}`
+        : undefined,
     url: settings.siteUrl,
-    email: settings.email,
+    email: settings.email || undefined,
     telephone: settings.telephone || undefined,
     address: {
       "@type": "PostalAddress",
       addressLocality: settings.adresse.split(',')[0]?.trim() || settings.adresse,
-      addressRegion: settings.adresse.split(',')[0]?.trim() === 'Genève' ? 'GE' : undefined,
       addressCountry: "CH",
     },
     priceRange: "$$",
-  };
+  } : null;
 
   return (
     <html lang={settings.langue} className="scroll-smooth">
@@ -175,6 +179,26 @@ export default async function RootLayout({
           />
         )}
         
+        {/* Google Analytics (si configuré) */}
+        {settings.gaMeasurementId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${settings.gaMeasurementId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${settings.gaMeasurementId}');
+                `,
+              }}
+            />
+          </>
+        )}
+        
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
@@ -184,17 +208,21 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
-        />
+        {localBusinessJsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+          />
+        )}
         
         {/* Preconnect pour les fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="antialiased bg-background text-foreground">
-        {children}
+        <MaintenanceGuard config={settings}>
+          {children}
+        </MaintenanceGuard>
       </body>
     </html>
   );

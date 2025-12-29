@@ -8,12 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // ========================================
+      // COULEURS THÉMABLES VIA CSS VARIABLES
+      // Définies dynamiquement par ThemeProvider
+      // ========================================
       colors: {
-        // ========================================
-        // COULEURS THÉMABLES VIA CSS VARIABLES
-        // Définies dynamiquement par ThemeProvider
-        // ========================================
-        
         background: "var(--background)",
         foreground: "var(--foreground)",
         
@@ -84,9 +83,10 @@ const config: Config = {
       },
       
       // ========================================
-      // ANIMATIONS
+      // ANIMATIONS - FUSIONNÉES ET COMPLÈTES
       // ========================================
       animation: {
+        // Base animations
         "fade-in-up": "fadeInUp 0.6s ease-out forwards",
         "fade-in-down": "fadeInDown 0.6s ease-out forwards",
         "fade-in": "fadeIn 0.6s ease-out forwards",
@@ -96,8 +96,29 @@ const config: Config = {
         "circuit-flow": "circuitFlow 2s ease-in-out infinite",
         "float": "float 6s ease-in-out infinite",
         "spin-slow": "spin 8s linear infinite",
+        "spin-slow-reverse": "spinReverse 12s linear infinite",
+        "pulse-slow": "pulseSlow 4s ease-in-out infinite",
+        
+        // --- ANIMATIONS ÉCLAIRS (TechHUDWrapper) ---
+        "flicker": "flicker 0.8s ease-in-out infinite",
+        "flicker-delay-1": "flicker 0.8s ease-in-out infinite 0.15s",
+        "flicker-delay-2": "flicker 0.8s ease-in-out infinite 0.3s",
+        "flicker-delay-3": "flicker 0.8s ease-in-out infinite 0.45s",
+        
+        // --- ANIMATIONS VIVES (Mapping DB) ---
+        "electric-flicker": "electricFlicker 1.5s infinite",
+        "shake-hard": "shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite",
+        "pulse-fast": "pulseGlow 1s ease-in-out infinite",
+        
+        // --- ANIMATIONS LOGO AVANCÉES ---
+        "spin-glow": "spinGlow 8s linear infinite",
+        "electric-pulse": "electricPulse 2s ease-in-out infinite",
+        "lightning-ring": "lightningRing 3s ease-in-out infinite",
+        "bounce-soft": "bounceSoft 2s ease-in-out infinite",
       },
+      
       keyframes: {
+        // Base keyframes
         fadeInUp: {
           "0%": { opacity: "0", transform: "translateY(30px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
@@ -130,6 +151,85 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
         },
+        
+        // --- KEYFRAMES VIVES ---
+        electricFlicker: {
+          "0%, 19%, 21%, 23%, 25%, 54%, 56%, 100%": {
+            opacity: "0.99",
+            filter: "drop-shadow(0 0 10px var(--primary-500)) brightness(1.2)",
+          },
+          "20%, 24%, 55%": {
+            opacity: "0.4",
+            filter: "none",
+          },
+        },
+        shake: {
+          "10%, 90%": { transform: "translate3d(-1px, 0, 0)" },
+          "20%, 80%": { transform: "translate3d(2px, 0, 0)" },
+          "30%, 50%, 70%": { transform: "translate3d(-4px, 0, 0)" },
+          "40%, 60%": { transform: "translate3d(4px, 0, 0)" },
+        },
+        
+        // --- KEYFRAMES LOGO AVANCÉES ---
+        spinGlow: {
+          "0%": { 
+            transform: "rotate(0deg)",
+            filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))",
+          },
+          "50%": { 
+            filter: "drop-shadow(0 0 20px rgba(168, 139, 250, 0.6))",
+          },
+          "100%": { 
+            transform: "rotate(360deg)",
+            filter: "drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))",
+          },
+        },
+        electricPulse: {
+          "0%, 100%": { 
+            boxShadow: "0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.3), 0 0 30px rgba(168, 139, 250, 0.2)",
+          },
+          "50%": { 
+            boxShadow: "0 0 20px rgba(168, 139, 250, 0.6), 0 0 40px rgba(34, 211, 238, 0.4), 0 0 60px rgba(168, 139, 250, 0.3)",
+          },
+        },
+        lightningRing: {
+          "0%": { 
+            transform: "scale(1) rotate(0deg)", 
+            opacity: "0.8",
+            borderColor: "rgba(34, 211, 238, 0.5)",
+          },
+          "50%": { 
+            transform: "scale(1.05) rotate(180deg)", 
+            opacity: "0.4",
+            borderColor: "rgba(168, 139, 250, 0.5)",
+          },
+          "100%": { 
+            transform: "scale(1) rotate(360deg)", 
+            opacity: "0.8",
+            borderColor: "rgba(34, 211, 238, 0.5)",
+          },
+        },
+        bounceSoft: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        
+        // --- KEYFRAMES TECHHUDWRAPPER ---
+        spinReverse: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(-360deg)" },
+        },
+        pulseSlow: {
+          "0%, 100%": { opacity: "0.3", transform: "scale(1)" },
+          "50%": { opacity: "0.6", transform: "scale(1.02)" },
+        },
+        flicker: {
+          "0%, 100%": { opacity: "0.4", strokeWidth: "1.5" },
+          "20%": { opacity: "1", strokeWidth: "2.5" },
+          "40%": { opacity: "0.6", strokeWidth: "2" },
+          "60%": { opacity: "0.9", strokeWidth: "2.5" },
+          "80%": { opacity: "0.3", strokeWidth: "1.5" },
+        },
       },
       
       // ========================================
@@ -142,6 +242,7 @@ const config: Config = {
         "glow-accent": "0 0 20px var(--accent-500)",
         "card": "0 4px 20px rgba(0, 0, 0, 0.25)",
         "card-hover": "0 8px 40px rgba(0, 0, 0, 0.35)",
+        "electric": "0 0 15px rgba(34, 211, 238, 0.5), 0 0 30px rgba(168, 139, 250, 0.3)",
       },
       
       // ========================================

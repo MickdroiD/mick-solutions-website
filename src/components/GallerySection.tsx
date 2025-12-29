@@ -13,6 +13,11 @@ import type { GalleryItem, GalleryDisplayType } from '@/lib/baserow';
 
 interface GallerySectionProps {
   galleryItems: GalleryItem[];
+  variant?: 'Grid' | 'Slider' | 'Masonry' | 'AI';
+  columns?: '2' | '3' | '4' | 'Auto' | string | null;
+  animation?: 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Flip' | string | null;
+  title?: string;
+  subtitle?: string;
 }
 
 // ============================================
@@ -247,50 +252,184 @@ function SliderView({ items, onImageClick }: { items: GalleryItem[]; onImageClic
 }
 
 // ============================================
+// ANIMATION VARIANTS HELPER
+// ============================================
+
+type GalleryAnimationType = 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Flip' | string | null;
+
+function getAnimationVariants(animation: GalleryAnimationType, index: number) {
+  const normalizedAnim = (animation || 'Fade').toLowerCase();
+  const delay = index * 0.05;
+  
+  switch (normalizedAnim) {
+    case 'slide':
+      return {
+        initial: { opacity: 0, x: -30 },
+        whileInView: { opacity: 1, x: 0 },
+        transition: { duration: 0.5, delay },
+      };
+    case 'zoom':
+      return {
+        initial: { opacity: 0, scale: 0.8 },
+        whileInView: { opacity: 1, scale: 1 },
+        transition: { duration: 0.5, delay },
+      };
+    case 'flip':
+      return {
+        initial: { opacity: 0, rotateY: 90 },
+        whileInView: { opacity: 1, rotateY: 0 },
+        transition: { duration: 0.6, delay },
+      };
+    case 'none':
+      return {
+        initial: {},
+        whileInView: {},
+        transition: {},
+      };
+    case 'fade':
+    default:
+      return {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        transition: { duration: 0.4, delay },
+      };
+  }
+}
+
+// ============================================
 // GRID VIEW
 // ============================================
 
-function GridView({ items, onImageClick }: { items: GalleryItem[]; onImageClick: (index: number) => void }) {
+type ColumnsType = '2' | '3' | '4' | 'Auto' | string | null;
+
+function GridView({ items, onImageClick, columns, animation }: { 
+  items: GalleryItem[]; 
+  onImageClick: (index: number) => void;
+  columns: ColumnsType;
+  animation: GalleryAnimationType;
+}) {
+  // Determine grid columns based on settings
+  const getGridCols = () => {
+    const col = columns || '4';
+    switch (col) {
+      case '2': return 'grid-cols-1 sm:grid-cols-2';
+      case '3': return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+      case '4': return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+      case 'Auto': return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+      default: return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+    }
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {items.map((item, index) => (
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: index * 0.05 }}
-          viewport={{ once: true }}
-          className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer bg-slate-900/50"
-          onClick={() => onImageClick(index)}
-        >
-          <Image
-            src={item.Image[0].url}
-            alt={item.Titre || `Image ${index + 1}`}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-          
-          {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          {/* Zoom Icon */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
-              <ZoomIn className="w-6 h-6 text-white" />
+    <div className={`grid ${getGridCols()} gap-4`}>
+      {items.map((item, index) => {
+        const animProps = getAnimationVariants(animation, index);
+        return (
+          <motion.div
+            key={item.id}
+            initial={animProps.initial}
+            whileInView={animProps.whileInView}
+            transition={animProps.transition}
+            viewport={{ once: true }}
+            className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer bg-slate-900/50"
+            onClick={() => onImageClick(index)}
+          >
+            <Image
+              src={item.Image[0].url}
+              alt={item.Titre || `Image ${index + 1}`}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+            
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Zoom Icon */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
+                <ZoomIn className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
-          
-          {/* Title */}
-          {item.Titre && (
-            <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <p className="text-sm font-medium text-white truncate">
-                {item.Titre}
-              </p>
+            
+            {/* Title */}
+            {item.Titre && (
+              <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <p className="text-sm font-medium text-white truncate">
+                  {item.Titre}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================
+// MASONRY VIEW (True CSS Columns layout)
+// ============================================
+
+function MasonryView({ items, onImageClick, columns, animation }: { 
+  items: GalleryItem[]; 
+  onImageClick: (index: number) => void;
+  columns: ColumnsType;
+  animation: GalleryAnimationType;
+}) {
+  // Determine CSS columns based on settings
+  const getColumnsCss = () => {
+    const col = columns || '4';
+    switch (col) {
+      case '2': return 'columns-1 sm:columns-2';
+      case '3': return 'columns-1 sm:columns-2 lg:columns-3';
+      case '4': return 'columns-2 md:columns-3 lg:columns-4';
+      case 'Auto': return 'columns-2 md:columns-3 lg:columns-4 xl:columns-5';
+      default: return 'columns-2 md:columns-3 lg:columns-4';
+    }
+  };
+
+  return (
+    <div className={`${getColumnsCss()} gap-4 space-y-4`}>
+      {items.map((item, index) => {
+        const animProps = getAnimationVariants(animation, index);
+        return (
+          <motion.div
+            key={item.id}
+            initial={animProps.initial}
+            whileInView={animProps.whileInView}
+            transition={animProps.transition}
+            viewport={{ once: true }}
+            className="group relative break-inside-avoid mb-4 rounded-xl overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500"
+            onClick={() => onImageClick(index)}
+          >
+            <Image
+              src={item.Image[0].url}
+              alt={item.Titre || `Image ${index + 1}`}
+              width={400}
+              height={300 + (index % 3) * 100} // Varying heights for masonry effect
+              className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              sizes="(max-width: 768px) 50vw, 25vw"
+            />
+            
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+              {item.Titre && (
+                <h4 className="text-lg font-semibold text-white mb-1">
+                  {item.Titre}
+                </h4>
+              )}
+              <div className="flex items-center gap-2 text-primary-300">
+                <ZoomIn className="w-4 h-4" />
+                <span className="text-sm">Agrandir</span>
+              </div>
             </div>
-          )}
-        </motion.div>
-      ))}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
@@ -299,50 +438,70 @@ function GridView({ items, onImageClick }: { items: GalleryItem[]; onImageClick:
 // ZOOM VIEW (Grid with scale effect)
 // ============================================
 
-function ZoomView({ items, onImageClick }: { items: GalleryItem[]; onImageClick: (index: number) => void }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-      {items.map((item, index) => (
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: index * 0.08 }}
-          viewport={{ once: true }}
-          className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-shadow duration-500"
-          onClick={() => onImageClick(index)}
-        >
-          <Image
-            src={item.Image[0].url}
-            alt={item.Titre || `Image ${index + 1}`}
-            fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-            sizes="(max-width: 768px) 50vw, 33vw"
-          />
-          
-          {/* Permanent Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-          
-          {/* Hover Gradient Enhancement */}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          {/* Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-            {item.Titre && (
-              <h4 className="text-lg font-semibold text-white mb-1">
-                {item.Titre}
-              </h4>
-            )}
-            <div className="flex items-center gap-2 text-primary-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-              <ZoomIn className="w-4 h-4" />
-              <span className="text-sm">Agrandir</span>
-            </div>
-          </div>
+function ZoomView({ items, onImageClick, columns, animation }: { 
+  items: GalleryItem[]; 
+  onImageClick: (index: number) => void;
+  columns: ColumnsType;
+  animation: GalleryAnimationType;
+}) {
+  // Determine grid columns based on settings
+  const getGridCols = () => {
+    const col = columns || '3';
+    switch (col) {
+      case '2': return 'grid-cols-1 sm:grid-cols-2';
+      case '3': return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+      case '4': return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+      case 'Auto': return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+      default: return 'grid-cols-2 md:grid-cols-3';
+    }
+  };
 
-          {/* Corner Accent */}
-          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-accent-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        </motion.div>
-      ))}
+  return (
+    <div className={`grid ${getGridCols()} gap-6`}>
+      {items.map((item, index) => {
+        const animProps = getAnimationVariants(animation, index);
+        return (
+          <motion.div
+            key={item.id}
+            initial={animProps.initial}
+            whileInView={animProps.whileInView}
+            transition={animProps.transition}
+            viewport={{ once: true }}
+            className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-shadow duration-500"
+            onClick={() => onImageClick(index)}
+          >
+            <Image
+              src={item.Image[0].url}
+              alt={item.Titre || `Image ${index + 1}`}
+              fill
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+              sizes="(max-width: 768px) 50vw, 33vw"
+            />
+            
+            {/* Permanent Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            
+            {/* Hover Gradient Enhancement */}
+            <div className="absolute inset-0 bg-gradient-to-t from-primary-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              {item.Titre && (
+                <h4 className="text-lg font-semibold text-white mb-1">
+                  {item.Titre}
+                </h4>
+              )}
+              <div className="flex items-center gap-2 text-primary-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                <ZoomIn className="w-4 h-4" />
+                <span className="text-sm">Agrandir</span>
+              </div>
+            </div>
+
+            {/* Corner Accent */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-accent-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
@@ -351,7 +510,14 @@ function ZoomView({ items, onImageClick }: { items: GalleryItem[]; onImageClick:
 // MAIN COMPONENT
 // ============================================
 
-export default function GallerySection({ galleryItems }: GallerySectionProps) {
+export default function GallerySection({ 
+  galleryItems, 
+  variant = 'Grid',
+  columns = '4',
+  animation = 'Fade',
+  title = 'Notre Galerie',
+  subtitle = 'Découvrez nos réalisations et notre univers en images.'
+}: GallerySectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   
@@ -364,8 +530,16 @@ export default function GallerySection({ galleryItems }: GallerySectionProps) {
     return null;
   }
 
-  // Déterminer le type d'affichage (prend le premier type trouvé ou 'Grille' par défaut)
-  const displayType: GalleryDisplayType = galleryItems[0]?.TypeAffichage || 'Grille';
+  // Mapper les variantes aux types d'affichage
+  const variantToDisplayType: Record<string, GalleryDisplayType | 'Masonry'> = {
+    'Grid': 'Grille',
+    'Slider': 'Slider',
+    'Masonry': 'Masonry', // True Masonry layout with CSS columns
+    'AI': 'Grille',
+  };
+  
+  // Utiliser la variante passée en prop, ou le type de l'item, ou par défaut Grille
+  const displayType = variantToDisplayType[variant] || galleryItems[0]?.TypeAffichage || 'Grille';
 
   // Handlers
   const openLightbox = (index: number) => {
@@ -390,11 +564,13 @@ export default function GallerySection({ galleryItems }: GallerySectionProps) {
     switch (displayType) {
       case 'Slider':
         return <SliderView items={galleryItems} onImageClick={openLightbox} />;
+      case 'Masonry':
+        return <MasonryView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
       case 'Zoom':
-        return <ZoomView items={galleryItems} onImageClick={openLightbox} />;
+        return <ZoomView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
       case 'Grille':
       default:
-        return <GridView items={galleryItems} onImageClick={openLightbox} />;
+        return <GridView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
     }
   };
 
@@ -414,10 +590,10 @@ export default function GallerySection({ galleryItems }: GallerySectionProps) {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Notre <span className="text-gradient">Galerie</span>
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Découvrez nos réalisations et notre univers en images.
+            {subtitle}
           </p>
         </motion.div>
 

@@ -64,11 +64,11 @@ export async function submitContact(formData: FormData): Promise<ContactResponse
     clearTimeout(timeoutId);
 
     const responseText = await response.text();
-    console.log('n8n response status:', response.status);
-    console.log('n8n response body:', responseText);
 
     if (!response.ok) {
-      console.error('n8n error:', response.status, responseText);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Contact] n8n error:', response.status, responseText);
+      }
       return {
         success: false,
         message: `Erreur serveur (${response.status}). Réessayez plus tard.`,

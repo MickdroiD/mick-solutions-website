@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, Calendar, Shield } from 'lucide-react';
-import { getAllLegalDocs, getLegalDocBySlug } from '@/lib/baserow';
+import { getAllLegalDocs, getLegalDocBySlug, getGlobalSettingsComplete } from '@/lib/baserow';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -20,10 +20,13 @@ export async function generateStaticParams() {
   }));
 }
 
-// Métadonnées dynamiques pour le SEO
+// Métadonnées dynamiques pour le SEO (White Label)
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const doc = await getLegalDocBySlug(slug);
+  const [doc, settings] = await Promise.all([
+    getLegalDocBySlug(slug),
+    getGlobalSettingsComplete(),
+  ]);
   
   if (!doc) {
     return {
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   return {
     title: doc.Titre,
-    description: `${doc.Titre} - Mick Solutions. Consultez nos informations légales.`,
+    description: `${doc.Titre} - ${settings.nomSite}. Consultez nos informations légales.`,
     robots: {
       index: true,
       follow: true,
@@ -43,7 +46,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function LegalPage({ params }: PageProps) {
   const { slug } = await params;
-  const doc = await getLegalDocBySlug(slug);
+  const [doc, settings] = await Promise.all([
+    getLegalDocBySlug(slug),
+    getGlobalSettingsComplete(),
+  ]);
   
   if (!doc) {
     notFound();
@@ -162,7 +168,7 @@ export default async function LegalPage({ params }: PageProps) {
         <footer className="mt-16 pt-8 border-t border-white/10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <p className="text-slate-500 text-sm">
-              © {new Date().getFullYear()} Mick Solutions. Tous droits réservés.
+              © {new Date().getFullYear()} {settings.nomSite}. Tous droits réservés.
             </p>
             <Link
               href="/"

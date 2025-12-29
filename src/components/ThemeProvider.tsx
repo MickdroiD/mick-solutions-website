@@ -4,7 +4,7 @@
 // Moteur de thème dynamique qui injecte les CSS variables
 // selon la configuration Baserow. Zéro flash, SSR-ready.
 
-import type { GlobalSettingsComplete, FontFamily, BorderRadius, PatternBackground } from '@/lib/types/global-settings';
+import type { GlobalSettingsComplete, FontFamily, BorderRadius, PatternBackground, AnimationSpeed, ScrollEffect, HoverEffect } from '@/lib/types/global-settings';
 
 interface ThemeProviderProps {
   settings: GlobalSettingsComplete;
@@ -175,6 +175,33 @@ const BORDER_RADIUS_MAP: Record<BorderRadius, string> = {
 };
 
 // ============================================
+// MAPPING DES ANIMATIONS
+// ============================================
+
+const ANIMATION_SPEED_MAP: Record<AnimationSpeed, string> = {
+  'Slow': '0.6s',
+  'Normal': '0.3s',
+  'Fast': '0.15s',
+  'Instant': '0s',
+};
+
+const SCROLL_EFFECT_MAP: Record<ScrollEffect, { transform: string; opacity: string }> = {
+  'None': { transform: 'none', opacity: '1' },
+  'Fade': { transform: 'none', opacity: '0' },
+  'Slide': { transform: 'translateY(30px)', opacity: '0' },
+  'Zoom': { transform: 'scale(0.95)', opacity: '0' },
+  'Parallax': { transform: 'translateY(20px)', opacity: '0' },
+};
+
+const HOVER_EFFECT_MAP: Record<HoverEffect, string> = {
+  'None': 'none',
+  'Scale': 'scale(1.02)',
+  'Lift': 'translateY(-4px)',
+  'Glow': 'none', // Glow uses box-shadow
+  'Shake': 'none', // Shake uses animation
+};
+
+// ============================================
 // GÉNÉRATION DES PATTERNS DE FOND
 // ============================================
 
@@ -225,6 +252,12 @@ export function ThemeProvider({ settings }: ThemeProviderProps) {
   
   // Pattern background
   const patternCSS = getPatternCSS(settings.patternBackground, settings.couleurPrimaire);
+  
+  // Animations
+  const animDuration = settings.animationSpeed ? ANIMATION_SPEED_MAP[settings.animationSpeed] : '0.3s';
+  const scrollFx = settings.scrollEffect ? SCROLL_EFFECT_MAP[settings.scrollEffect] : SCROLL_EFFECT_MAP['Fade'];
+  const hoverFx = settings.hoverEffect ? HOVER_EFFECT_MAP[settings.hoverEffect] : 'none';
+  const animationsEnabled = settings.enableAnimations !== false;
   
   // Générer le CSS complet
   const cssVariables = `
@@ -283,6 +316,14 @@ export function ThemeProvider({ settings }: ThemeProviderProps) {
       
       /* -------- PATTERN DE FOND -------- */
       ${patternCSS ? `--pattern-bg: ${patternCSS};` : ''}
+      
+      /* -------- ANIMATIONS -------- */
+      --anim-duration: ${animationsEnabled ? animDuration : '0s'};
+      --anim-enabled: ${animationsEnabled ? '1' : '0'};
+      --scroll-transform-initial: ${animationsEnabled ? scrollFx.transform : 'none'};
+      --scroll-opacity-initial: ${animationsEnabled ? scrollFx.opacity : '1'};
+      --hover-transform: ${animationsEnabled ? hoverFx : 'none'};
+      --hover-glow: ${animationsEnabled && settings.hoverEffect === 'Glow' ? '0 0 20px var(--primary-400)' : 'none'};
     }
     
     @media (min-width: 768px) {
