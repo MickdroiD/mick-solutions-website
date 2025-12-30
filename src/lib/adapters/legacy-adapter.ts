@@ -78,6 +78,8 @@ export function adaptGlobalConfigToLegacy(
     lienCalendly: config.contact.lienCalendly,
     lienWhatsapp: config.contact.lienWhatsapp,
     lienBoutonAppel: config.contact.lienBoutonAppel || '',
+    // 🔧 FIX: Mapper texteBoutonAppel depuis Contact (au lieu de hardcoder)
+    texteBoutonAppel: config.contact.texteBoutonAppel || 'Réserver un appel',
 
     // ========== F. SECTION HERO (from heroSection or defaults) ==========
     titreHero: heroContent?.titre || 'Titre Principal',
@@ -136,7 +138,8 @@ export function adaptGlobalConfigToLegacy(
     // ========== K. MODULES - VARIANTES ==========
     themeGlobal: config.branding.themeGlobal as GlobalSettingsComplete['themeGlobal'],
     heroVariant: (heroDesign?.variant || config.branding.themeGlobal || 'Electric') as GlobalSettingsComplete['heroVariant'],
-    navbarVariant: config.branding.themeGlobal as GlobalSettingsComplete['navbarVariant'],
+    // 🔧 FIX: Utilise navbarVariant dédié avec fallback sur themeGlobal
+    navbarVariant: (config.branding.navbarVariant || config.branding.themeGlobal || 'Electric') as GlobalSettingsComplete['navbarVariant'],
     servicesVariant: 'Cards',
     galleryVariant: 'Grid',
     testimonialsVariant: 'Cards',
@@ -162,8 +165,9 @@ export function adaptGlobalConfigToLegacy(
     logoFrameStyle: heroDesign?.logoFrameStyle as GlobalSettingsComplete['logoFrameStyle'],
     textAnimation: (heroDesign?.textAnimation || config.animations.textAnimation) as GlobalSettingsComplete['textAnimation'],
     galleryAnimation: 'Fade',
-    headerLogoSize: 40,
-    headerLogoAnimation: 'spin' as GlobalSettingsComplete['headerLogoAnimation'],
+    // 🔧 FIX: Mapper headerLogoSize et headerLogoAnimation depuis Branding au lieu de hardcoder
+    headerLogoSize: config.branding.headerLogoSize ?? 40,
+    headerLogoAnimation: (config.branding.headerLogoAnimation || 'spin') as GlobalSettingsComplete['headerLogoAnimation'],
     heroLogoAnimation: (heroDesign?.logoAnimation || 'electric') as GlobalSettingsComplete['heroLogoAnimation'],
     heroLogoSize: heroDesign?.logoSize || 280,
 

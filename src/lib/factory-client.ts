@@ -24,6 +24,17 @@ import {
   FooterConfigSchema,
   DEFAULT_GLOBAL_CONFIG,
   DEFAULT_HERO_SECTION,
+  // 🔧 Nouveaux imports pour JSON auto-parsing
+  DEFAULT_SEO,
+  DEFAULT_BRANDING,
+  DEFAULT_CONTACT,
+  DEFAULT_INTEGRATIONS,
+  DEFAULT_ASSETS,
+  DEFAULT_AI_CONFIG,
+  DEFAULT_ANIMATIONS,
+  DEFAULT_PREMIUM,
+  DEFAULT_FOOTER,
+  safeJsonParseWithSchema,
   type GlobalConfig,
   type Section,
   type SectionType,
@@ -51,9 +62,12 @@ interface BaserowSelectOption {
   color: string;
 }
 
+// 🔧 FIX: Aligné avec structure Baserow réelle (Audit 29/12/2025)
 interface BaserowConfigRow {
   id: number;
-  Name?: string;
+  Nom?: string;  // Nom du site (champ DB réel)
+  Notes?: string | null;  // Notes optionnelles
+  Actif?: boolean;  // Statut actif/inactif
   SEO_Metadata?: string;
   Branding?: string;
   Contact?: string;
@@ -65,10 +79,15 @@ interface BaserowConfigRow {
   Footer?: string;
 }
 
+// 🔧 FIX: Aligné avec structure Baserow réelle (Audit 29/12/2025)
 interface BaserowSectionRow {
   id: number;
-  Type?: BaserowSelectOption | string;
+  Nom?: string | null;  // Nom de la section
+  Notes?: string | null;  // Notes optionnelles
+  Actif?: boolean;  // Champ DB réel
+  /** @deprecated Utiliser Actif - gardé pour compatibilité */
   Is_Active?: boolean;
+  Type?: BaserowSelectOption | string;
   Order?: number | string;
   Content?: string;
   Design?: string;
@@ -260,58 +279,41 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
   const row = rows[0];
   logInfo(`Fetched config row ID: ${row.id}`);
 
-  // Parse each JSON column with Zod validation
-  const identityRaw = safeJsonParse<Record<string, unknown>>(row.Name, {}, 'Identity');
-  const seoRaw = safeJsonParse<Record<string, unknown>>(row.SEO_Metadata, {}, 'SEO_Metadata');
-  const brandingRaw = safeJsonParse<Record<string, unknown>>(row.Branding, {}, 'Branding');
-  const contactRaw = safeJsonParse<Record<string, unknown>>(row.Contact, {}, 'Contact');
-  const integrationsRaw = safeJsonParse<Record<string, unknown>>(row.Integrations, {}, 'Integrations');
-  const assetsRaw = safeJsonParse<Record<string, unknown>>(row.Assets, {}, 'Assets');
-  const aiRaw = safeJsonParse<Record<string, unknown>>(row.AI_Config, {}, 'AI_Config');
-  const animationsRaw = safeJsonParse<Record<string, unknown>>(row.Animations, {}, 'Animations');
-  const premiumRaw = safeJsonParse<Record<string, unknown>>(row.Premium, {}, 'Premium');
-  const footerRaw = safeJsonParse<Record<string, unknown>>(row.Footer, {}, 'Footer');
-
-  // Validate with Zod (safeParse for graceful degradation)
+  // 🔧 Parse JSON + validate avec fallback automatique via safeJsonParseWithSchema
   const identity = IdentitySchema.safeParse({
-    nomSite: row.Name || identityRaw['nomSite'],
-    ...identityRaw,
+    nomSite: row.Nom || 'Mon Site',
+    slogan: '',
+    initialesLogo: row.Nom?.substring(0, 2).toUpperCase() || 'MS',
   });
-  const seo = SEOSchema.safeParse(seoRaw);
-  const branding = BrandingSchema.safeParse(brandingRaw);
-  const contact = ContactInfoSchema.safeParse(contactRaw);
-  const integrations = IntegrationsSchema.safeParse(integrationsRaw);
-  const assets = AssetsSchema.safeParse(assetsRaw);
-  const ai = AIConfigSchema.safeParse(aiRaw);
-  const animations = AnimationsConfigSchema.safeParse(animationsRaw);
-  const premium = PremiumSchema.safeParse(premiumRaw);
-  const footer = FooterConfigSchema.safeParse(footerRaw);
+  
+  // Chaque champ JSON est parsé et validé en une seule opération avec fallback sur les defaults
+  const seo = safeJsonParseWithSchema(row.SEO_Metadata, SEOSchema, DEFAULT_SEO, 'SEO_Metadata');
+  const branding = safeJsonParseWithSchema(row.Branding, BrandingSchema, DEFAULT_BRANDING, 'Branding');
+  const contact = safeJsonParseWithSchema(row.Contact, ContactInfoSchema, DEFAULT_CONTACT, 'Contact');
+  const integrations = safeJsonParseWithSchema(row.Integrations, IntegrationsSchema, DEFAULT_INTEGRATIONS, 'Integrations');
+  const assets = safeJsonParseWithSchema(row.Assets, AssetsSchema, DEFAULT_ASSETS, 'Assets');
+  const ai = safeJsonParseWithSchema(row.AI_Config, AIConfigSchema, DEFAULT_AI_CONFIG, 'AI_Config');
+  const animations = safeJsonParseWithSchema(row.Animations, AnimationsConfigSchema, DEFAULT_ANIMATIONS, 'Animations');
+  const premium = safeJsonParseWithSchema(row.Premium, PremiumSchema, DEFAULT_PREMIUM, 'Premium');
+  const footer = safeJsonParseWithSchema(row.Footer, FooterConfigSchema, DEFAULT_FOOTER, 'Footer');
 
-  // Log validation errors but don't crash
+  // Identity validation log (seul champ qui reste un safeParse)
   if (!identity.success) logWarn('Identity validation failed', identity.error.issues);
-  if (!seo.success) logWarn('SEO validation failed', seo.error.issues);
-  if (!branding.success) logWarn('Branding validation failed', branding.error.issues);
-  if (!contact.success) logWarn('Contact validation failed', contact.error.issues);
-  if (!integrations.success) logWarn('Integrations validation failed', integrations.error.issues);
-  if (!assets.success) logWarn('Assets validation failed', assets.error.issues);
-  if (!ai.success) logWarn('AI validation failed', ai.error.issues);
-  if (!animations.success) logWarn('Animations validation failed', animations.error.issues);
-  if (!premium.success) logWarn('Premium validation failed', premium.error.issues);
-  if (!footer.success) logWarn('Footer validation failed', footer.error.issues);
 
-  // Build config with fallbacks
+  // 🔧 Build config - les champs JSON sont déjà parsés avec fallback par safeJsonParseWithSchema
   const config: GlobalConfig = {
     id: row.id,
     identity: identity.success ? identity.data : DEFAULT_GLOBAL_CONFIG.identity,
-    seo: seo.success ? seo.data : DEFAULT_GLOBAL_CONFIG.seo,
-    branding: branding.success ? branding.data : DEFAULT_GLOBAL_CONFIG.branding,
-    contact: contact.success ? contact.data : DEFAULT_GLOBAL_CONFIG.contact,
-    integrations: integrations.success ? integrations.data : DEFAULT_GLOBAL_CONFIG.integrations,
-    assets: assets.success ? assets.data : DEFAULT_GLOBAL_CONFIG.assets,
-    ai: ai.success ? ai.data : DEFAULT_GLOBAL_CONFIG.ai,
-    animations: animations.success ? animations.data : DEFAULT_GLOBAL_CONFIG.animations,
-    premium: premium.success ? premium.data : DEFAULT_GLOBAL_CONFIG.premium,
-    footer: footer.success ? footer.data : DEFAULT_GLOBAL_CONFIG.footer,
+    // Valeurs directes (déjà parsées et validées avec fallback automatique)
+    seo,
+    branding,
+    contact,
+    integrations,
+    assets,
+    ai,
+    animations,
+    premium,
+    footer,
   };
 
   // Final validation of complete config
@@ -378,9 +380,10 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
     const design = safeJsonParse(row.Design, {}, `Section ${row.id} Design`);
 
     // Build section object
+    // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
     const sectionData = {
       type: sectionType,
-      isActive: row.Is_Active ?? true,
+      isActive: row.Actif ?? row.Is_Active ?? true,
       order: typeof row.Order === 'string' ? parseInt(row.Order, 10) : (row.Order ?? 0),
       page: row.Page || 'home',
       content,
@@ -451,10 +454,11 @@ export async function getAllSections(): Promise<Section[]> {
     const content = safeJsonParse(row.Content, {}, `Section ${row.id} Content`);
     const design = safeJsonParse(row.Design, {}, `Section ${row.id} Design`);
 
+    // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
     const sectionData = {
       id: row.id, // Include row ID for updates
       type: sectionType,
-      isActive: row.Is_Active ?? true,
+      isActive: row.Actif ?? row.Is_Active ?? true,
       order: typeof row.Order === 'string' ? parseInt(row.Order, 10) : (row.Order ?? 0),
       page: row.Page || 'home',
       content,
@@ -576,11 +580,14 @@ export async function updateSection(
   const updateData: Record<string, unknown> = {};
 
   if (updates.isActive !== undefined) {
-    updateData['Is_Active'] = updates.isActive;
+    // 🔧 FIX: Écrire dans les DEUX champs pour compatibilité (Actif = champ principal DB)
+    updateData['Actif'] = updates.isActive;
+    updateData['Is_Active'] = updates.isActive; // Legacy fallback
   }
 
   if (updates.order !== undefined) {
-    updateData['Order'] = updates.order;
+    // 🔧 FIX: Order est un champ string dans Baserow (decimal), le convertir
+    updateData['Order'] = String(updates.order);
   }
 
   if (updates.content) {
@@ -595,11 +602,16 @@ export async function updateSection(
     updateData['Page'] = updates.page;
   }
 
-  logInfo(`Updating section row ${rowId} with ${Object.keys(updateData).length} fields`);
+  // Log détaillé pour debug
+  logInfo(`Updating section row ${rowId} with fields: ${Object.keys(updateData).join(', ')}`);
+  if (updates.content) {
+    logInfo(`Content keys: ${Object.keys(updates.content).join(', ')}`);
+  }
 
   const { error } = await updateBaserowRow(SECTIONS_TABLE_ID, rowId, updateData);
 
   if (error) {
+    logError(`Failed to update section ${rowId}`, error);
     return { success: false, error };
   }
 
@@ -611,6 +623,22 @@ export async function updateSection(
 // CREATE SECTION
 // ============================================
 
+// Mapping des types de section vers les IDs Baserow single_select
+const SECTION_TYPE_IDS: Record<string, number> = {
+  'hero': 3413,
+  'services': 3414,
+  'advantages': 3415,
+  'gallery': 3416,
+  'portfolio': 3417,
+  'testimonials': 3418,
+  'trust': 3419,
+  'faq': 3420,
+  'contact': 3421,
+  'blog': 3422,
+  'ai-assistant': 3423,
+  'custom': 3424,
+};
+
 export async function createSection(
   section: Omit<Section, 'id'>
 ): Promise<{ success: boolean; id?: number; error?: string }> {
@@ -618,14 +646,25 @@ export async function createSection(
     return { success: false, error: 'Configuration manquante' };
   }
 
+  // 🔧 FIX: Utiliser l'ID du type pour le champ single_select
+  const typeId = SECTION_TYPE_IDS[section.type];
+  if (!typeId) {
+    logError(`Unknown section type: ${section.type}`);
+    return { success: false, error: `Type de section inconnu: ${section.type}` };
+  }
+
   const createData: Record<string, unknown> = {
-    Type: section.type,
-    Is_Active: section.isActive,
-    Order: section.order,
+    Type: typeId, // 🔧 FIX: ID au lieu de string pour single_select
+    Actif: section.isActive, // 🔧 FIX: Utiliser Actif (champ principal)
+    Is_Active: section.isActive, // Legacy fallback
+    Order: String(section.order), // 🔧 FIX: String pour champ decimal
     Content: JSON.stringify(section.content),
     Design: JSON.stringify(section.design),
     Page: section.page || 'home',
+    Nom: section.type.toUpperCase(), // Nom lisible pour la DB
   };
+
+  logInfo(`Creating section type=${section.type} (ID: ${typeId})`);
 
   try {
     const response = await fetch(

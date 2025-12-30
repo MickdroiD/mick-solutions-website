@@ -112,6 +112,7 @@ export const GlobalSettingsSchema = z.object({
   lienCalendly: z.string().nullable().default(null),
   lienWhatsapp: z.string().nullable().default(null),
   lienBoutonAppel: z.string().default(DEFAULT_SETTINGS.lienBoutonAppel),
+  texteBoutonAppel: z.string().default(DEFAULT_SETTINGS.texteBoutonAppel),
 
   // F. SECTION HERO
   titreHero: z.string().default(DEFAULT_SETTINGS.titreHero),

@@ -3,6 +3,7 @@ import "./globals.css";
 import { getGlobalSettingsComplete } from "@/lib/baserow";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import MaintenanceGuard from "@/components/MaintenanceGuard";
+import PWAProvider from "@/components/PWAProvider";
 
 // Force le rendu dynamique (SSR) pour le mode multi-tenant
 export const dynamic = 'force-dynamic';
@@ -79,8 +80,14 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: [{ url: faviconUrl }],
       shortcut: faviconUrl,
     } : undefined,
-    // Manifest dynamique via API route
-    manifest: "/api/manifest",
+    // Manifest PWA statique
+    manifest: "/manifest.json",
+    // Apple PWA
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Admin V2',
+    },
     alternates: {
       canonical: settings.siteUrl,
     },
@@ -218,8 +225,16 @@ export default async function RootLayout({
         {/* Preconnect pour les fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* PWA Icons */}
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="antialiased bg-background text-foreground">
+        <PWAProvider />
         <MaintenanceGuard config={settings}>
           {children}
         </MaintenanceGuard>

@@ -6,24 +6,32 @@ services:
     environment:
       - NODE_ENV=production
       - BASEROW_API_TOKEN=${BASEROW_API_TOKEN}
-      - BASEROW_SERVICES_TABLE_ID=${BASEROW_SERVICES_TABLE_ID}
+      - BASEROW_API_URL=https://baserow.mick-solutions.ch/api
+      - BASEROW_FACTORY_GLOBAL_ID=${BASEROW_FACTORY_GLOBAL_ID}
+      - BASEROW_FACTORY_SECTIONS_ID=${BASEROW_FACTORY_SECTIONS_ID}
+      - BASEROW_FACTORY_LEADS_ID=${BASEROW_FACTORY_LEADS_ID}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SITE_NAME=${SITE_NAME:-Mick Solutions}
+      - NEXT_PUBLIC_SITE_URL=https://www.mick-solutions.ch
+      - JWT_SECRET=${JWT_SECRET:-}
+      - BASEROW_SERVICES_TABLE_ID=${BASEROW_SERVICES_TABLE_ID:-748}
       - NEXT_PUBLIC_BASEROW_API_URL=https://baserow.mick-solutions.ch
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
-      # Route pour www.mick-solutions.ch ET mick-solutions.ch
-      - "traefik.http.routers.website.rule=Host(`www.mick-solutions.ch`) || Host(`mick-solutions.ch`)"
-      - "traefik.http.routers.website.entrypoints=websecure"
-      - "traefik.http.routers.website.tls.certresolver=myresolver"
-      - "traefik.http.services.website.loadbalancer.server.port=3000"
-      # Redirection de mick-solutions.ch vers www.mick-solutions.ch
-      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://mick-solutions\\.ch/(.*)"
-      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://www.mick-solutions.ch/$${1}"
-      - "traefik.http.middlewares.www-redirect.redirectregex.permanent=true"
-      - "traefik.http.routers.website.middlewares=www-redirect"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.micksite.rule=Host(`www.mick-solutions.ch`) || Host(`mick-solutions.ch`)"
+      - "traefik.http.routers.micksite.entrypoints=websecure"
+      - "traefik.http.routers.micksite.tls.certresolver=myresolver"
+      - "traefik.http.services.micksite.loadbalancer.server.port=3000"
 
 networks:
   proxy:
     external: true
-

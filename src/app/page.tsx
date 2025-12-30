@@ -306,19 +306,176 @@ function SectionRendererWithFallback({
     return <SectionRenderer section={section} globalConfig={globalConfig} />;
   }
 
-  // For other sections, use legacy components with Baserow data
+  // ⚡ FACTORY V2: Toutes les sections utilisent section.content
   switch (section.type) {
-    case 'advantages':
-      return <AdvantagesSection advantages={legacyProps.advantages} />;
+    case 'advantages': {
+      const advSection = section as import('@/lib/schemas/factory').AdvantagesSection;
+      // Factory V2 utilise "avantages" ou "items"
+      const rawContent = advSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.avantages || rawContent.items || []) as Array<{
+        id?: string;
+        titre: string;
+        description: string;
+        icone?: string;
+        badge?: string;
+      }>;
+      // Adapter les items V2 au format Advantage
+      const adaptedAdvantages = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        Titre: item.titre,
+        Description: item.description,
+        Icone: item.icone || 'star',
+        Badge: item.badge || '',
+        Ordre: String(idx + 1),
+      }));
+      // Récupérer les options de design
+      const variant = advSection.design?.variant as 'Grid' | 'List' | 'Cards' | 'Compact' | undefined;
+      const cardStyle = advSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
+      const hoverEffect = advSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake' | undefined;
+      return (
+        <AdvantagesSection 
+          advantages={adaptedAdvantages.length > 0 ? adaptedAdvantages : legacyProps.advantages}
+          variant={variant}
+          cardStyle={cardStyle}
+          hoverEffect={hoverEffect}
+          title={advSection.content.titre}
+          subtitle={advSection.content.sousTitre || undefined}
+        />
+      );
+    }
 
-    case 'services':
-      return <ServicesSection services={legacyProps.services ?? []} />;
+    case 'services': {
+      const servSection = section as import('@/lib/schemas/factory').ServicesSection;
+      // Factory V2 utilise "services" ou "items" selon le schéma
+      const rawContent = servSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.services || rawContent.items || []) as Array<{
+        id?: string;
+        titre: string;
+        description: string;
+        icone?: string;
+        tagline?: string;
+        pointsCles?: string[];
+        tarif?: string;
+      }>;
+      // Adapter les items V2 au format Service
+      const adaptedServices = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        Titre: item.titre,
+        Description: item.description,
+        Icone: item.icone || 'settings',
+        Ordre: String(idx + 1),
+        Tagline: item.tagline || null,
+        tags: [],
+        points_cle: item.pointsCles?.join('\n') || null,
+        type: null,
+        tarif: item.tarif || null,
+      }));
+      // Récupérer les options de design
+      const variant = servSection.design?.variant as 'Grid' | 'Accordion' | 'Cards' | 'Showcase' | undefined;
+      const cardStyle = servSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
+      const hoverEffect = servSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake' | undefined;
+      // Extraire le titre et sous-titre depuis Baserow
+      const titre = servSection.content.titre || 'Nos Services';
+      const titreParts = titre.split(' ');
+      const sectionTitle = titreParts.slice(0, -1).join(' ') || 'Nos';
+      const sectionTitleHighlight = titreParts.slice(-1)[0] || 'Services';
+      
+      return (
+        <ServicesSection 
+          services={adaptedServices.length > 0 ? adaptedServices : []}
+          variant={variant}
+          cardStyle={cardStyle}
+          hoverEffect={hoverEffect}
+          labels={{
+            sectionTitle,
+            sectionTitleHighlight,
+            sectionSubtitle: servSection.content.sousTitre || '',
+          }}
+        />
+      );
+    }
 
-    case 'portfolio':
-      return <PortfolioSection projects={legacyProps.projects ?? []} />;
+    case 'portfolio': {
+      const portSection = section as import('@/lib/schemas/factory').PortfolioSection;
+      // Factory V2 utilise "projets" 
+      const rawContent = portSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.projets || []) as Array<{
+        id?: string;
+        titre?: string;
+        nom?: string;
+        description?: string;
+        descriptionCourte?: string;
+        imageUrl?: string;
+        slug?: string;
+        tags?: string[];
+        lien?: string;
+        lienSite?: string;
+      }>;
+      // Adapter les items V2 au format Project
+      const adaptedProjects = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        Nom: item.nom || item.titre || `Projet ${idx + 1}`,
+        Slug: item.slug || `projet-${idx + 1}`,
+        Tags: (item.tags || []).map((tag, tagIdx) => ({ id: tagIdx + 1, value: tag, color: 'blue' })),
+        DescriptionCourte: item.descriptionCourte || item.description || '',
+        ImageCouverture: item.imageUrl ? [{ url: item.imageUrl, name: item.nom || item.titre || 'Projet' }] : [],
+        LienSite: item.lienSite || item.lien || '',
+        Statut: { id: 1, value: 'Publié', color: 'green' },
+        Ordre: String(idx + 1),
+      }));
+      // Récupérer les options de design
+      const variant = portSection.design?.variant as 'Electric' | 'Minimal' | 'Corporate' | 'Bold' | undefined;
+      const cardStyle = portSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
+      const hoverEffect = portSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
+      const layout = portSection.design?.layout as 'Grid' | 'Masonry' | 'Carousel' | undefined;
+      return (
+        <PortfolioSection 
+          projects={adaptedProjects}
+          variant={variant}
+          cardStyle={cardStyle}
+          hoverEffect={hoverEffect}
+          layout={layout}
+          title={portSection.content.titre}
+          subtitle={portSection.content.sousTitre || undefined}
+        />
+      );
+    }
 
-    case 'trust':
-      return <TrustSection trustPoints={legacyProps.trustPoints} />;
+    case 'trust': {
+      const trustSection = section as import('@/lib/schemas/factory').TrustSection;
+      // Factory V2 utilise "trustPoints" ou "items"
+      const rawContent = trustSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.trustPoints || rawContent.items || []) as Array<{
+        id?: string;
+        titre: string;
+        description: string;
+        icone?: string;
+        badge?: string;
+      }>;
+      // Adapter les items V2 au format TrustPoint
+      const adaptedTrust = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        Titre: item.titre,
+        Description: item.description,
+        Icone: item.icone || 'shield',
+        Badge: item.badge || '',
+        Ordre: String(idx + 1),
+      }));
+      // Récupérer les options de design
+      const variant = trustSection.design?.variant as 'Electric' | 'Minimal' | 'Corporate' | 'Bold' | undefined;
+      const cardStyle = trustSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
+      const hoverEffect = trustSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
+      return (
+        <TrustSection 
+          trustPoints={adaptedTrust.length > 0 ? adaptedTrust : legacyProps.trustPoints}
+          variant={variant}
+          cardStyle={cardStyle}
+          hoverEffect={hoverEffect}
+          title={trustSection.content.titre}
+          subtitle={trustSection.content.sousTitre || undefined}
+        />
+      );
+    }
 
     case 'gallery': {
       // ⚡ FACTORY V2: Utiliser strictement section.content.items
@@ -351,38 +508,107 @@ function SectionRendererWithFallback({
           variant={gallerySection.design.variant as 'Grid' | 'Slider' | 'Masonry' | 'AI' | undefined}
           columns={gallerySection.design.columns as '2' | '3' | '4' | 'Auto' | undefined}
           animation={gallerySection.design.animation as 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Flip' | undefined}
+          imageStyle={gallerySection.design.imageStyle as 'Square' | 'Rounded' | 'Circle' | 'Custom' | undefined}
+          imageFilter={gallerySection.design.imageFilter as 'None' | 'Grayscale' | 'Sepia' | 'Contrast' | 'Blur' | undefined}
+          aspectRatio={gallerySection.design.aspectRatio as '1:1' | '4:3' | '16:9' | '3:4' | 'auto' | undefined}
           title={gallerySection.content.titre || 'Notre Galerie'}
           subtitle={gallerySection.content.sousTitre || 'Découvrez nos réalisations.'}
         />
       );
     }
 
-    case 'testimonials':
-      return legacyProps.reviews && legacyProps.reviews.length > 0 ? (
+    case 'testimonials': {
+      const testSection = section as import('@/lib/schemas/factory').TestimonialsSection;
+      // Factory V2 utilise "temoignages" ou "items"
+      const rawContent = testSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.temoignages || rawContent.items || []) as Array<{
+        id?: string;
+        nom?: string;
+        auteur?: string;
+        poste?: string;
+        message: string;
+        note?: number;
+        photoUrl?: string;
+      }>;
+      // Adapter les items V2 au format Review
+      const adaptedReviews = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        NomClient: item.nom || item.auteur || `Client ${idx + 1}`,
+        PosteEntreprise: item.poste || '',
+        Photo: item.photoUrl ? [{ url: item.photoUrl, name: item.nom || item.auteur || 'Client' }] : [],
+        Message: item.message,
+        Note: String(item.note || 5),
+        Afficher: true,
+      }));
+      // Récupérer les options de design
+      const cardStyle = testSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
+      const hoverEffect = testSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
+      return adaptedReviews.length > 0 ? (
         <TestimonialsSection 
-          testimonials={legacyProps.reviews} 
-          variant={legacyProps.config.testimonialsVariant as 'Minimal' | 'Carousel' | 'Cards' | 'Video' | 'AI' | undefined} 
+          testimonials={adaptedReviews} 
+          variant={testSection.design.variant as 'Minimal' | 'Carousel' | 'Cards' | 'Video' | 'AI' | undefined}
+          cardStyle={cardStyle}
+          hoverEffect={hoverEffect}
+          title={testSection.content.titre}
+          subtitle={testSection.content.sousTitre || undefined}
         />
       ) : null;
+    }
 
-    case 'faq':
-      return legacyProps.faqItems && legacyProps.faqItems.length > 0 ? (
+    case 'faq': {
+      const faqSection = section as import('@/lib/schemas/factory').FAQSection;
+      // Factory V2 utilise "questions" ou "items"
+      const rawContent = faqSection.content as Record<string, unknown>;
+      const v2Items = (rawContent.questions || rawContent.items || []) as Array<{
+        id?: string;
+        question: string;
+        reponse: string;
+      }>;
+      // Adapter les items V2 au format FAQ
+      const adaptedFaq = v2Items.map((item, idx) => ({
+        id: idx + 1,
+        Question: item.question,
+        Reponse: item.reponse,
+        Ordre: String(idx + 1),
+      }));
+      return adaptedFaq.length > 0 ? (
         <FAQSection 
-          faqItems={legacyProps.faqItems} 
-          variant={legacyProps.config.faqVariant as 'Minimal' | 'Accordion' | 'Tabs' | 'Search' | 'AI' | undefined} 
+          faqItems={adaptedFaq} 
+          variant={faqSection.design.variant as 'Minimal' | 'Accordion' | 'Tabs' | 'Search' | 'AI' | undefined}
+          cardStyle={faqSection.design.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined}
+          hoverEffect={faqSection.design.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined}
+          title={faqSection.content.titre}
+          subtitle={faqSection.content.sousTitre || undefined}
         />
       ) : null;
+    }
 
-    case 'blog':
+    case 'blog': {
+      const blogSection = section as import('@/lib/schemas/factory').BlogSection;
       return (
         <BlogSection 
           posts={legacyProps.blogPosts} 
           isDevMode={process.env.NODE_ENV === 'development'}
+          title={blogSection.content.titre}
+          subtitle={blogSection.content.sousTitre || undefined}
+          variant={blogSection.design?.variant as 'Electric' | 'Minimal' | 'Corporate' | 'Bold' | undefined}
+          cardStyle={blogSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Outlined' | 'Glass' | undefined}
+          hoverEffect={blogSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined}
         />
       );
+    }
 
-    case 'contact':
-      return <ContactForm />;
+    case 'contact': {
+      const contactSection = section as import('@/lib/schemas/factory').ContactSection;
+      return (
+        <ContactForm
+          title={contactSection.content.titre}
+          subtitle={contactSection.content.sousTitre || undefined}
+          submitText={contactSection.content.submitText || undefined}
+          successMessage={contactSection.content.successMessage || undefined}
+        />
+      );
+    }
 
     default:
       // For unrecognized types, use the generic SectionRenderer

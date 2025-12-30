@@ -11,9 +11,27 @@ import type { Review } from '@/lib/baserow';
 // PROPS INTERFACE
 // ============================================
 
+type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
+
 interface TestimonialsSectionProps {
   testimonials: Review[];
   variant?: 'Minimal' | 'Carousel' | 'Cards' | 'Video' | 'AI';
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
+  title?: string;
+  subtitle?: string;
+}
+
+// Helper pour obtenir les classes de style de carte
+function getCardStyleClasses(style: CardStyle = 'Shadow'): string {
+  switch (style) {
+    case 'Flat': return 'bg-white/5';
+    case 'Border': return 'bg-white/5 border-2 border-primary-200';
+    case 'Glassmorphism': return 'bg-white/10 backdrop-blur-md border border-white/20';
+    case 'Shadow':
+    default: return 'bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:shadow-lg hover:shadow-primary-500/5';
+  }
 }
 
 // ============================================
@@ -39,7 +57,7 @@ function StarRating({ rating }: { rating: number }) {
 // TESTIMONIAL CARD
 // ============================================
 
-function TestimonialCard({ testimonial, index }: { testimonial: Review; index: number }) {
+function TestimonialCard({ testimonial, index, cardStyleClasses, hoverStyleClasses }: { testimonial: Review; index: number; cardStyleClasses?: string; hoverStyleClasses?: string }) {
   const rating = parseInt(testimonial.Note) || 5;
 
   return (
@@ -48,7 +66,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: Review; index: n
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="group relative p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:border-primary-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-primary-500/5"
+      className={`group relative p-6 rounded-2xl transition-all duration-500 ${cardStyleClasses || 'bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10'} ${hoverStyleClasses || 'hover:shadow-lg hover:shadow-primary-500/5 hover:border-primary-500/30'}`}
     >
       {/* Quote icon */}
       <Quote className="absolute top-4 right-4 w-8 h-8 text-primary-500/20" />
@@ -223,9 +241,28 @@ function CarouselView({ testimonials }: { testimonials: Review[] }) {
 export default function TestimonialsSection({
   testimonials,
   variant = 'Cards',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Glow',
+  title = 'Ce que disent nos clients',
+  subtitle = 'Les témoignages rassurent vos futurs clients.',
 }: TestimonialsSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  
+  // Hover effect classes
+  const getHoverEffectClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Scale': return 'hover:scale-[1.02]';
+      case 'Lift': return 'hover:-translate-y-2 hover:shadow-xl';
+      case 'Glow':
+      default: return 'hover:shadow-primary-500/20 hover:border-primary-500/30';
+    }
+  };
+  
+  // Obtenir les classes de style de carte
+  const cardClasses = getCardStyleClasses(cardStyle);
+  const hoverClasses = getHoverEffectClasses();
 
   // Ne pas rendre si pas de témoignages
   if (!testimonials || testimonials.length === 0) {
@@ -242,7 +279,13 @@ export default function TestimonialsSection({
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
-              <TestimonialCard key={testimonial.id} testimonial={testimonial} index={index} />
+              <TestimonialCard 
+                key={testimonial.id} 
+                testimonial={testimonial} 
+                index={index} 
+                cardStyleClasses={cardClasses}
+                hoverStyleClasses={hoverClasses}
+              />
             ))}
           </div>
         );
@@ -269,10 +312,10 @@ export default function TestimonialsSection({
             <span className="text-sm font-medium text-accent-300">Témoignages clients</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Ce que nos <span className="text-gradient">clients</span> disent
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Des entreprises qui nous font confiance et partagent leur expérience.
+            {subtitle}
           </p>
         </motion.div>
 

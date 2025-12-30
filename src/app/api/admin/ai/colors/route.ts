@@ -54,9 +54,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get AI config from global settings
-    const config = await getGlobalConfig();
-    const aiApiKey = config.ai?.aiApiKey;
+    // Priority: 1. Environment variable, 2. Baserow config, 3. Fallback
+    let aiApiKey = process.env.OPENAI_API_KEY;
+    
+    // If no env var, try Baserow config
+    if (!aiApiKey) {
+      const config = await getGlobalConfig();
+      aiApiKey = config.ai?.aiApiKey || undefined;
+    }
 
     // Check for API key
     if (!aiApiKey) {
@@ -66,11 +71,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         ...palette,
         source: 'fallback',
-        message: 'Palette générée algorithmiquement (configurez une clé API OpenAI pour de meilleurs résultats)',
+        message: 'Palette générée algorithmiquement',
       });
     }
 
     // Generate with OpenAI
+    console.log('🤖 Generating palette with OpenAI...');
     const palette = await generateWithOpenAI(prompt, aiApiKey);
     return NextResponse.json({ ...palette, source: 'openai' });
 

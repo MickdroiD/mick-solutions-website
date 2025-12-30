@@ -7,12 +7,22 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import type { FAQ } from '@/lib/baserow';
 
 // ============================================
+// TYPES
+// ============================================
+type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
+
+// ============================================
 // PROPS INTERFACE
 // ============================================
 
 interface FAQSectionProps {
   faqItems: FAQ[];
   variant?: 'Minimal' | 'Accordion' | 'Tabs' | 'Search' | 'AI';
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
+  title?: string;
+  subtitle?: string;
 }
 
 // ============================================
@@ -24,11 +34,15 @@ function AccordionItem({
   isOpen,
   onToggle,
   index,
+  cardStyleClasses,
+  hoverEffectClasses,
 }: {
   item: FAQ;
   isOpen: boolean;
   onToggle: () => void;
   index: number;
+  cardStyleClasses: string;
+  hoverEffectClasses: string;
 }) {
   return (
     <motion.div
@@ -43,7 +57,7 @@ function AccordionItem({
         className={`w-full flex items-center justify-between p-5 rounded-xl text-left transition-all duration-300 ${
           isOpen
             ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 border border-primary-500/30'
-            : 'bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20'
+            : `${cardStyleClasses} ${hoverEffectClasses}`
         }`}
       >
         <span className={`font-medium pr-4 ${isOpen ? 'text-white' : 'text-slate-300'}`}>
@@ -81,11 +95,40 @@ function AccordionItem({
 // MAIN COMPONENT
 // ============================================
 
-export default function FAQSection({ faqItems, variant = 'Accordion' }: FAQSectionProps) {
+export default function FAQSection({ 
+  faqItems, 
+  variant = 'Accordion',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Glow',
+  title = 'Questions Fréquentes',
+  subtitle = 'Retrouvez ici les réponses aux questions les plus courantes.',
+}: FAQSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Card style classes
+  const getCardStyleClasses = () => {
+    switch (cardStyle) {
+      case 'Flat': return 'bg-white/5';
+      case 'Border': return 'bg-white/5 border-2 border-primary-200';
+      case 'Glassmorphism': return 'bg-white/10 backdrop-blur-md border border-white/20';
+      case 'Shadow':
+      default: return 'bg-white/5 border border-white/10 shadow-lg';
+    }
+  };
+  
+  // Hover effect classes
+  const getHoverEffectClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Scale': return 'hover:scale-[1.01]';
+      case 'Lift': return 'hover:-translate-y-1 hover:shadow-xl';
+      case 'Glow':
+      default: return 'hover:shadow-primary-500/20 hover:border-primary-500/30';
+    }
+  };
 
   // Ne pas rendre si pas de FAQ
   if (!faqItems || faqItems.length === 0) {
@@ -118,13 +161,13 @@ export default function FAQSection({ faqItems, variant = 'Accordion' }: FAQSecti
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6">
             <HelpCircle className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-primary-300">Questions fréquentes</span>
+            <span className="text-sm font-medium text-primary-300">FAQ</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            On répond à vos <span className="text-gradient">questions</span>
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Tout ce que vous devez savoir sur nos services.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -160,6 +203,8 @@ export default function FAQSection({ faqItems, variant = 'Accordion' }: FAQSecti
               index={index}
               isOpen={openIndex === index}
               onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+              cardStyleClasses={getCardStyleClasses()}
+              hoverEffectClasses={getHoverEffectClasses()}
             />
           ))}
         </motion.div>

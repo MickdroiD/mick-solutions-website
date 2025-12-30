@@ -94,8 +94,34 @@ export function HeroElectric({ config }: ModuleProps) {
   const animProps = getHeroLogoAnimation(heroLogoAnimation as string);
   const canonicalAnim = normalizeAnimationValue(heroLogoAnimation as string);
   
-  // Effets visuels
-  const isElectricEffect = ['electric', 'spin-glow'].includes(canonicalAnim);
+  // Options de design (nouvelles)
+  const heroHeight = config.heroHeight || 'Tall';
+  const heroBackgroundUrl = config.heroBackgroundUrl || null;
+  const heroVideoUrl = config.heroVideoUrl || null;
+  const textAnimation = config.textAnimation || 'None';
+  
+  // 🔧 FIX: Récupérer le style d'animation global et le thème
+  const animationStyle = config.animationStyle || 'mick-electric';
+  const themeGlobal = config.themeGlobal || 'Electric';
+  
+  // Convertir heroHeight en classes CSS
+  const heightClass = {
+    Short: 'min-h-[70vh]',
+    Medium: 'min-h-[85vh]',
+    Tall: 'min-h-screen',
+    FullScreen: 'min-h-screen h-screen',
+  }[heroHeight as string] || 'min-h-screen';
+  
+  // 🔧 FIX: L'effet électrique s'active si :
+  // 1. heroLogoAnimation est 'electric' ou 'spin-glow' (animation du logo)
+  // 2. OU animationStyle est 'mick-electric' (style global d'animation)
+  // 3. OU themeGlobal est 'Electric' (thème global)
+  const isLogoElectric = ['electric', 'spin-glow'].includes(canonicalAnim);
+  const isStyleElectric = ['mick-electric', 'Mick Electric', 'Mick-Electrique'].includes(animationStyle as string);
+  const isThemeElectric = themeGlobal === 'Electric';
+  
+  // L'effet électrique est actif si une des conditions est remplie
+  const isElectricEffect = isLogoElectric || isStyleElectric || isThemeElectric;
   const isLightningCircle = canonicalAnim === 'electric';
 
   // Parser le titre
@@ -103,6 +129,16 @@ export function HeroElectric({ config }: ModuleProps) {
   const ligne1 = titreParts[0] ? titreParts[0].trim() + (titreParts[0].trim().endsWith('.') ? '' : '.') : '';
   const ligne2 = titreParts[1] ? titreParts[1].trim() + (titreParts[1].trim().endsWith('.') ? '' : '.') : '';
   const ligne3 = titreParts[2] ? titreParts[2].trim() : '';
+  
+  // Animation de texte
+  const getTextAnimationClass = () => {
+    switch (textAnimation) {
+      case 'Gradient': return 'animate-gradient-x bg-gradient-to-r from-primary-400 via-accent-400 to-primary-400 bg-clip-text text-transparent bg-[length:200%_auto]';
+      case 'Fade': return 'animate-fade-in';
+      case 'Typing': return 'animate-typing overflow-hidden whitespace-nowrap border-r-2 border-primary-400';
+      default: return '';
+    }
+  };
 
   // 🧱 LOGIQUE GRID BLOCKS 🧱
   // On vérifie si config.heroBlocks existe et contient des éléments
@@ -114,9 +150,38 @@ export function HeroElectric({ config }: ModuleProps) {
   const hasGridBlocks = heroBlocks.length > 0;
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className={`relative ${heightClass} flex items-center justify-center overflow-hidden pt-20`}>
       {/* Background gradients */}
       <div className="absolute inset-0 bg-background pointer-events-none">
+        {/* Video background */}
+        {heroVideoUrl && (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={heroVideoUrl} type="video/mp4" />
+          </video>
+        )}
+        
+        {/* Image background */}
+        {heroBackgroundUrl && !heroVideoUrl && (
+          <Image
+            src={heroBackgroundUrl}
+            alt="Hero background"
+            fill
+            className="object-cover"
+            priority
+          />
+        )}
+        
+        {/* Overlay for readability */}
+        {(heroBackgroundUrl || heroVideoUrl) && (
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
+        )}
+        
         <div className="absolute top-0 left-0 w-[800px] h-[800px] rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2 bg-primary-500/10" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full blur-[150px] translate-x-1/3 translate-y-1/3 bg-accent-500/10" />
       </div>
@@ -143,8 +208,8 @@ export function HeroElectric({ config }: ModuleProps) {
               </motion.div>
             )}
 
-            {/* Titre */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6 font-heading">
+            {/* Titre avec animation configurable */}
+            <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6 font-heading ${getTextAnimationClass()}`}>
               {ligne1}
               {ligne2 && <><br /><span className="text-gradient">{ligne2}</span></>}
               {ligne3 && <><br />{ligne3}</>}

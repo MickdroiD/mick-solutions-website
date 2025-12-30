@@ -73,47 +73,59 @@ interface ServiceCardProps {
   index: number;
   isInView: boolean;
   onClick: () => void;
+  cardStyleClasses?: string;
+  hoverClasses?: string;
+  isShowcase?: boolean;
+}
+
+interface AccordionServiceCardProps {
+  service: Service;
+  index: number;
+  isInView: boolean;
+  isExpanded: boolean;
+  onClick: () => void;
+  cardStyleClasses?: string;
 }
 
 // ============================================
-// DEFAULT SERVICES (Fallback)
+// DEFAULT SERVICES (Fallback) - Thème "Nouveau Client"
 // ============================================
 const defaultServices: Service[] = [
   {
     id: 1,
-    Titre: 'Secrétariat Virtuel Automatisé',
-    Description: 'Traitement d\'emails, factures, RDV avec une automatisation intelligente qui travaille pour vous 24/7.',
-    Icone: 'mail',
+    Titre: 'Service Principal',
+    Description: 'Décrivez ici votre service phare. Expliquez clairement ce que vous proposez et les bénéfices pour le client.',
+    Icone: 'briefcase',
     Ordre: '1',
-    Tagline: 'Traitement d\'emails, factures, RDV',
+    Tagline: 'Votre service le plus important',
     tags: [],
-    points_cle: 'Réponses automatiques personnalisées\nGestion des pièces jointes\nClassement intelligent\nNotifications en temps réel',
-    type: { id: 1, value: 'Abonnement', color: 'blue' },
-    tarif: 'Dès 49.- CHF/mois',
+    points_cle: 'Avantage clé 1\nAvantage clé 2\nAvantage clé 3\nAvantage clé 4',
+    type: { id: 1, value: 'Sur devis', color: 'blue' },
+    tarif: 'Sur devis',
   },
   {
     id: 2,
-    Titre: 'Centralisation de vos Données',
-    Description: 'Fini les fichiers Excel perdus, tout est au même endroit, accessible et sécurisé.',
-    Icone: 'database',
+    Titre: 'Service Secondaire',
+    Description: 'Un autre service important que vous proposez. Soyez précis et orienté bénéfice client.',
+    Icone: 'settings',
     Ordre: '2',
-    Tagline: 'Fini les fichiers Excel perdus',
+    Tagline: 'Votre deuxième offre',
     tags: [],
-    points_cle: 'Base de données centralisée\nAccès multi-utilisateurs\nRecherche instantanée\nExport vers Excel/PDF',
-    type: { id: 2, value: 'Projet', color: 'green' },
+    points_cle: 'Point fort 1\nPoint fort 2\nPoint fort 3',
+    type: { id: 2, value: 'Sur devis', color: 'green' },
     tarif: 'Sur devis',
   },
   {
     id: 3,
-    Titre: 'Sérénité & Sécurité Suisse',
-    Description: 'Sauvegardes automatiques, confidentialité totale, hébergement en Suisse.',
-    Icone: 'shield',
+    Titre: 'Service Complémentaire',
+    Description: 'Un service additionnel ou une option qui vous différencie de la concurrence.',
+    Icone: 'zap',
     Ordre: '3',
-    Tagline: 'Sauvegardes automatiques, confidentialité totale',
+    Tagline: 'Ce qui vous différencie',
     tags: [],
-    points_cle: 'Hébergement suisse\nSauvegardes quotidiennes\nChiffrement de bout en bout\nConformité RGPD',
-    type: { id: 1, value: 'Abonnement', color: 'blue' },
-    tarif: 'Inclus dans nos formules',
+    points_cle: 'Atout 1\nAtout 2\nAtout 3',
+    type: { id: 1, value: 'Sur devis', color: 'blue' },
+    tarif: 'Sur devis',
   },
 ];
 
@@ -179,7 +191,15 @@ function TagBadge({ tag }: { tag: BaserowTag }) {
 // ============================================
 // SERVICE CARD COMPONENT
 // ============================================
-function ServiceCard({ service, index, isInView, onClick }: ServiceCardProps) {
+function ServiceCard({ 
+  service, 
+  index, 
+  isInView, 
+  onClick,
+  cardStyleClasses = 'bg-white shadow-lg',
+  hoverClasses = 'hover:scale-[1.02]',
+  isShowcase = false,
+}: ServiceCardProps) {
   const IconComponent = getIcon(service.Icone);
 
   return (
@@ -190,40 +210,133 @@ function ServiceCard({ service, index, isInView, onClick }: ServiceCardProps) {
       className="group cursor-pointer"
       onClick={onClick}
     >
-      <div className="relative h-full p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-accent-500/30 transition-all duration-500 overflow-hidden hover:scale-[1.02] active:scale-[0.98]">
+      <div className={`relative h-full p-8 rounded-2xl border border-primary-200 hover:border-primary-400 transition-all duration-500 overflow-hidden active:scale-[0.98] ${cardStyleClasses} ${hoverClasses}`}>
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-accent-500/0 to-primary-500/0 group-hover:from-accent-500/5 group-hover:to-primary-500/5 transition-all duration-500" />
         
         {/* Decorative line */}
         <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-accent-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-        <div className="relative z-10">
+        <div className={`relative z-10 ${isShowcase ? 'flex flex-col md:flex-row gap-6' : ''}`}>
           {/* Header: Icon + Type Badge */}
-          <div className="flex items-start justify-between mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-500/20 to-primary-500/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <IconComponent className="w-8 h-8 text-accent-400" />
+          <div className={`flex items-start justify-between mb-6 ${isShowcase ? 'md:flex-col md:items-center md:w-32 md:mb-0' : ''}`}>
+            <div className={`rounded-2xl bg-gradient-to-br from-accent-500/20 to-primary-500/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${isShowcase ? 'w-20 h-20' : 'w-16 h-16'}`}>
+              <IconComponent className={`text-accent-400 ${isShowcase ? 'w-10 h-10' : 'w-8 h-8'}`} />
             </div>
-            <TypeBadge type={service.type} />
+            {!isShowcase && <TypeBadge type={service.type} />}
           </div>
 
-          {/* Title */}
-          <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-gradient transition-all duration-300">
-            {service.Titre}
-          </h3>
+          <div className="flex-1">
+            {/* Title */}
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className={`font-semibold text-primary-900 transition-all duration-300 ${isShowcase ? 'text-2xl' : 'text-xl'}`}>
+                {service.Titre}
+              </h3>
+              {isShowcase && <TypeBadge type={service.type} />}
+            </div>
 
-          {/* Tagline */}
-          <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">
-            {service.Tagline || service.Description}
-          </p>
+            {/* Tagline / Description */}
+            <p className={`text-primary-600 leading-relaxed ${isShowcase ? 'text-base' : 'text-sm line-clamp-2'}`}>
+              {isShowcase ? service.Description : (service.Tagline || service.Description)}
+            </p>
 
-          {/* Click indicator */}
-          <div className="mt-6 flex items-center gap-2 text-sm text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span>Voir les détails</span>
-            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            {/* Click indicator */}
+            <div className={`flex items-center gap-2 text-sm text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${isShowcase ? 'mt-4' : 'mt-6'}`}>
+              <span>Voir les détails</span>
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
           </div>
         </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// ACCORDION SERVICE CARD COMPONENT
+// ============================================
+function AccordionServiceCard({ 
+  service, 
+  index, 
+  isInView, 
+  isExpanded,
+  onClick,
+  cardStyleClasses = 'bg-white shadow-lg',
+}: AccordionServiceCardProps) {
+  const IconComponent = getIcon(service.Icone);
+  const keyPoints = service.points_cle
+    ? service.points_cle.split('\n').filter((point) => point.trim() !== '')
+    : [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      className="group"
+    >
+      <div className={`relative rounded-2xl border border-primary-200 transition-all duration-300 overflow-hidden ${cardStyleClasses} ${isExpanded ? 'border-primary-400' : ''}`}>
+        {/* Header - Always visible */}
+        <button
+          onClick={onClick}
+          className="w-full p-6 flex items-center gap-4 text-left hover:bg-primary-50/50 transition-colors"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500/20 to-primary-500/20 flex items-center justify-center flex-shrink-0">
+            <IconComponent className="w-6 h-6 text-accent-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-primary-900">{service.Titre}</h3>
+            {!isExpanded && (
+              <p className="text-sm text-primary-600 line-clamp-1">{service.Tagline || service.Description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <TypeBadge type={service.type} />
+            <motion.svg 
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              className="w-5 h-5 text-primary-400"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </motion.svg>
+          </div>
+        </button>
+        
+        {/* Expandable content */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="px-6 pb-6 pt-2 border-t border-primary-100">
+                <p className="text-primary-700 mb-4">{service.Description}</p>
+                
+                {keyPoints.length > 0 && (
+                  <ul className="space-y-2 mb-4">
+                    {keyPoints.map((point, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-primary-600">
+                        <Check className="w-4 h-4 text-accent-500 mt-0.5 flex-shrink-0" />
+                        <span>{point.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                {service.tarif && (
+                  <p className="text-lg font-semibold text-gradient">{service.tarif}</p>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
@@ -367,14 +480,22 @@ interface SectionLabels {
   modalCtaText: string;
 }
 
+// Thème "Nouveau Client" - Labels pédagogiques
 const DEFAULT_LABELS: SectionLabels = {
   sectionTitle: 'Nos',
   sectionTitleHighlight: 'services',
-  sectionSubtitle: 'Des solutions concrètes qui s\'adaptent à votre façon de travailler, pas l\'inverse.',
-  ctaQuestion: 'Vous avez un besoin spécifique ?',
-  ctaLink: 'Parlons-en ensemble',
-  modalCtaText: 'Demander un devis',
+  sectionSubtitle: 'Décrivez ici ce que vous proposez à vos clients en une phrase.',
+  ctaQuestion: 'Une question ?',
+  ctaLink: 'Contactez-nous',
+  modalCtaText: 'En savoir plus',
 };
+
+// ============================================
+// DESIGN OPTIONS
+// ============================================
+type ServiceVariant = 'Grid' | 'Accordion' | 'Cards' | 'Showcase';
+type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake';
 
 // ============================================
 // MAIN COMPONENT
@@ -382,18 +503,62 @@ const DEFAULT_LABELS: SectionLabels = {
 interface ServicesSectionProps {
   services?: Service[];
   labels?: Partial<SectionLabels>;
+  variant?: ServiceVariant;
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
 }
 
-export default function ServicesSection({ services, labels }: ServicesSectionProps) {
+export default function ServicesSection({ 
+  services, 
+  labels,
+  variant = 'Grid',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Scale',
+}: ServicesSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expandedAccordion, setExpandedAccordion] = useState<number | null>(null);
 
   // Fusionner les labels par défaut avec les labels personnalisés
   const sectionLabels = { ...DEFAULT_LABELS, ...labels };
   
   const displayServices = services && services.length > 0 ? services : defaultServices;
+  
+  // Card style classes
+  const getCardStyleClasses = () => {
+    switch (cardStyle) {
+      case 'Flat': return 'bg-white';
+      case 'Border': return 'bg-white border-2 border-primary-200';
+      case 'Glassmorphism': return 'bg-white/60 backdrop-blur-md border border-white/20';
+      case 'Shadow':
+      default: return 'bg-white shadow-lg shadow-primary-500/10';
+    }
+  };
+  
+  // Hover effect classes
+  const getHoverClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Glow': return 'hover:shadow-xl hover:shadow-primary-500/30';
+      case 'Lift': return 'hover:-translate-y-2 hover:shadow-xl';
+      case 'Shake': return 'hover:animate-shake';
+      case 'Scale':
+      default: return 'hover:scale-[1.02]';
+    }
+  };
+  
+  // Grid classes based on variant
+  const getGridClasses = () => {
+    switch (variant) {
+      case 'Showcase': return 'grid-cols-1 lg:grid-cols-2';
+      case 'Accordion': return 'grid-cols-1 max-w-3xl mx-auto';
+      case 'Cards':
+      case 'Grid':
+      default: return 'sm:grid-cols-2 lg:grid-cols-3';
+    }
+  };
 
   const openModal = (service: Service) => {
     setSelectedService(service);
@@ -410,9 +575,9 @@ export default function ServicesSection({ services, labels }: ServicesSectionPro
 
   return (
     <section id="services" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-[150px]" />
+      {/* Background - Thème Corporate Light bleu clair */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-blue-100/50 to-blue-50" />
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-300/20 rounded-full blur-[150px]" />
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -422,24 +587,39 @@ export default function ServicesSection({ services, labels }: ServicesSectionPro
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-900 mb-4">
             {sectionLabels.sectionTitle} <span className="text-gradient">{sectionLabels.sectionTitleHighlight}</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p className="text-lg text-primary-700 max-w-2xl mx-auto">
             {sectionLabels.sectionSubtitle}
           </p>
         </motion.div>
 
-        {/* Services grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Services grid/list */}
+        <div className={`grid ${getGridClasses()} gap-6`}>
           {displayServices.map((service, index) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              index={index}
-              isInView={isInView}
-              onClick={() => openModal(service)}
-            />
+            variant === 'Accordion' ? (
+              <AccordionServiceCard
+                key={service.id}
+                service={service}
+                index={index}
+                isInView={isInView}
+                isExpanded={expandedAccordion === index}
+                onClick={() => setExpandedAccordion(expandedAccordion === index ? null : index)}
+                cardStyleClasses={getCardStyleClasses()}
+              />
+            ) : (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                index={index}
+                isInView={isInView}
+                onClick={() => openModal(service)}
+                cardStyleClasses={getCardStyleClasses()}
+                hoverClasses={getHoverClasses()}
+                isShowcase={variant === 'Showcase'}
+              />
+            )
           ))}
         </div>
 
@@ -450,7 +630,7 @@ export default function ServicesSection({ services, labels }: ServicesSectionPro
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-12"
         >
-          <p className="text-slate-500 mb-4">{sectionLabels.ctaQuestion}</p>
+          <p className="text-primary-600 mb-4">{sectionLabels.ctaQuestion}</p>
           <a
             href="#contact"
             className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 font-medium transition-colors"

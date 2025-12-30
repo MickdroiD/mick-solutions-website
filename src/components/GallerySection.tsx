@@ -16,8 +16,61 @@ interface GallerySectionProps {
   variant?: 'Grid' | 'Slider' | 'Masonry' | 'AI';
   columns?: '2' | '3' | '4' | 'Auto' | string | null;
   animation?: 'None' | 'Fade' | 'Slide' | 'Zoom' | 'Flip' | string | null;
+  imageStyle?: 'Square' | 'Rounded' | 'Circle' | 'Custom';
+  imageFilter?: 'None' | 'Grayscale' | 'Sepia' | 'Contrast' | 'Blur';
+  aspectRatio?: '1:1' | '4:3' | '16:9' | '3:4' | 'auto';
   title?: string;
   subtitle?: string;
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function getImageStyleClasses(style?: string): string {
+  switch (style) {
+    case 'Square':
+      return 'rounded-none';
+    case 'Circle':
+      return 'rounded-full';
+    case 'Custom':
+      return 'rounded-3xl';
+    case 'Rounded':
+    default:
+      return 'rounded-xl';
+  }
+}
+
+function getImageFilterClasses(filter?: string): string {
+  switch (filter) {
+    case 'Grayscale':
+      return 'grayscale group-hover:grayscale-0 transition-all duration-500';
+    case 'Sepia':
+      return 'sepia group-hover:sepia-0 transition-all duration-500';
+    case 'Contrast':
+      return 'contrast-125';
+    case 'Blur':
+      return 'blur-[1px] group-hover:blur-none transition-all duration-500';
+    case 'None':
+    default:
+      return '';
+  }
+}
+
+function getAspectRatioClasses(ratio?: string): string {
+  switch (ratio) {
+    case '1:1':
+      return 'aspect-square';
+    case '4:3':
+      return 'aspect-[4/3]';
+    case '16:9':
+      return 'aspect-video';
+    case '3:4':
+      return 'aspect-[3/4]';
+    case 'auto':
+    default:
+      return 'aspect-square';
+  }
 }
 
 // ============================================
@@ -144,7 +197,12 @@ function LightboxModal({
 // SLIDER VIEW
 // ============================================
 
-function SliderView({ items, onImageClick }: { items: GalleryItem[]; onImageClick: (index: number) => void }) {
+function SliderView({ items, onImageClick, styleClasses = '', filterClasses = '' }: { 
+  items: GalleryItem[]; 
+  onImageClick: (index: number) => void;
+  styleClasses?: string;
+  filterClasses?: string;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -302,11 +360,14 @@ function getAnimationVariants(animation: GalleryAnimationType, index: number) {
 
 type ColumnsType = '2' | '3' | '4' | 'Auto' | string | null;
 
-function GridView({ items, onImageClick, columns, animation }: { 
+function GridView({ items, onImageClick, columns, animation, styleClasses = '', filterClasses = '', aspectClasses = 'aspect-square' }: { 
   items: GalleryItem[]; 
   onImageClick: (index: number) => void;
   columns: ColumnsType;
   animation: GalleryAnimationType;
+  styleClasses?: string;
+  filterClasses?: string;
+  aspectClasses?: string;
 }) {
   // Determine grid columns based on settings
   const getGridCols = () => {
@@ -331,14 +392,14 @@ function GridView({ items, onImageClick, columns, animation }: {
             whileInView={animProps.whileInView}
             transition={animProps.transition}
             viewport={{ once: true }}
-            className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer bg-slate-900/50"
+            className={`group relative ${aspectClasses} ${styleClasses} overflow-hidden cursor-pointer bg-slate-900/50`}
             onClick={() => onImageClick(index)}
           >
             <Image
               src={item.Image[0].url}
               alt={item.Titre || `Image ${index + 1}`}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`object-cover transition-transform duration-500 group-hover:scale-105 ${filterClasses}`}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
             
@@ -371,11 +432,14 @@ function GridView({ items, onImageClick, columns, animation }: {
 // MASONRY VIEW (True CSS Columns layout)
 // ============================================
 
-function MasonryView({ items, onImageClick, columns, animation }: { 
+function MasonryView({ items, onImageClick, columns, animation, styleClasses = '', filterClasses = '' }: { 
   items: GalleryItem[]; 
   onImageClick: (index: number) => void;
   columns: ColumnsType;
   animation: GalleryAnimationType;
+  styleClasses?: string;
+  filterClasses?: string;
+  aspectClasses?: string; // Non utilisé pour Masonry (hauteurs variables)
 }) {
   // Determine CSS columns based on settings
   const getColumnsCss = () => {
@@ -400,7 +464,7 @@ function MasonryView({ items, onImageClick, columns, animation }: {
             whileInView={animProps.whileInView}
             transition={animProps.transition}
             viewport={{ once: true }}
-            className="group relative break-inside-avoid mb-4 rounded-xl overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500"
+            className={`group relative break-inside-avoid mb-4 ${styleClasses || 'rounded-xl'} overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500`}
             onClick={() => onImageClick(index)}
           >
             <Image
@@ -408,7 +472,7 @@ function MasonryView({ items, onImageClick, columns, animation }: {
               alt={item.Titre || `Image ${index + 1}`}
               width={400}
               height={300 + (index % 3) * 100} // Varying heights for masonry effect
-              className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className={`w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${filterClasses}`}
               sizes="(max-width: 768px) 50vw, 25vw"
             />
             
@@ -438,11 +502,14 @@ function MasonryView({ items, onImageClick, columns, animation }: {
 // ZOOM VIEW (Grid with scale effect)
 // ============================================
 
-function ZoomView({ items, onImageClick, columns, animation }: { 
+function ZoomView({ items, onImageClick, columns, animation, styleClasses = '', filterClasses = '', aspectClasses = 'aspect-[4/3]' }: { 
   items: GalleryItem[]; 
   onImageClick: (index: number) => void;
   columns: ColumnsType;
   animation: GalleryAnimationType;
+  styleClasses?: string;
+  filterClasses?: string;
+  aspectClasses?: string;
 }) {
   // Determine grid columns based on settings
   const getGridCols = () => {
@@ -467,14 +534,14 @@ function ZoomView({ items, onImageClick, columns, animation }: {
             whileInView={animProps.whileInView}
             transition={animProps.transition}
             viewport={{ once: true }}
-            className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-shadow duration-500"
+            className={`group relative ${aspectClasses} ${styleClasses || 'rounded-2xl'} overflow-hidden cursor-pointer bg-slate-900/50 shadow-lg hover:shadow-2xl hover:shadow-primary-500/10 transition-shadow duration-500`}
             onClick={() => onImageClick(index)}
           >
             <Image
               src={item.Image[0].url}
               alt={item.Titre || `Image ${index + 1}`}
               fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+              className={`object-cover transition-transform duration-700 ease-out group-hover:scale-110 ${filterClasses}`}
               sizes="(max-width: 768px) 50vw, 33vw"
             />
             
@@ -515,9 +582,16 @@ export default function GallerySection({
   variant = 'Grid',
   columns = '4',
   animation = 'Fade',
+  imageStyle = 'Rounded',
+  imageFilter = 'None',
+  aspectRatio = '1:1',
   title = 'Notre Galerie',
   subtitle = 'Découvrez nos réalisations et notre univers en images.'
 }: GallerySectionProps) {
+  // Classes dynamiques basées sur les props
+  const styleClasses = getImageStyleClasses(imageStyle);
+  const filterClasses = getImageFilterClasses(imageFilter);
+  const aspectClasses = getAspectRatioClasses(aspectRatio);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   
@@ -561,16 +635,26 @@ export default function GallerySection({
 
   // Render appropriate view based on display type
   const renderGalleryView = () => {
+    const sharedProps = { 
+      items: galleryItems, 
+      onImageClick: openLightbox,
+      columns,
+      animation,
+      styleClasses,
+      filterClasses,
+      aspectClasses,
+    };
+    
     switch (displayType) {
       case 'Slider':
-        return <SliderView items={galleryItems} onImageClick={openLightbox} />;
+        return <SliderView items={galleryItems} onImageClick={openLightbox} styleClasses={styleClasses} filterClasses={filterClasses} />;
       case 'Masonry':
-        return <MasonryView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
+        return <MasonryView {...sharedProps} />;
       case 'Zoom':
-        return <ZoomView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
+        return <ZoomView {...sharedProps} />;
       case 'Grille':
       default:
-        return <GridView items={galleryItems} onImageClick={openLightbox} columns={columns} animation={animation} />;
+        return <GridView {...sharedProps} />;
     }
   };
 

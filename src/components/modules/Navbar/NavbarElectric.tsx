@@ -53,6 +53,14 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
   const hasLogoSvg = Boolean(config.logoSvgCode && String(config.logoSvgCode).trim());
   const hasLogoUrl = Boolean(config.logoUrl && config.logoUrl.trim());
   const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
+  
+  // 🔧 FIX: Forcer l'effet électrique si le style global est 'mick-electric' ou thème 'Electric'
+  const animationStyle = config.animationStyle || 'mick-electric';
+  const themeGlobal = config.themeGlobal || 'Electric';
+  const forceElectricEffect = (
+    ['mick-electric', 'Mick Electric', 'Mick-Electrique'].includes(animationStyle as string) ||
+    themeGlobal === 'Electric'
+  );
 
   return (
     <motion.header
@@ -86,6 +94,7 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
                 }
                 primaryColor="var(--primary-400)"
                 accentColor="var(--accent-400)"
+                showElectricEffect={forceElectricEffect}
               />
             ) : (
               // Fallback: Initiales avec gradient
@@ -128,7 +137,8 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
                          transition-all duration-300"
               >
                 <Phone className="w-4 h-4" />
-                Réserver un appel
+                {/* 🔧 FIX: Texte dynamique depuis config */}
+                {config.texteBoutonAppel || 'Réserver un appel'}
               </a>
             )}
             <a
@@ -185,7 +195,8 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
                   className="flex items-center gap-2 py-3 px-2 text-primary-300 hover:text-foreground transition-colors touch-manipulation text-base"
                 >
                   <Phone className="w-4 h-4" />
-                  Réserver un appel
+                  {/* 🔧 FIX: Texte dynamique depuis config */}
+                  {config.texteBoutonAppel || 'Réserver un appel'}
                 </a>
               )}
               <a

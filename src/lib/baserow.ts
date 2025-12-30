@@ -124,16 +124,20 @@ export interface GalleryItem {
 const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 
-// Table IDs pour les données de sections (pas de config globale)
+// ============================================
+// ANCIEN SYSTÈME DÉSACTIVÉ - Factory V2 uniquement
+// ============================================
+// Les anciennes tables sont désactivées pour éviter les interférences.
+// Toutes les données viennent maintenant de Factory V2 ou des valeurs par défaut.
 const TABLE_IDS = {
-  SERVICES: 748,
-  PORTFOLIO: 749,
-  REVIEWS: 750,
-  FAQ: 752,
-  LEGAL_DOCS: 753,
-  ADVANTAGES: 757,
-  TRUST_POINTS: 758,
-  GALLERY: 781,
+  // SERVICES: 748,    // DÉSACTIVÉ - utilise defaultServices
+  // PORTFOLIO: 749,   // DÉSACTIVÉ
+  // REVIEWS: 750,     // DÉSACTIVÉ
+  // FAQ: 752,         // DÉSACTIVÉ
+  LEGAL_DOCS: 753,     // Gardé pour les pages légales
+  // ADVANTAGES: 757,  // DÉSACTIVÉ - utilise DEFAULT_ADVANTAGES
+  // TRUST_POINTS: 758,// DÉSACTIVÉ - utilise DEFAULT_TRUST_POINTS
+  // GALLERY: 781,     // DÉSACTIVÉ
 } as const;
 
 // ============================================
@@ -206,21 +210,11 @@ interface BaserowServiceRow {
   'Tarif (indicatif):'?: string;
 }
 
+// DÉSACTIVÉ - Retourne null pour utiliser les defaultServices du composant
 export async function getServices(): Promise<Service[] | null> {
-  const rows = await fetchBaserow<BaserowServiceRow>(TABLE_IDS.SERVICES, { orderBy: 'Ordre' });
-  if (!rows) return null;
-  return rows.map(r => ({
-    id: r.id,
-    Titre: r.Titre,
-    Description: r.Description,
-    Icone: r.Icone,
-    Ordre: r.Ordre,
-    Tagline: r.Tagline || null,
-    tags: r.tags || [],
-    points_cle: r['Points Clés'] || null,
-    type: r['Type:'] || null,
-    tarif: r['Tarif (indicatif):'] || null,
-  }));
+  // Ancien système désactivé - les données viennent de Factory V2
+  // ou des defaultServices dans ServicesSection.tsx
+  return null;
 }
 
 interface BaserowProjectRow {
@@ -235,26 +229,9 @@ interface BaserowProjectRow {
   Ordre: string | null;
 }
 
+// DÉSACTIVÉ - Ancien système
 export async function getProjects(): Promise<Project[] | null> {
-  const rows = await fetchBaserow<BaserowProjectRow>(TABLE_IDS.PORTFOLIO, {
-    filters: JSON.stringify({
-      filter_type: 'AND',
-      filters: [{ type: 'single_select_equal', field: 'Statut', value: '3068' }],
-    }),
-    orderBy: 'Ordre',
-  });
-  if (!rows) return null;
-  return rows.map(r => ({
-    id: r.id,
-    Nom: r.Nom,
-    Slug: r.Slug,
-    Tags: r.Tags,
-    DescriptionCourte: r['Description courte'],
-    ImageCouverture: r['Image de couverture'],
-    LienSite: r['Lien du site'],
-    Statut: r.Statut,
-    Ordre: r.Ordre,
-  }));
+  return null;
 }
 
 interface BaserowReviewRow {
@@ -267,27 +244,14 @@ interface BaserowReviewRow {
   Afficher: boolean;
 }
 
+// DÉSACTIVÉ - Les témoignages viennent de Factory V2
 export async function getReviews(): Promise<Review[] | null> {
-  const rows = await fetchBaserow<BaserowReviewRow>(TABLE_IDS.REVIEWS, {
-    filters: JSON.stringify({
-      filter_type: 'AND',
-      filters: [{ type: 'boolean', field: 'Afficher', value: 'true' }],
-    }),
-  });
-  if (!rows) return null;
-  return rows.map(r => ({
-    id: r.id,
-    NomClient: r['Nom du client'],
-    PosteEntreprise: r['Poste / Entreprise'],
-    Photo: r.Photo,
-    Message: r.Message,
-    Note: r.Note,
-    Afficher: r.Afficher,
-  }));
+  return null;
 }
 
+// DÉSACTIVÉ - Les FAQ viennent de Factory V2
 export async function getFAQ(): Promise<FAQ[] | null> {
-  return fetchBaserow<FAQ>(TABLE_IDS.FAQ, { orderBy: 'Ordre' });
+  return null;
 }
 
 interface BaserowLegalDocRow {
@@ -318,28 +282,30 @@ export async function getLegalDocBySlug(slug: string): Promise<LegalDoc | null> 
 }
 
 // Default values
+// Thème "Nouveau Client" - Contenu pédagogique
 export const DEFAULT_ADVANTAGES: Advantage[] = [
-  { id: 1, Titre: "Récupérez vos heures", Description: "Les tâches répétitives automatisées.", Icone: "clock", Badge: "10h+ économisées/semaine", Ordre: "1" },
-  { id: 2, Titre: "Réduisez vos coûts", Description: "Un investissement unique pour des économies durables.", Icone: "trending-down", Badge: "Jusqu'à 70% d'économies", Ordre: "2" },
-  { id: 3, Titre: "Zéro complexité", Description: "On s'occupe de tout, vous profitez des résultats.", Icone: "target", Badge: "Clé en main", Ordre: "3" },
-  { id: 4, Titre: "Résultats immédiats", Description: "Vos processus tournent dès le premier jour.", Icone: "zap", Badge: "Opérationnel en 48h", Ordre: "4" },
+  { id: 1, Titre: "Premier Avantage", Description: "Décrivez ici un avantage clé de votre offre pour le client.", Icone: "star", Badge: "Ex: +30%", Ordre: "1" },
+  { id: 2, Titre: "Deuxième Avantage", Description: "Un autre bénéfice important que vous apportez à vos clients.", Icone: "check", Badge: "Ex: 24h", Ordre: "2" },
+  { id: 3, Titre: "Troisième Avantage", Description: "Un point fort qui vous différencie de la concurrence.", Icone: "award", Badge: "Ex: 100%", Ordre: "3" },
+  { id: 4, Titre: "Quatrième Avantage", Description: "Un dernier argument de vente convaincant.", Icone: "shield", Badge: "Ex: Garanti", Ordre: "4" },
 ];
 
+// Thème "Nouveau Client" - Contenu pédagogique
 export const DEFAULT_TRUST_POINTS: TrustPoint[] = [
-  { id: 1, Titre: "100% hébergé en Suisse", Description: "Vos données ne quittent jamais le territoire suisse.", Icone: "map-pin", Badge: "Genève, CH", Ordre: "1" },
-  { id: 2, Titre: "Sécurité bancaire", Description: "Chiffrement de bout en bout, sauvegardes quotidiennes.", Icone: "shield", Badge: "Certifié", Ordre: "2" },
-  { id: 3, Titre: "Transparence totale", Description: "Accès complet aux logs et rapports en temps réel.", Icone: "eye", Badge: "Open Book", Ordre: "3" },
-  { id: 4, Titre: "Pas de coûts cachés", Description: "Un prix fixe, tout compris.", Icone: "banknote", Badge: "Prix fixe", Ordre: "4" },
+  { id: 1, Titre: "Point de Confiance 1", Description: "Expliquez pourquoi les clients peuvent vous faire confiance.", Icone: "shield", Badge: "Ex: Certifié", Ordre: "1" },
+  { id: 2, Titre: "Point de Confiance 2", Description: "Un engagement de sécurité ou de qualité.", Icone: "lock", Badge: "Ex: Sécurisé", Ordre: "2" },
+  { id: 3, Titre: "Point de Confiance 3", Description: "Une garantie ou une politique transparente.", Icone: "check-circle", Badge: "Ex: Garanti", Ordre: "3" },
+  { id: 4, Titre: "Point de Confiance 4", Description: "Un dernier élément de réassurance.", Icone: "award", Badge: "Ex: N°1", Ordre: "4" },
 ];
 
+// Retourne directement les valeurs pédagogiques par défaut
 export async function getAdvantages(): Promise<Advantage[]> {
-  const rows = await fetchBaserow<Advantage>(TABLE_IDS.ADVANTAGES, { orderBy: 'Ordre' });
-  return rows && rows.length > 0 ? rows : DEFAULT_ADVANTAGES;
+  return DEFAULT_ADVANTAGES;
 }
 
+// Retourne directement les valeurs pédagogiques par défaut
 export async function getTrustPoints(): Promise<TrustPoint[]> {
-  const rows = await fetchBaserow<TrustPoint>(TABLE_IDS.TRUST_POINTS, { orderBy: 'Ordre' });
-  return rows && rows.length > 0 ? rows : DEFAULT_TRUST_POINTS;
+  return DEFAULT_TRUST_POINTS;
 }
 
 interface BaserowGalleryRow {
@@ -350,15 +316,8 @@ interface BaserowGalleryRow {
   'Type Affichage'?: BaserowSelectOption | null;
 }
 
+// DÉSACTIVÉ - Ancien système
 export async function getGalleryItems(): Promise<GalleryItem[]> {
-  const rows = await fetchBaserow<BaserowGalleryRow>(TABLE_IDS.GALLERY, { orderBy: 'Ordre' });
-  if (!rows) return [];
-  return rows.filter(r => r.Image?.length > 0).map(r => ({
-    id: r.id,
-    Titre: r.Titre,
-    Image: r.Image,
-    Ordre: r.Ordre,
-    TypeAffichage: (r['Type Affichage']?.value || null) as GalleryDisplayType | null,
-  }));
+  return [];
 }
 

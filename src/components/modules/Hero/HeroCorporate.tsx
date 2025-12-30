@@ -16,7 +16,8 @@ export function HeroCorporate({ config }: ModuleProps) {
   const titreParts = config.titreHero.split('.');
   
   return (
-    <section className="relative min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-background overflow-hidden">
+    // Thème Corporate Light - fond bleu clair (#EFF6FF) sans mode dark
+    <section className="relative min-h-screen bg-gradient-to-b from-blue-50 to-blue-100/50 overflow-hidden">
       {/* Pattern de fond corporate */}
       <div className="absolute inset-0 opacity-[0.03] pattern-bg">
         <div 
@@ -56,7 +57,7 @@ export function HeroCorporate({ config }: ModuleProps) {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-serif text-primary-950 dark:text-white leading-[1.15] mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-serif text-primary-950 leading-[1.15] mb-6"
             >
               {titreParts[0]?.trim() || "Excellence"}
               <br />
@@ -74,7 +75,7 @@ export function HeroCorporate({ config }: ModuleProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-lg text-primary-700 dark:text-primary-200 mb-8 leading-relaxed max-w-lg"
+              className="text-lg text-primary-700 mb-8 leading-relaxed max-w-lg"
             >
               {config.sousTitreHero}
             </motion.p>
@@ -90,7 +91,7 @@ export function HeroCorporate({ config }: ModuleProps) {
                 .filter(Boolean)
                 .slice(0, 3)
                 .map((label, i) => (
-                  <li key={i} className="flex items-center gap-3 text-primary-800 dark:text-primary-100">
+                  <li key={i} className="flex items-center gap-3 text-primary-800">
                     <CheckCircle2 className="w-5 h-5 text-accent-500 flex-shrink-0" />
                     <span>{label}</span>
                   </li>
@@ -129,9 +130,9 @@ export function HeroCorporate({ config }: ModuleProps) {
             className="relative"
           >
             {/* Card principale */}
-            <div className="relative bg-white dark:bg-primary-900/50 rounded-theme-xl shadow-2xl p-8 border border-primary-100 dark:border-primary-800">
+            <div className="relative bg-white rounded-theme-xl shadow-2xl p-8 border border-primary-200">
               {/* Header card */}
-              <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary-100 dark:border-primary-800">
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-primary-200">
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-12 h-12 rounded-theme-lg flex items-center justify-center text-white font-bold text-lg"
@@ -142,11 +143,11 @@ export function HeroCorporate({ config }: ModuleProps) {
                     {config.initialesLogo}
                   </div>
                   <div>
-                    <div className="font-semibold text-primary-900 dark:text-white">{config.nomSite}</div>
+                    <div className="font-semibold text-primary-900">{config.nomSite}</div>
                     <div className="text-sm text-primary-500">{config.slogan}</div>
                   </div>
                 </div>
-                <div className="px-3 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-semibold rounded-full">
+                <div className="px-3 py-1 bg-accent-100 text-accent-700 text-xs font-semibold rounded-full">
                   Actif
                 </div>
               </div>

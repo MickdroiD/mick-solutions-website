@@ -22,13 +22,15 @@ function FooterLogoWithAnimation({
   logoSvgCode,
   nomSite, 
   animation, 
-  size = 40 
+  size = 40,
+  forceElectric = false // 🔧 FIX: Nouveau prop pour forcer l'effet électrique
 }: { 
   logoUrl: string; 
   logoSvgCode?: string | null;
   nomSite: string; 
   animation?: LogoAnimation | null; 
   size?: number | null;
+  forceElectric?: boolean;
 }) {
   const logoSize = size || 40;
   const normalizedAnimation = animation?.toLowerCase() || 'none';
@@ -67,12 +69,21 @@ function FooterLogoWithAnimation({
         };
       case 'none':
       default:
+        // 🔧 FIX: Si forceElectric est true, appliquer le glow même si animation est 'none'
+        if (forceElectric) {
+          return {
+            animate: {},
+            transition: {},
+            style: { filter: 'drop-shadow(0 0 12px rgba(34, 211, 238, 0.6))' }
+          };
+        }
         return { animate: {}, transition: {} };
     }
   };
 
   const animProps = getAnimationVariants();
-  const isElectric = normalizedAnimation === 'electric' || normalizedAnimation === 'lightning_circle';
+  // 🔧 FIX: L'effet électrique est actif si l'animation est 'electric' OU si forceElectric
+  const isElectric = normalizedAnimation === 'electric' || normalizedAnimation === 'lightning_circle' || forceElectric;
 
   return (
     <motion.div
@@ -134,6 +145,14 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
     { icon: Github, url: config.lienGithub, label: 'GitHub' },
     { icon: Instagram, url: config.lienInstagram, label: 'Instagram' },
   ].filter(s => s.url);
+  
+  // 🔧 FIX: Forcer l'effet électrique si le style global est 'mick-electric' ou thème 'Electric'
+  const animationStyle = config.animationStyle || 'mick-electric';
+  const themeGlobal = config.themeGlobal || 'Electric';
+  const forceElectricEffect = (
+    ['mick-electric', 'Mick Electric', 'Mick-Electrique'].includes(animationStyle as string) ||
+    themeGlobal === 'Electric'
+  );
 
   return (
     <footer className="relative overflow-hidden">
@@ -194,6 +213,7 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
                   nomSite={config.nomSite}
                   animation={config.footerLogoAnimation}
                   size={config.footerLogoSize}
+                  forceElectric={forceElectricEffect}
                 />
               ) : (
                 <AnimatedLogoFrame 

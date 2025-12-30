@@ -545,10 +545,17 @@ ${Colors.RESET}`);
 
   const configGlobalTable = newTables.find(t => t.name === 'CONFIG_GLOBAL');
   const sectionsTable = newTables.find(t => t.name === 'SECTIONS');
+  const leadsTable = newTables.find(t => t.name === 'LEADS');
 
   if (!configGlobalTable || !sectionsTable) {
     log.error('Tables CONFIG_GLOBAL ou SECTIONS non trouvées dans la nouvelle database.');
     process.exit(1);
+  }
+
+  if (leadsTable) {
+    log.dim(`- LEADS trouvée (ID: ${leadsTable.id})`);
+  } else {
+    log.warning('Table LEADS non trouvée (optionnelle)');
   }
 
   // ========== 7. CUSTOMIZE CLIENT DATA (Optional) ==========
@@ -561,42 +568,89 @@ ${Colors.RESET}`);
     if (rows.results.length > 0) {
       const firstRow = rows.results[0];
       
-      // Mettre à jour le nom du site
+      // Mettre à jour le nom du site (champ "Nom", pas "Name")
       await client.updateRow(configGlobalTable.id, firstRow.id, {
-        Name: clientName,
+        Nom: clientName,
       });
+      log.dim('→ Nom du site mis à jour');
       
       // Mettre à jour le SEO avec le nom du client
       if (firstRow.SEO_Metadata) {
         try {
           const seo = JSON.parse(firstRow.SEO_Metadata as string);
           seo.metaTitre = `${clientName} - Site Officiel`;
-          seo.metaDescription = `Bienvenue sur le site de ${clientName}.`;
+          seo.metaDescription = `Bienvenue sur le site de ${clientName}. Découvrez nos services et contactez-nous.`;
+          seo.siteUrl = `https://${clientSlug}.ch`;
           await client.updateRow(configGlobalTable.id, firstRow.id, {
             SEO_Metadata: JSON.stringify(seo),
           });
+          log.dim('→ SEO Metadata personnalisé');
         } catch {
           // Ignorer les erreurs de parsing JSON
         }
       }
       
       // Mettre à jour le Contact
+      const clientEmail = `contact@${clientSlug}.ch`;
       if (firstRow.Contact) {
         try {
           const contact = JSON.parse(firstRow.Contact as string);
-          contact.email = `contact@${clientSlug}.ch`;
+          contact.email = clientEmail;
           await client.updateRow(configGlobalTable.id, firstRow.id, {
             Contact: JSON.stringify(contact),
           });
+          log.dim('→ Contact personnalisé');
         } catch {
           // Ignorer les erreurs de parsing JSON
         }
       }
       
-      log.success('Configuration personnalisée avec le nom du client');
+      // Mettre à jour le Footer (copyright avec le nom du client)
+      if (firstRow.Footer) {
+        try {
+          const footer = JSON.parse(firstRow.Footer as string);
+          footer.copyrightTexte = `© ${new Date().getFullYear()} ${clientName}. Tous droits réservés.`;
+          await client.updateRow(configGlobalTable.id, firstRow.id, {
+            Footer: JSON.stringify(footer),
+          });
+          log.dim('→ Footer personnalisé');
+        } catch {
+          // Ignorer les erreurs de parsing JSON
+        }
+      }
+      
+      log.success('CONFIG_GLOBAL personnalisée');
     }
   } catch (err) {
-    log.warning(`Personnalisation partielle: ${err}`);
+    log.warning(`Personnalisation CONFIG_GLOBAL partielle: ${err}`);
+  }
+
+  // ========== 7b. PERSONNALISER LA SECTION CONTACT ==========
+  log.step('Mise à jour de la section Contact...');
+  try {
+    const sectionsRows = await client.listRows(sectionsTable.id);
+    const contactSection = sectionsRows.results.find(
+      (row) => (row.Nom as string)?.toUpperCase() === 'CONTACT' || (row.Type as number) === 3421
+    );
+    
+    if (contactSection) {
+      const contentStr = contactSection.Content as string;
+      if (contentStr) {
+        try {
+          const content = JSON.parse(contentStr);
+          content.emailContact = `contact@${clientSlug}.ch`;
+          await client.updateRow(sectionsTable.id, contactSection.id as number, {
+            Content: JSON.stringify(content),
+          });
+          log.dim('→ Section CONTACT personnalisée');
+        } catch {
+          // Ignorer les erreurs de parsing JSON
+        }
+      }
+    }
+    log.success('SECTIONS personnalisées');
+  } catch (err) {
+    log.warning(`Personnalisation SECTIONS partielle: ${err}`);
   }
 
   // ========== 8. OUTPUT CONFIGURATION ==========
@@ -604,6 +658,8 @@ ${Colors.RESET}`);
 
   const token = process.env.BASEROW_API_TOKEN || 'VOTRE_TOKEN_BASEROW';
   const adminPin = generateRandomPin();
+
+  const leadsIdStr = leadsTable ? String(leadsTable.id) : 'N/A';
 
   console.log(`
 ${Colors.GREEN}${Colors.BOLD}
@@ -613,16 +669,19 @@ ${Colors.GREEN}${Colors.BOLD}
 │  Database ID: ${String(newDatabase.id).padEnd(43)}│
 │  CONFIG_GLOBAL ID: ${String(configGlobalTable.id).padEnd(39)}│
 │  SECTIONS ID: ${String(sectionsTable.id).padEnd(44)}│
+│  LEADS ID: ${leadsIdStr.padEnd(47)}│
 │  ADMIN PIN: ${String(adminPin).padEnd(46)}│
 └────────────────────────────────────────────────────────────┘
 ${Colors.RESET}`);
 
   console.log(`
-${Colors.CYAN}🚀 CONFIGURATION POUR DOCKER/VERCEL:${Colors.RESET}
+${Colors.CYAN}🚀 CONFIGURATION POUR DOCKER:${Colors.RESET}
 ${Colors.DIM}───────────────────────────────────────${Colors.RESET}
 ${Colors.YELLOW}BASEROW_API_TOKEN=${token}
+BASEROW_FACTORY_DATABASE_ID=${newDatabase.id}
 BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
-BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}
+BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}${leadsTable ? `
+BASEROW_FACTORY_LEADS_ID=${leadsTable.id}` : ''}
 ADMIN_PASSWORD=${adminPin}${Colors.RESET}
 ${Colors.DIM}───────────────────────────────────────${Colors.RESET}
 `);
@@ -631,24 +690,33 @@ ${Colors.DIM}──────────────────────�
   const saveToFile = await confirm('💾 Sauvegarder la config dans un fichier .env.client?');
   
   if (saveToFile) {
-    const envContent = `# Configuration pour: ${clientName}
+    const envContent = `# ============================================
+# Configuration pour: ${clientName}
+# ============================================
 # Créé le: ${new Date().toISOString()}
 # Database ID: ${newDatabase.id}
+# Slug: ${clientSlug}
 
-# === FACTORY V2 CONFIG ===
+# === FACTORY V2 - BASEROW CONFIG ===
 BASEROW_API_TOKEN=${token}
+BASEROW_FACTORY_DATABASE_ID=${newDatabase.id}
 BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
 BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}
+${leadsTable ? `BASEROW_FACTORY_LEADS_ID=${leadsTable.id}` : '# BASEROW_FACTORY_LEADS_ID= # Table LEADS non présente'}
 
 # === ADMIN AUTH ===
 ADMIN_PASSWORD=${adminPin}
 
-# === OPTIONNEL ===
-# Nom du site (affiché dans admin)
+# === SITE CONFIG ===
 SITE_NAME=${clientName}
+NEXT_PUBLIC_SITE_URL=https://${clientSlug}.ch
 
-# Domaine personnalisé
-# NEXT_PUBLIC_SITE_URL=https://${clientSlug}.ch
+# === EMAIL CONFIG (à personnaliser) ===
+# CONTACT_EMAIL=contact@${clientSlug}.ch
+# SMTP_HOST=
+# SMTP_PORT=587
+# SMTP_USER=
+# SMTP_PASSWORD=
 `;
 
     const filename = `.env.client-${clientSlug}`;

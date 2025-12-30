@@ -124,78 +124,6 @@ const AVAILABLE_SECTION_TYPES = [
 ] as const;
 
 // ============================================
-// AVAILABLE SECTION TILE (for inactive/unused sections)
-// ============================================
-
-interface AvailableSectionTileProps {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  isUsed: boolean;
-  existingSection?: (Section & { _rowId?: number }) | null;
-  onAdd: () => void;
-  onSelect?: () => void;
-  onToggleActive?: (isActive: boolean) => void;
-}
-
-function AvailableSectionTile({ 
-  label, icon: Icon, isUsed, existingSection, 
-  onAdd, onSelect, onToggleActive 
-}: AvailableSectionTileProps) {
-  // Si la section existe mais est désactivée
-  if (existingSection && !existingSection.isActive) {
-    return (
-      <button
-        type="button"
-        onClick={onSelect}
-        className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-800/30 border border-white/5 hover:border-white/10 transition-all group opacity-50 hover:opacity-80"
-      >
-        <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center shrink-0">
-          <Icon className="w-4 h-4 text-slate-500" />
-        </div>
-        <div className="flex-1 text-left min-w-0">
-          <span className="block text-xs font-medium text-slate-500 truncate">{label}</span>
-        </div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleActive?.(true);
-          }}
-          className="p-1 rounded text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-          title="Activer"
-        >
-          <EyeOff className="w-3 h-3" />
-        </button>
-        <span className="px-1.5 py-0.5 rounded-full bg-slate-700/50 text-slate-600 text-[9px]">
-          Off
-        </span>
-      </button>
-    );
-  }
-
-  // Si la section n'existe pas encore (disponible à créer)
-  if (!isUsed) {
-    return (
-      <button
-        type="button"
-        onClick={onAdd}
-        className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-800/20 border border-dashed border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all group"
-      >
-        <div className="w-8 h-8 rounded-lg bg-slate-700/30 group-hover:bg-cyan-500/20 flex items-center justify-center shrink-0 transition-colors">
-          <Icon className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors" />
-        </div>
-        <div className="flex-1 text-left min-w-0">
-          <span className="block text-xs font-medium text-slate-600 group-hover:text-slate-400 truncate transition-colors">{label}</span>
-        </div>
-        <Plus className="w-3.5 h-3.5 text-slate-600 group-hover:text-cyan-400 transition-colors" />
-      </button>
-    );
-  }
-
-  return null;
-}
-
-// ============================================
 // SIDEBAR SECTION ITEM
 // ============================================
 
@@ -605,32 +533,111 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Available Sections (inactive + not created) */}
+            {/* Inactive Sections (désactivées mais existantes) */}
+            {allSections.filter(s => !s.isActive).length > 0 && (
+              <div className="mt-4 pt-3 border-t border-white/5">
+                <h3 className="text-slate-600 text-[10px] font-medium flex items-center gap-2 uppercase tracking-wider mb-2">
+                  <EyeOff className="w-3 h-3" />
+                  Désactivées ({allSections.filter(s => !s.isActive).length})
+                </h3>
+                
+                <div className="space-y-1">
+                  {allSections.filter(s => !s.isActive).map((section) => {
+                    const sectionConfig = AVAILABLE_SECTION_TYPES.find(t => t.type === section.type);
+                    const Icon = sectionConfig?.icon || Layers;
+                    const label = SECTION_LABELS[section.type] || section.type;
+                    
+                    return (
+                      <div
+                        key={section._rowId}
+                        className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all group ${
+                          selectedView === section._rowId
+                            ? 'bg-slate-700/50 border border-cyan-500/30'
+                            : 'bg-slate-800/30 border border-white/5 hover:border-white/10 opacity-60 hover:opacity-80'
+                        }`}
+                      >
+                        {/* Zone cliquable pour sélectionner */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedView(section._rowId!)}
+                          className="flex items-center gap-2 flex-1 min-w-0"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-slate-500" />
+                          </div>
+                          <div className="flex-1 text-left min-w-0">
+                            <span className="text-slate-400 text-xs font-medium truncate block">{label}</span>
+                            <span className="text-slate-600 text-[10px]">Cliquer pour modifier</span>
+                          </div>
+                        </button>
+                        
+                        {/* Actions: Activer + Supprimer */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSectionActive(section._rowId!, true);
+                            }}
+                            className="p-1 hover:bg-emerald-500/20 rounded text-slate-500 hover:text-emerald-400 transition-colors"
+                            title="Activer cette section"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Supprimer définitivement la section "${label}" ? Cette action est irréversible.`)) {
+                                deleteSection(section._rowId!);
+                                if (selectedView === section._rowId) {
+                                  setSelectedView('global');
+                                }
+                              }
+                            }}
+                            className="p-1 hover:bg-red-500/20 rounded text-slate-500 hover:text-red-400 transition-colors"
+                            title="Supprimer définitivement"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Add New Section (types non encore créés) */}
             <div className="mt-4 pt-3 border-t border-white/5">
               <h3 className="text-slate-600 text-[10px] font-medium flex items-center gap-2 uppercase tracking-wider mb-2">
                 <Plus className="w-3 h-3" />
-                Disponibles
+                Créer une section
               </h3>
               
               <div className="space-y-1">
                 {AVAILABLE_SECTION_TYPES.map(({ type, label, icon: Icon }) => {
+                  // Vérifie si une section de ce type existe déjà (active ou non)
                   const existingSection = allSections.find(s => s.type === type);
-                  const isUsed = existingSection?.isActive ?? false;
                   
-                  // Skip if section is active (already shown above)
-                  if (isUsed) return null;
+                  // Si la section existe déjà, ne pas afficher le bouton de création
+                  if (existingSection) return null;
                   
                   return (
-                    <AvailableSectionTile
+                    <button
                       key={type}
-                      label={label}
-                      icon={Icon}
-                      isUsed={isUsed}
-                      existingSection={existingSection}
-                      onAdd={() => handleAddSection(type)}
-                      onSelect={() => existingSection?._rowId && setSelectedView(existingSection._rowId)}
-                      onToggleActive={(isActive) => existingSection?._rowId && toggleSectionActive(existingSection._rowId, isActive)}
-                    />
+                      type="button"
+                      onClick={() => handleAddSection(type)}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-800/20 border border-dashed border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-slate-700/30 group-hover:bg-cyan-500/20 flex items-center justify-center shrink-0 transition-colors">
+                        <Icon className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors" />
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <span className="text-slate-500 group-hover:text-slate-300 text-xs font-medium truncate block transition-colors">{label}</span>
+                        <span className="text-slate-600 text-[10px]">+ Créer cette section</span>
+                      </div>
+                    </button>
                   );
                 })}
               </div>

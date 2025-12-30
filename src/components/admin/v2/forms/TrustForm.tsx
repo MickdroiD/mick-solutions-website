@@ -62,6 +62,13 @@ const CARD_STYLE_OPTIONS = [
   { value: 'Glassmorphism', label: 'Glass' },
 ];
 
+const HOVER_EFFECT_OPTIONS = [
+  { value: 'None', label: 'Aucun' },
+  { value: 'Scale', label: 'Agrandir' },
+  { value: 'Glow', label: 'Lueur' },
+  { value: 'Lift', label: 'Élever' },
+];
+
 const TRUST_TYPE_OPTIONS = [
   { value: 'point', label: 'Point de confiance', emoji: '✅', description: 'Texte avec icône' },
   { value: 'stat', label: 'Statistique', emoji: '📊', description: 'Chiffre + label' },
@@ -434,6 +441,27 @@ function TrustFormComponent({ section, onUpdate }: TrustFormProps) {
                 className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${
                   section.design.cardStyle === opt.value
                     ? 'border-violet-500 bg-violet-500/20 text-violet-400'
+                    : 'border-white/10 text-slate-400 hover:border-white/20'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Hover Effect */}
+        <div className="space-y-2 pt-4 border-t border-white/5">
+          <label className="text-white font-medium text-sm">Effet au survol</label>
+          <div className="flex flex-wrap gap-2">
+            {HOVER_EFFECT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateDesign('hoverEffect', opt.value)}
+                className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${
+                  section.design.hoverEffect === opt.value
+                    ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
                     : 'border-white/10 text-slate-400 hover:border-white/20'
                 }`}
               >

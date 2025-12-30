@@ -5,18 +5,32 @@ import { ExternalLink, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import type { Project } from '@/lib/baserow';
 
+// ============================================
+// VARIANT TYPES
+// ============================================
+type VariantType = 'Electric' | 'Minimal' | 'Corporate' | 'Bold';
+type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
+type LayoutType = 'Grid' | 'Masonry' | 'Carousel';
+
 interface PortfolioSectionProps {
   projects?: Project[];
+  variant?: VariantType;
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
+  layout?: LayoutType;
+  title?: string;
+  subtitle?: string;
 }
 
-// Mock data si pas de données Baserow
-const mockProjects: Project[] = [
+// Default pedagogical projects
+const defaultProjects: Project[] = [
   {
     id: 1,
-    Nom: 'Automatisation CRM',
-    Slug: 'automatisation-crm',
-    Tags: [{ id: 1, value: 'n8n', color: 'blue' }, { id: 2, value: 'Web', color: 'green' }],
-    DescriptionCourte: 'Synchronisation automatique des contacts entre plusieurs outils métier.',
+    Nom: '[Nom du projet 1]',
+    Slug: 'projet-1',
+    Tags: [{ id: 1, value: 'Catégorie', color: 'blue' }],
+    DescriptionCourte: 'Décrivez ce projet : objectifs, technologies utilisées et résultats obtenus pour le client.',
     ImageCouverture: [],
     LienSite: '',
     Statut: { id: 3068, value: 'Publié', color: 'green' },
@@ -24,10 +38,10 @@ const mockProjects: Project[] = [
   },
   {
     id: 2,
-    Nom: 'Dashboard Analytics',
-    Slug: 'dashboard-analytics',
-    Tags: [{ id: 2, value: 'Web', color: 'green' }, { id: 3, value: 'Design', color: 'purple' }],
-    DescriptionCourte: 'Tableau de bord temps réel pour le suivi des KPIs.',
+    Nom: '[Nom du projet 2]',
+    Slug: 'projet-2',
+    Tags: [{ id: 2, value: 'Web', color: 'green' }],
+    DescriptionCourte: 'Expliquez les défis rencontrés et comment vous les avez résolus.',
     ImageCouverture: [],
     LienSite: '',
     Statut: { id: 3068, value: 'Publié', color: 'green' },
@@ -35,10 +49,10 @@ const mockProjects: Project[] = [
   },
   {
     id: 3,
-    Nom: 'Facturation Automatisée',
-    Slug: 'facturation-automatisee',
-    Tags: [{ id: 1, value: 'n8n', color: 'blue' }],
-    DescriptionCourte: 'Génération et envoi automatique des factures mensuelles.',
+    Nom: '[Nom du projet 3]',
+    Slug: 'projet-3',
+    Tags: [{ id: 3, value: 'Design', color: 'purple' }],
+    DescriptionCourte: 'Présentez les bénéfices concrets pour votre client et les métriques de succès.',
     ImageCouverture: [],
     LienSite: '',
     Statut: { id: 3068, value: 'Publié', color: 'green' },
@@ -54,8 +68,48 @@ const tagColors: Record<string, string> = {
   'SEO': 'bg-green-500/20 text-green-300 border-green-500/30',
 };
 
-export default function PortfolioSection({ projects }: PortfolioSectionProps) {
-  const displayProjects = projects && projects.length > 0 ? projects : mockProjects;
+export default function PortfolioSection({ 
+  projects,
+  variant = 'Electric',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Scale',
+  layout = 'Grid',
+  title = 'Nos projets',
+  subtitle = 'Découvrez quelques-unes de nos réalisations.',
+}: PortfolioSectionProps) {
+  const displayProjects = projects && projects.length > 0 ? projects : defaultProjects;
+  
+  // Card style classes
+  const getCardStyleClasses = () => {
+    switch (cardStyle) {
+      case 'Flat': return 'bg-slate-900/30';
+      case 'Border': return 'bg-slate-900/50 border-2 border-primary-200';
+      case 'Glassmorphism': return 'bg-white/10 backdrop-blur-md border border-white/20';
+      case 'Shadow':
+      default: return 'bg-slate-900/50 border border-white/5 hover:border-primary-500/30 shadow-lg';
+    }
+  };
+  
+  // Hover effect classes
+  const getHoverEffectClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Glow': return 'hover:shadow-xl hover:shadow-primary-500/20';
+      case 'Lift': return 'hover:-translate-y-2';
+      case 'Scale':
+      default: return 'hover:scale-[1.02]';
+    }
+  };
+  
+  // Grid classes based on layout
+  const getGridClasses = () => {
+    switch (layout) {
+      case 'Masonry': return 'columns-1 md:columns-2 lg:columns-3 gap-6';
+      case 'Carousel': return 'flex overflow-x-auto gap-6 snap-x snap-mandatory pb-4';
+      case 'Grid':
+      default: return 'grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8';
+    }
+  };
 
   // Si aucun projet, ne pas afficher la section
   if (!displayProjects || displayProjects.length === 0) {
@@ -81,15 +135,15 @@ export default function PortfolioSection({ projects }: PortfolioSectionProps) {
             Réalisations
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Nos <span className="text-gradient">projets</span>
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Découvrez quelques-unes de nos réalisations pour des PME suisses.
+            {subtitle}
           </p>
         </motion.div>
 
-        {/* Projects grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* Projects grid/layout */}
+        <div className={layout === 'Grid' ? getGridClasses() : layout === 'Masonry' ? 'columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6' : 'flex overflow-x-auto gap-6 snap-x snap-mandatory pb-4'}>
           {displayProjects.map((project, index) => (
             <motion.div
               key={project.id}
@@ -97,11 +151,9 @@ export default function PortfolioSection({ projects }: PortfolioSectionProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group relative"
+              className={`group relative ${layout === 'Carousel' ? 'flex-shrink-0 w-80 snap-center' : layout === 'Masonry' ? 'break-inside-avoid mb-6' : ''}`}
             >
-              <div className="relative h-full bg-slate-900/50 rounded-2xl border border-white/5 overflow-hidden
-                            hover:border-primary-500/30 transition-all duration-500
-                            hover:shadow-xl hover:shadow-primary-500/10">
+              <div className={`relative h-full rounded-2xl overflow-hidden transition-all duration-500 ${getCardStyleClasses()} ${getHoverEffectClasses()}`}>
                 {/* Image de couverture */}
                 <div className="relative h-48 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
                   {project.ImageCouverture && project.ImageCouverture.length > 0 ? (

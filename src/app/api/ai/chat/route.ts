@@ -232,13 +232,16 @@ export async function POST(request: NextRequest): Promise<Response> {
     const body: ChatRequestBody = await request.json();
     const {
       messages,
-      provider = 'openai',
+      provider: rawProvider = 'openai',
       model,
       systemPrompt,
       siteContext,
       customApiKey,
       stream = false,
     } = body;
+
+    // Normalize provider to lowercase
+    const provider = rawProvider?.toLowerCase() as 'openai' | 'anthropic';
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Messages requis' }, { status: 400 });
@@ -265,7 +268,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const selectedModel =
       model ||
-      (provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-sonnet-20241022');
+      (provider === 'openai' ? 'gpt-4o-mini' : 'claude-3-haiku-20240307');
 
     // Mode streaming
     if (stream) {

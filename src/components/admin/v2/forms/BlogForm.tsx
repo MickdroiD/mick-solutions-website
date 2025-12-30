@@ -35,6 +35,13 @@ const CARD_STYLE_OPTIONS = [
   { value: 'Glass', label: 'Verre', description: 'Effet glassmorphism' },
 ];
 
+const HOVER_EFFECT_OPTIONS = [
+  { value: 'None', label: 'Aucun', description: 'Pas d\'effet' },
+  { value: 'Scale', label: 'Agrandir', description: 'Zoom au survol' },
+  { value: 'Glow', label: 'Lueur', description: 'Effet lumineux' },
+  { value: 'Lift', label: 'Élever', description: 'Soulèvement' },
+];
+
 // ============================================
 // BLOG FORM COMPONENT
 // ============================================
@@ -208,6 +215,28 @@ function BlogFormComponent({ section, onUpdate }: BlogFormProps) {
                 className={`px-4 py-3 rounded-xl border-2 text-sm transition-all ${
                   section.design.cardStyle === opt.value
                     ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
+                    : 'border-white/10 text-slate-400 hover:border-white/20'
+                }`}
+              >
+                <span className="block font-medium">{opt.label}</span>
+                <span className="text-xs opacity-60">{opt.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Hover Effect */}
+        <div className="space-y-2 pt-4 border-t border-white/5">
+          <label className="text-white font-medium text-sm">Effet au survol</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {HOVER_EFFECT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateDesign('hoverEffect', opt.value)}
+                className={`px-4 py-3 rounded-xl border-2 text-sm transition-all ${
+                  section.design.hoverEffect === opt.value
+                    ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
                     : 'border-white/10 text-slate-400 hover:border-white/20'
                 }`}
               >

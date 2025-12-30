@@ -18,18 +18,57 @@ export interface BlogPost {
   category?: string;
 }
 
+type VariantType = 'Minimal' | 'Electric' | 'Corporate' | 'Bold';
+type CardStyle = 'Flat' | 'Shadow' | 'Outlined' | 'Glass';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
+
 interface BlogSectionProps {
   posts: BlogPost[] | null;
   /** Mode admin/dev pour afficher les placeholders */
   isDevMode?: boolean;
+  variant?: VariantType;
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
+  title?: string;
+  subtitle?: string;
 }
 
 // ============================================
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export default function BlogSection({ posts, isDevMode = false }: BlogSectionProps) {
+export default function BlogSection({ 
+  posts, 
+  isDevMode = false,
+  variant = 'Electric',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Glow',
+  title = 'Nos derniers articles',
+  subtitle = 'Découvrez nos conseils, actualités et retours d\'expérience.',
+}: BlogSectionProps) {
   const hasPosts = posts && posts.length > 0;
+
+  // Card style classes
+  const getCardStyleClasses = () => {
+    switch (cardStyle) {
+      case 'Flat': return 'bg-white/5';
+      case 'Outlined': return 'bg-white/5 border-2 border-white/20';
+      case 'Glass': return 'bg-white/10 backdrop-blur-md border border-white/20';
+      case 'Shadow':
+      default: return 'bg-white/5 border border-white/10 shadow-lg';
+    }
+  };
+
+  // Hover effect classes
+  const getHoverEffectClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Scale': return 'hover:scale-[1.02]';
+      case 'Lift': return 'hover:-translate-y-2 hover:shadow-xl';
+      case 'Glow':
+      default: return 'hover:shadow-primary-500/20 hover:border-primary-500/30';
+    }
+  };
 
   // Si pas d'articles et pas en mode dev, ne rien afficher
   if (!hasPosts && !isDevMode) {
@@ -51,10 +90,10 @@ export default function BlogSection({ posts, isDevMode = false }: BlogSectionPro
             Blog
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Nos derniers articles
+            {title}
           </h2>
           <p className="text-slate-400 max-w-2xl mx-auto">
-            Découvrez nos conseils, actualités et retours d&apos;expérience.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -69,7 +108,7 @@ export default function BlogSection({ posts, isDevMode = false }: BlogSectionPro
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/30 transition-all duration-300"
+                className={`group rounded-2xl overflow-hidden transition-all duration-300 ${getCardStyleClasses()} ${getHoverEffectClasses()}`}
               >
                 {/* Image de couverture */}
                 {post.coverImage && (

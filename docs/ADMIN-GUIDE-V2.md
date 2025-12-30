@@ -313,13 +313,6 @@ networks:
 docker compose up -d
 ```
 
-### Option B: Vercel
-
-1. Fork le repository GitHub
-2. Importer dans Vercel
-3. Configurer les variables d'environnement
-4. Deploy
-
 ### Configuration DNS
 
 Ajouter les enregistrements DNS:

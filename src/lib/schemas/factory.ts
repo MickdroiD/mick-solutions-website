@@ -8,6 +8,128 @@
 import { z } from 'zod';
 
 // ============================================
+// 0. JSON TRANSFORM HELPERS
+// ============================================
+// Fonctions utilitaires pour parser les champs JSON stringifiés de Baserow
+// avec fallback sur des valeurs par défaut en cas d'erreur.
+
+/**
+ * Crée un transformer Zod qui parse une string JSON en objet typé.
+ * En cas d'échec (JSON invalide, null, undefined), retourne l'objet par défaut.
+ * 
+ * @param schema - Le schéma Zod à appliquer après parsing
+ * @param defaultValue - Valeur par défaut si parsing échoue
+ * @param fieldName - Nom du champ pour le logging (optionnel)
+ */
+function createJsonTransformer<T extends z.ZodTypeAny>(
+  schema: T,
+  defaultValue: z.infer<T>,
+  fieldName?: string
+) {
+  return z.string().transform((val, ctx): z.infer<T> => {
+    // Handle empty/null cases
+    if (!val || val.trim() === '' || val === 'null' || val === 'undefined') {
+      return defaultValue;
+    }
+
+    try {
+      const parsed = JSON.parse(val);
+      // Validate with schema, use defaults for missing fields
+      const result = schema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
+      }
+      // Log validation errors in development
+      if (process.env.NODE_ENV === 'development' && fieldName) {
+        console.warn(`[Factory] ${fieldName} validation failed:`, result.error.issues);
+      }
+      // Try to merge with defaults for partial data (only if both are objects)
+      if (typeof defaultValue === 'object' && defaultValue !== null && typeof parsed === 'object' && parsed !== null) {
+        return { ...defaultValue, ...parsed } as z.infer<T>;
+      }
+      return defaultValue;
+    } catch (e) {
+      // JSON parse error - return default
+      if (process.env.NODE_ENV === 'development' && fieldName) {
+        console.warn(`[Factory] ${fieldName} JSON parse error:`, e);
+      }
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid JSON in ${fieldName || 'field'}, using defaults`,
+      });
+      return defaultValue;
+    }
+  });
+}
+
+/**
+ * Parse un champ JSON en objet générique (pour Content/Design dynamiques)
+ * Retourne {} si parsing échoue.
+ */
+const JsonObjectTransformer = z.string().transform((val, ctx) => {
+  if (!val || val.trim() === '' || val === 'null' || val === 'undefined') {
+    return {};
+  }
+  try {
+    return JSON.parse(val) as Record<string, unknown>;
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid JSON, using empty object',
+    });
+    return {};
+  }
+});
+
+/**
+ * Helper exporté pour parser manuellement un champ JSON avec fallback.
+ * Utile pour les cas où on ne passe pas par le schéma Zod complet.
+ * 
+ * @example
+ * const seo = safeJsonParseWithSchema(row.SEO_Metadata, SEOSchema, DEFAULT_SEO);
+ */
+export function safeJsonParseWithSchema<T extends z.ZodTypeAny>(
+  jsonString: string | null | undefined,
+  schema: T,
+  defaultValue: z.infer<T>,
+  fieldName?: string
+): z.infer<T> {
+  if (!jsonString || jsonString.trim() === '' || jsonString === 'null') {
+    return defaultValue;
+  }
+
+  try {
+    // Handle double-encoded JSON
+    let cleaned = jsonString;
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = JSON.parse(cleaned) as string;
+    }
+    cleaned = cleaned.replace(/\\"/g, '"');
+
+    const parsed = JSON.parse(cleaned) as unknown;
+    const result = schema.safeParse(parsed);
+    
+    if (result.success) {
+      return result.data;
+    }
+    
+    if (process.env.NODE_ENV === 'development' && fieldName) {
+      console.warn(`[Factory] ${fieldName} validation failed:`, result.error.issues);
+    }
+    // Merge with defaults for partial data (only if both are objects)
+    if (typeof defaultValue === 'object' && defaultValue !== null && typeof parsed === 'object' && parsed !== null) {
+      return { ...defaultValue, ...parsed } as z.infer<T>;
+    }
+    return defaultValue;
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development' && fieldName) {
+      console.warn(`[Factory] ${fieldName} JSON parse error:`, e);
+    }
+    return defaultValue;
+  }
+}
+
+// ============================================
 // 1. ENUMS RÉUTILISABLES
 // ============================================
 // Centralisés pour cohérence entre GlobalConfig et Sections.
@@ -272,6 +394,11 @@ export const BrandingSchema = z.object({
   borderRadius: BorderRadiusEnum.default('Medium'),
   patternBackground: PatternBackgroundEnum.default('Grid'),
   themeGlobal: VariantStyleEnum.default('Electric'),
+  // === NAVBAR / HEADER CONFIG ===
+  navbarVariant: VariantStyleEnum.nullable().default(null), // Override themeGlobal pour navbar
+  headerLogoSize: z.number().int().min(20).max(120).default(40),
+  headerLogoAnimation: LogoAnimationEnum.default('spin'),
+  stickyHeader: z.boolean().default(true),
 });
 
 // 3.4 Contact Sub-Schema
@@ -288,6 +415,8 @@ export const ContactInfoSchema = z.object({
   lienCalendly: z.string().url().nullable().default(null),
   lienWhatsapp: z.string().nullable().default(null),
   lienBoutonAppel: z.string().nullable().default(null),
+  // === NAVBAR CTA CONFIG ===
+  texteBoutonAppel: z.string().default('Réserver un appel'), // Texte affiché sur le bouton appel navbar
   // CRM Lite: Webhook URL pour traitement des leads
   n8nWebhookUrl: z.string().url().nullable().default(null),
 });
@@ -313,12 +442,18 @@ export const IntegrationsSchema = z.object({
 });
 
 // 3.6 Assets Sub-Schema
+// Helper to validate URL or relative path (starts with /)
+const urlOrPathSchema = z.string().refine(
+  (val) => val.startsWith('/') || val.startsWith('http://') || val.startsWith('https://'),
+  { message: 'Must be a valid URL or a path starting with /' }
+).nullable().default(null);
+
 export const AssetsSchema = z.object({
-  logoUrl: z.string().url().nullable().default(null),
-  logoDarkUrl: z.string().url().nullable().default(null),
+  logoUrl: urlOrPathSchema,
+  logoDarkUrl: urlOrPathSchema,
   logoSvgCode: z.string().nullable().default(null),
-  faviconUrl: z.string().url().nullable().default(null),
-  ogImageUrl: z.string().url().nullable().default(null),
+  faviconUrl: urlOrPathSchema,
+  ogImageUrl: urlOrPathSchema,
 });
 
 // 3.7 AI Config Sub-Schema
@@ -453,8 +588,13 @@ export const ServiceItemSchema = z.object({
   description: z.string(),
   icone: z.string().nullable().default(null),
   pointsCles: z.array(z.string()).default([]),
+  // Support both field names for price
   tarif: z.string().nullable().default(null),
-  type: z.enum(['Prestation unique', 'Abonnement mensuel']).nullable(),
+  prix: z.string().nullable().optional(),
+  // Support both field names for link
+  lien: z.string().nullable().optional(),
+  // Type is optional for backward compatibility
+  type: z.enum(['Prestation unique', 'Abonnement mensuel']).nullable().optional(),
 });
 
 export const ServicesContentSchema = z.object({
@@ -541,11 +681,18 @@ export const GallerySectionSchema = z.object({
 // 4.5 PORTFOLIO SECTION
 export const PortfolioItemSchema = z.object({
   id: z.string(),
-  nom: z.string(),
-  descriptionCourte: z.string().nullable().default(null),
-  imageUrl: z.string().url().nullable().default(null),
-  lienSite: z.string().url().nullable().default(null),
-  slug: z.string(),
+  // Support both field names (nom/titre)
+  nom: z.string().optional(),
+  titre: z.string().optional(),
+  // Support both field names for description
+  descriptionCourte: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().default(null), // Allow relative paths
+  // Support both field names for link
+  lienSite: z.string().nullable().optional(),
+  lien: z.string().nullable().optional(),
+  // Slug is optional for backward compatibility
+  slug: z.string().optional(),
   tags: z.array(z.string()).default([]),
 });
 
@@ -713,15 +860,19 @@ export const BlogSectionSchema = z.object({
 
 // 4.11 AI ASSISTANT SECTION
 export const AIAssistantContentSchema = z.object({
+  titre: z.string().default('Assistant Virtuel'),
+  sousTitre: z.string().nullable().default(null),
   welcomeMessage: z.string().default('Bonjour ! Comment puis-je vous aider ?'),
   placeholder: z.string().default('Posez votre question...'),
   avatarUrl: z.string().url().nullable().default(null),
   voiceEnabled: z.boolean().default(false),
   voiceLanguage: VoiceLanguageEnum.default('fr-FR'),
+  suggestedQuestions: z.array(z.string()).default([]),
 });
 
 export const AIAssistantDesignSchema = z.object({
   style: AIAssistantStyleEnum.default('Chat'),
+  position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
 });
 
 export const AIAssistantSectionSchema = z.object({
@@ -787,37 +938,182 @@ export type AIAssistantSection = z.infer<typeof AIAssistantSectionSchema>;
 export type CustomSection = z.infer<typeof CustomSectionSchema>;
 
 // ============================================
-// 6. BASEROW ROW SCHEMAS
+// 6. BASEROW ROW SCHEMAS (with JSON Auto-Parsing)
 // ============================================
 // Pour mapping direct vers les lignes Baserow.
+// ⚠️ ALIGNÉ avec la structure Baserow réelle (Audit 29/12/2025)
+// 🔧 JSON auto-parsé avec fallback sur valeurs par défaut
 
+// --- Valeurs par défaut pour les champs JSON (exportées pour réutilisation) ---
+export const DEFAULT_SEO = {
+  metaTitre: '',
+  metaDescription: '',
+  siteUrl: 'https://example.com',
+  motsCles: '',
+  langue: 'fr',
+  locale: 'fr_CH',
+  robotsIndex: true,
+  sitemapPriority: 0.8,
+};
+
+export const DEFAULT_BRANDING = {
+  couleurPrimaire: '#06b6d4',
+  couleurAccent: '#a855f7',
+  couleurBackground: '#0a0a0f',
+  couleurText: '#ffffff',
+  fontPrimary: 'Inter' as const,
+  fontHeading: 'Inter' as const,
+  fontCustomUrl: null,
+  borderRadius: 'Medium' as const,
+  patternBackground: 'Grid' as const,
+  themeGlobal: 'Electric' as const,
+  // === NAVBAR / HEADER CONFIG ===
+  navbarVariant: null,
+  headerLogoSize: 40,
+  headerLogoAnimation: 'spin' as const,
+  stickyHeader: true,
+};
+
+export const DEFAULT_CONTACT = {
+  email: 'contact@example.com',
+  telephone: null,
+  adresse: '',
+  adresseCourte: null,
+  lienLinkedin: null,
+  lienInstagram: null,
+  lienTwitter: null,
+  lienYoutube: null,
+  lienGithub: null,
+  lienCalendly: null,
+  lienWhatsapp: null,
+  lienBoutonAppel: null,
+  // === NAVBAR CTA CONFIG ===
+  texteBoutonAppel: 'Réserver un appel',
+  n8nWebhookUrl: null,
+};
+
+export const DEFAULT_INTEGRATIONS = {
+  umamiSiteId: null,
+  umamiScriptUrl: null,
+  gaMeasurementId: null,
+  gtmContainerId: null,
+  hotjarSiteId: null,
+  facebookPixelId: null,
+  n8nWebhookContact: null,
+  n8nWebhookNewsletter: null,
+  stripePublicKey: null,
+  mailchimpListId: null,
+  sendgridApiKey: null,
+  notionDatabaseId: null,
+  airtableBaseId: null,
+};
+
+export const DEFAULT_ASSETS = {
+  logoUrl: null,
+  logoDarkUrl: null,
+  logoSvgCode: null,
+  faviconUrl: null,
+  ogImageUrl: null,
+};
+
+export const DEFAULT_AI_CONFIG = {
+  aiMode: 'Disabled' as const,
+  aiProvider: 'OpenAI' as const,
+  aiApiKey: null,
+  aiModel: 'gpt-4o',
+  aiSystemPrompt: null,
+  aiWebhookUrl: null,
+  aiImageWebhook: null,
+  aiMaxTokens: 1000,
+  aiTemperature: 0.7,
+  aiTone: 'Professional' as const,
+  aiIndustry: 'Services' as const,
+  aiTargetAudience: null,
+  aiKeywords: null,
+};
+
+export const DEFAULT_ANIMATIONS = {
+  enableAnimations: true,
+  animationStyle: 'mick-electric' as const,
+  animationSpeed: 'Normal' as const,
+  scrollEffect: 'Fade' as const,
+  hoverEffect: 'Scale' as const,
+  loadingStyle: 'Skeleton' as const,
+  textAnimation: 'Gradient' as const,
+};
+
+export const DEFAULT_PREMIUM = {
+  isPremium: false,
+  premiumUntil: null,
+  customDomain: null,
+  customCss: null,
+  customJs: null,
+  featureFlags: [] as string[],
+  rateLimitApi: 1000,
+  maintenanceMode: false,
+};
+
+export const DEFAULT_FOOTER = {
+  copyrightTexte: '© Mon Site. Tous droits réservés.',
+  paysHebergement: 'Hébergé en Suisse',
+  showLegalLinks: true,
+  customFooterText: null,
+  footerCtaText: null,
+  footerCtaUrl: null,
+  footerLogoSize: 40,
+  footerLogoAnimation: 'none' as const,
+  footerVariant: 'Electric' as const,
+};
+
+// --- Schéma CONFIG_GLOBAL avec JSON auto-parsing ---
 export const BaserowGlobalConfigRowSchema = z.object({
   id: z.number().int().positive(),
-  Nom_Site: z.string(),
-  SEO_Metadata: z.string(), // JSON stringifié
-  Branding: z.string(), // JSON stringifié
-  Contact: z.string(), // JSON stringifié
-  Integrations: z.string(), // JSON stringifié
-  Assets: z.string(), // JSON stringifié
-  AI_Config: z.string(), // JSON stringifié
-  Animations: z.string(), // JSON stringifié
-  Premium: z.string(), // JSON stringifié
-  Footer: z.string(), // JSON stringifié
+  // 🔧 FIX: Renommé Nom_Site → Nom (champ DB réel)
+  Nom: z.string(),
+  // Champs optionnels présents en DB mais pas toujours utilisés
+  Notes: z.string().nullable().optional(),
+  Actif: z.boolean().optional(),
+  // 🔧 Champs JSON auto-parsés avec fallback sur valeurs par défaut
+  SEO_Metadata: createJsonTransformer(SEOSchema, DEFAULT_SEO, 'SEO_Metadata'),
+  Branding: createJsonTransformer(BrandingSchema, DEFAULT_BRANDING, 'Branding'),
+  Contact: createJsonTransformer(ContactInfoSchema, DEFAULT_CONTACT, 'Contact'),
+  Integrations: createJsonTransformer(IntegrationsSchema, DEFAULT_INTEGRATIONS, 'Integrations'),
+  Assets: createJsonTransformer(AssetsSchema, DEFAULT_ASSETS, 'Assets'),
+  AI_Config: createJsonTransformer(AIConfigSchema, DEFAULT_AI_CONFIG, 'AI_Config'),
+  Animations: createJsonTransformer(AnimationsConfigSchema, DEFAULT_ANIMATIONS, 'Animations'),
+  Premium: createJsonTransformer(PremiumSchema, DEFAULT_PREMIUM, 'Premium'),
+  Footer: createJsonTransformer(FooterConfigSchema, DEFAULT_FOOTER, 'Footer'),
 });
 
+// Type inféré après transformation (objets parsés, pas strings)
+export type BaserowGlobalConfigRowParsed = z.infer<typeof BaserowGlobalConfigRowSchema>;
+
+// --- Schéma SECTIONS avec JSON auto-parsing ---
 export const BaserowSectionRowSchema = z.object({
   id: z.number().int().positive(),
+  // Champs optionnels présents en DB
+  Nom: z.string().nullable().optional(),
+  Notes: z.string().nullable().optional(),
+  // 🔧 FIX: Baserow a "Actif" (booléen), le code utilisait "Is_Active"
+  // On garde les deux pour rétrocompatibilité
+  Actif: z.boolean().optional(),
+  /** @deprecated Utiliser Actif à la place - gardé pour compatibilité */
+  Is_Active: z.boolean().optional(),
   Type: z.object({
     id: z.number(),
     value: SectionTypeEnum,
     color: z.string(),
   }),
-  Is_Active: z.boolean(),
-  Order: z.number(),
-  Content: z.string(), // JSON stringifié
-  Design: z.string(), // JSON stringifié
+  // 🔧 FIX: Baserow renvoie "0" (string), on coerce en number
+  Order: z.coerce.number(),
+  // 🔧 Champs JSON auto-parsés (contenu dynamique selon le type de section)
+  Content: JsonObjectTransformer,
+  Design: JsonObjectTransformer,
   Page: z.string(),
 });
+
+// Type inféré après transformation
+export type BaserowSectionRowParsed = z.infer<typeof BaserowSectionRowSchema>;
 
 // ============================================
 // 7. DEFAULTS
@@ -850,6 +1146,11 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     borderRadius: 'Medium',
     patternBackground: 'Grid',
     themeGlobal: 'Electric',
+    // 🔧 Navbar/Header config
+    navbarVariant: null,
+    headerLogoSize: 40,
+    headerLogoAnimation: 'spin',
+    stickyHeader: true,
   },
   contact: {
     email: 'contact@example.com',
@@ -864,6 +1165,8 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     lienCalendly: null,
     lienWhatsapp: null,
     lienBoutonAppel: null,
+    // 🔧 Navbar CTA config
+    texteBoutonAppel: 'Réserver un appel',
     n8nWebhookUrl: null,
   },
   integrations: {
@@ -970,41 +1273,49 @@ export const DEFAULT_HERO_SECTION: HeroSection = {
 
 /**
  * Parse une row Baserow CONFIG_GLOBAL vers GlobalConfig
+ * 🔧 Les champs JSON sont déjà auto-parsés par le schéma Zod (plus de JSON.parse manuel)
  */
 export function parseGlobalConfigRow(
-  row: z.infer<typeof BaserowGlobalConfigRowSchema>
+  row: BaserowGlobalConfigRowParsed
 ): GlobalConfig {
   return {
     id: row.id,
-    identity: { ...JSON.parse(row.Nom_Site || '{}'), nomSite: row.Nom_Site },
-    seo: JSON.parse(row.SEO_Metadata || '{}'),
-    branding: JSON.parse(row.Branding || '{}'),
-    contact: JSON.parse(row.Contact || '{}'),
-    integrations: JSON.parse(row.Integrations || '{}'),
-    assets: JSON.parse(row.Assets || '{}'),
-    ai: JSON.parse(row.AI_Config || '{}'),
-    animations: JSON.parse(row.Animations || '{}'),
-    premium: JSON.parse(row.Premium || '{}'),
-    footer: JSON.parse(row.Footer || '{}'),
+    identity: { 
+      nomSite: row.Nom,
+      slogan: '', // Sera mergé depuis d'autres champs si besoin
+      initialesLogo: row.Nom?.substring(0, 2).toUpperCase() || 'MS',
+    },
+    // 🔧 Données déjà parsées par le transformer Zod
+    seo: row.SEO_Metadata,
+    branding: row.Branding,
+    contact: row.Contact,
+    integrations: row.Integrations,
+    assets: row.Assets,
+    ai: row.AI_Config,
+    animations: row.Animations,
+    premium: row.Premium,
+    footer: row.Footer,
   };
 }
 
 /**
  * Valide et parse une section depuis Baserow
+ * 🔧 Content/Design sont déjà auto-parsés par le schéma Zod
  */
 export function parseSectionRow(
-  row: z.infer<typeof BaserowSectionRowSchema>
+  row: BaserowSectionRowParsed
 ): Section {
-  const content = JSON.parse(row.Content || '{}');
-  const design = JSON.parse(row.Design || '{}');
+  // Priorité: Actif (champ DB réel) > Is_Active (legacy) > true (default)
+  const isActive = row.Actif ?? row.Is_Active ?? true;
 
   const sectionData = {
     type: row.Type.value,
-    isActive: row.Is_Active,
+    isActive,
     order: row.Order,
     page: row.Page,
-    content,
-    design,
+    // 🔧 Déjà parsés par JsonObjectTransformer
+    content: row.Content,
+    design: row.Design,
   };
 
   return SectionSchema.parse(sectionData);
@@ -1012,10 +1323,12 @@ export function parseSectionRow(
 
 /**
  * Prépare une Section pour insertion Baserow
+ * 🔧 FIX: Écrit vers Actif (champ DB réel) et Is_Active (compatibilité)
  */
 export function serializeSectionForBaserow(section: Section): {
   Type: string;
-  Is_Active: boolean;
+  Actif: boolean;
+  Is_Active: boolean; // Gardé pour compatibilité si le champ existe
   Order: number;
   Content: string;
   Design: string;
@@ -1023,7 +1336,8 @@ export function serializeSectionForBaserow(section: Section): {
 } {
   return {
     Type: section.type,
-    Is_Active: section.isActive,
+    Actif: section.isActive,
+    Is_Active: section.isActive, // Écriture dupliquée pour compatibilité
     Order: section.order,
     Content: JSON.stringify(section.content),
     Design: JSON.stringify(section.design),

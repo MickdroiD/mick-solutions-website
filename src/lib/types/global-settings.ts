@@ -166,6 +166,7 @@ export interface GlobalSettingsComplete {
   lienCalendly: string | null;
   lienWhatsapp: string | null;
   lienBoutonAppel: string;
+  texteBoutonAppel: string; // Texte affiché sur le bouton appel navbar
 
   // ========== F. SECTION HERO ==========
   titreHero: string;
@@ -385,6 +386,7 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   lienCalendly: null,
   lienWhatsapp: null,
   lienBoutonAppel: '',
+  texteBoutonAppel: 'Réserver un appel',
 
   // Hero
   titreHero: 'Titre Principal. Deuxième ligne. Troisième ligne.',

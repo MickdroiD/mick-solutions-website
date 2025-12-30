@@ -7,16 +7,20 @@ import { useRef } from 'react';
 import { submitContact } from '@/app/actions/submitContact';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-const timeThieves = [
-  { value: "", label: "Sélectionnez une option" },
-  { value: "emails", label: "Gestion des emails" },
-  { value: "facturation", label: "Facturation & comptabilité" },
-  { value: "saisie", label: "Saisie de données" },
-  { value: "planification", label: "Planification & RDV" },
-  { value: "autre", label: "Autre" },
-];
+// Props pour rendre le formulaire configurable depuis Baserow
+interface ContactFormProps {
+  title?: string;
+  subtitle?: string;
+  submitText?: string;
+  successMessage?: string;
+}
 
-export default function ContactForm() {
+export default function ContactForm({
+  title = 'Contactez-nous',
+  subtitle = 'Une question, un projet ? Remplissez le formulaire ci-dessous.',
+  submitText = 'Envoyer le message',
+  successMessage = 'Merci ! Nous vous répondrons dans les plus brefs délais.',
+}: ContactFormProps) {
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const ref = useRef(null);
@@ -49,10 +53,10 @@ export default function ContactForm() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Commençons <span className="text-gradient">ensemble</span>
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            Décrivez votre situation, on vous répond sous 24h avec une proposition concrète.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -128,14 +132,14 @@ export default function ContactForm() {
                 />
               </div>
 
-              {/* Row 3: Time thief select */}
+              {/* Row 3: Subject/Topic select */}
               <div className="group">
-                <label htmlFor="voleurTemps" className="block text-sm font-medium text-slate-300 mb-2">
-                  Quel est votre plus gros voleur de temps ? <span className="text-red-400">*</span>
+                <label htmlFor="sujet" className="block text-sm font-medium text-slate-300 mb-2">
+                  Sujet de votre demande <span className="text-red-400">*</span>
                 </label>
                 <select
-                  id="voleurTemps"
-                  name="voleurTemps"
+                  id="sujet"
+                  name="sujet"
                   required
                   disabled={isPending}
                   className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 
@@ -151,11 +155,11 @@ export default function ContactForm() {
                     backgroundSize: '1.25rem',
                   }}
                 >
-                  {timeThieves.map((option) => (
-                    <option key={option.value} value={option.value} className="bg-slate-900">
-                      {option.label}
-                    </option>
-                  ))}
+                  <option value="" className="bg-slate-900">Sélectionnez une option</option>
+                  <option value="devis" className="bg-slate-900">Demande de devis</option>
+                  <option value="info" className="bg-slate-900">Demande d&apos;information</option>
+                  <option value="partenariat" className="bg-slate-900">Partenariat</option>
+                  <option value="autre" className="bg-slate-900">Autre</option>
                 </select>
               </div>
 
@@ -201,7 +205,7 @@ export default function ContactForm() {
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Demander mon audit gratuit
+                    {submitText}
                   </>
                 )}
               </motion.button>

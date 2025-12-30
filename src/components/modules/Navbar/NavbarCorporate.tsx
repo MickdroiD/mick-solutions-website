@@ -50,7 +50,7 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
       <motion.div
         initial={{ y: 0 }}
         animate={{ y: isScrolled ? -40 : 0 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-primary-900 dark:bg-primary-950 text-white text-xs"
+        className="fixed top-0 left-0 right-0 z-50 bg-primary-900 text-white text-xs"
       >
         <div className="max-w-7xl mx-auto px-6 h-10 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -77,8 +77,8 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
         animate={{ y: 0 }}
         className={`fixed left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'top-0 bg-white dark:bg-background shadow-lg'
-            : 'top-10 bg-white/95 dark:bg-background/95 backdrop-blur-sm'
+            ? 'top-0 bg-white shadow-lg'
+            : 'top-10 bg-white/95 backdrop-blur-sm'
         }`}
       >
         <nav className="max-w-7xl mx-auto px-6">
@@ -93,7 +93,7 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
                 {config.initialesLogo}
               </div>
               <div>
-                <div className="font-semibold text-primary-900 dark:text-foreground text-lg">
+                <div className="font-semibold text-primary-900 text-lg">
                   {config.nomSite}
                 </div>
                 <div className="text-xs text-primary-500 hidden sm:block">
@@ -109,7 +109,7 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
                   key={item.name}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.id)}
-                  className="text-sm font-medium text-primary-700 dark:text-primary-200 
+                  className="text-sm font-medium text-primary-700 
                              hover:text-primary-500 transition-colors relative group py-2"
                 >
                   {item.name}
@@ -132,7 +132,7 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-primary-700 dark:text-primary-200"
+              className="lg:hidden p-2 text-primary-700"
               aria-label={isMobileMenuOpen ? 'Fermer' : 'Menu'}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -147,7 +147,7 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white dark:bg-background border-t border-primary-100 dark:border-primary-900"
+              className="lg:hidden bg-white border-t border-primary-200"
             >
               <div className="px-6 py-6 space-y-4">
                 {navItems.map((item) => (
@@ -155,12 +155,12 @@ export function NavbarCorporate({ config, navItems = defaultNavItems }: NavbarMo
                     key={item.name}
                     href={item.href}
                     onClick={(e) => handleNavClick(e, item.id)}
-                    className="block py-2 text-primary-700 dark:text-primary-200 font-medium hover:text-primary-500"
+                    className="block py-2 text-primary-700 font-medium hover:text-primary-500"
                   >
                     {item.name}
                   </a>
                 ))}
-                <div className="pt-4 border-t border-primary-100 dark:border-primary-800">
+                <div className="pt-4 border-t border-primary-200">
                   <a
                     href="#contact"
                     onClick={(e) => handleNavClick(e, 'contact')}

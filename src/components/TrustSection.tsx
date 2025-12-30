@@ -32,18 +32,70 @@ function getIcon(iconName: string): LucideIcon {
 }
 
 // ============================================
+// VARIANT TYPES
+// ============================================
+type VariantType = 'Electric' | 'Minimal' | 'Corporate' | 'Bold';
+type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
+type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
+
+// ============================================
 // PROPS INTERFACE
 // ============================================
 interface TrustSectionProps {
   trustPoints: TrustPoint[];
+  variant?: VariantType;
+  cardStyle?: CardStyle;
+  hoverEffect?: HoverEffect;
+  title?: string;
+  subtitle?: string;
 }
 
 // ============================================
 // COMPONENT
 // ============================================
-export default function TrustSection({ trustPoints }: TrustSectionProps) {
+export default function TrustSection({ 
+  trustPoints,
+  variant = 'Electric',
+  cardStyle = 'Shadow',
+  hoverEffect = 'Glow',
+  title = 'Pourquoi nous faire confiance ?',
+  subtitle = 'Nous sommes une entreprise suisse, pour des clients suisses.',
+}: TrustSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  
+  // Card style classes
+  const getCardStyleClasses = () => {
+    switch (cardStyle) {
+      case 'Flat': return 'bg-white/[0.02]';
+      case 'Border': return 'bg-white/[0.02] border-2 border-primary-200';
+      case 'Glassmorphism': return 'bg-white/10 backdrop-blur-md border border-white/20';
+      case 'Shadow':
+      default: return 'bg-white/[0.02] border border-white/5 shadow-lg';
+    }
+  };
+  
+  // Hover effect classes
+  const getHoverEffectClasses = () => {
+    switch (hoverEffect) {
+      case 'None': return '';
+      case 'Scale': return 'hover:scale-[1.02]';
+      case 'Lift': return 'hover:-translate-y-2 hover:shadow-xl';
+      case 'Glow':
+      default: return 'hover:shadow-primary-500/20 hover:border-primary-500/30';
+    }
+  };
+  
+  // Variant-specific classes
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'Minimal': return 'bg-transparent';
+      case 'Corporate': return 'bg-primary-50/5';
+      case 'Bold': return 'bg-gradient-to-r from-primary-500/5 to-accent-500/5';
+      case 'Electric':
+      default: return '';
+    }
+  };
 
   return (
     <section id="confiance" className="relative py-24 sm:py-32 overflow-hidden">
@@ -68,12 +120,10 @@ export default function TrustSection({ trustPoints }: TrustSectionProps) {
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Pourquoi nous faire <span className="text-gradient">confiance</span> ?
+            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-            Nous sommes une entreprise suisse, pour des clients suisses.
-            <br className="hidden sm:block" />
-            Pragmatisme, sécurité et résultats concrets.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -90,7 +140,7 @@ export default function TrustSection({ trustPoints }: TrustSectionProps) {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="group"
               >
-                <div className="flex gap-6 p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary-500/20 transition-all duration-300">
+                <div className={`flex gap-6 p-6 rounded-2xl transition-all duration-300 ${getCardStyleClasses()} ${getHoverEffectClasses()} ${getVariantClasses()}`}>
                   {/* Icon */}
                   <div className="flex-shrink-0">
                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-500/10 to-accent-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -127,7 +177,7 @@ export default function TrustSection({ trustPoints }: TrustSectionProps) {
         >
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-primary-500/5 to-accent-500/5 border border-primary-500/10">
             <p className="text-slate-300">
-              Prêt à automatiser en toute sérénité ?
+              Prêt à nous faire confiance ?
             </p>
             <a
               href="#contact"
@@ -136,7 +186,7 @@ export default function TrustSection({ trustPoints }: TrustSectionProps) {
                        hover:from-primary-400 hover:to-accent-400
                        transition-all duration-300"
             >
-              Discutons de votre projet
+              Contactez-nous
             </a>
           </div>
         </motion.div>

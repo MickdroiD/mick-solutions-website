@@ -9,6 +9,7 @@
     "lint": "next lint",
     "db:setup": "npx tsx scripts/setup-factory-db.ts",
     "db:migrate": "npx tsx scripts/setup-factory-db.ts",
+    "db:seed": "npx tsx scripts/seed-factory-content.ts",
     "client:new": "npx tsx scripts/create-client.ts"
   },
   "dependencies": {

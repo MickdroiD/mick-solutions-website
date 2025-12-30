@@ -89,7 +89,7 @@ npx tsx scripts/create-client.ts "Boulangerie Patate"
 Le script affiche les variables à la fin:
 
 ```
-🚀 CONFIGURATION POUR DOCKER/VERCEL:
+🚀 CONFIGURATION POUR DOCKER:
 ───────────────────────────────────────
 BASEROW_API_TOKEN=xxxxx
 BASEROW_FACTORY_GLOBAL_ID=1234

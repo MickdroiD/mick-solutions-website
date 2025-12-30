@@ -20,6 +20,7 @@ const LEADS_TABLE_ID = process.env.BASEROW_FACTORY_LEADS_ID;
 // ============================================
 // TYPES
 // ============================================
+// 🔧 FIX: Aligné avec structure Baserow réelle (Audit 29/12/2025)
 
 interface BaserowLeadRow {
   id: number;
@@ -31,6 +32,10 @@ interface BaserowLeadRow {
   Status: { id: number; value: string; color: string } | null;
   Source: string | null;
   Created_At: string | null;
+  // Champs supplémentaires présents en DB (optionnels)
+  Nom: string | null;
+  Notes: string | null;
+  Actif: boolean;
 }
 
 export interface Lead {

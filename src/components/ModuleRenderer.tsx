@@ -9,6 +9,7 @@
 import React from 'react';
 import { GlobalSettingsComplete } from '@/lib/types/global-settings';
 import { HeroModule } from './modules/Hero';
+import AIAssistant from './AIAssistant';
 import type { ModuleType, VariantStyle } from './modules/types';
 import type { 
   GlobalConfig, 
@@ -230,12 +231,20 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
     // ========== AI ASSISTANT ==========
     case 'ai-assistant': {
       const aiSection = section as AIAssistantSection;
-      console.log('[SectionRenderer] AI Assistant section:', aiSection.content);
+      
+      // Map section content/design to AIAssistant props
       return (
-        <SectionPlaceholder 
-          type="ai-assistant" 
-          title="AI Assistant"
-          variant={aiSection.design.style}
+        <AIAssistant
+          siteName={globalConfig.identity.nomSite}
+          industry={globalConfig.ai.aiIndustry || undefined}
+          welcomeMessage={aiSection.content.welcomeMessage}
+          placeholder={aiSection.content.placeholder}
+          avatarUrl={aiSection.content.avatarUrl || undefined}
+          primaryColor={globalConfig.branding.couleurPrimaire}
+          accentColor={globalConfig.branding.couleurAccent}
+          position={aiSection.design.position === 'bottom-left' ? 'bottom-left' : 'bottom-right'}
+          provider={globalConfig.ai.aiProvider as 'openai' | 'anthropic' | undefined}
+          systemPrompt={globalConfig.ai.aiSystemPrompt || undefined}
         />
       );
     }

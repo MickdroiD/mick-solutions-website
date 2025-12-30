@@ -1,12 +1,14 @@
 // ============================================
 // API Route: /api/admin/test
 // ============================================
-// Test de connectivité et diagnostic
+// Test de connectivité et diagnostic (Factory V2)
 
 import { NextResponse } from 'next/server';
 
 const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+const CONFIG_GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID;
+const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID;
 
 export async function GET() {
   const tests: Record<string, { status: 'ok' | 'error' | 'warning'; message: string; details?: unknown }> = {};
@@ -18,16 +20,45 @@ export async function GET() {
     tests.baserow_token = { status: 'error', message: 'BASEROW_API_TOKEN manquant' };
   }
 
-  // Test 2: Connexion Baserow
-  if (BASEROW_TOKEN) {
+  // Test 2: Factory V2 Table IDs
+  if (CONFIG_GLOBAL_TABLE_ID && SECTIONS_TABLE_ID) {
+    tests.factory_config = { 
+      status: 'ok', 
+      message: 'Factory V2 configurée', 
+      details: { 
+        CONFIG_GLOBAL: CONFIG_GLOBAL_TABLE_ID, 
+        SECTIONS: SECTIONS_TABLE_ID 
+      } 
+    };
+  } else {
+    tests.factory_config = { 
+      status: 'error', 
+      message: 'IDs Factory V2 manquants',
+      details: {
+        BASEROW_FACTORY_GLOBAL_ID: CONFIG_GLOBAL_TABLE_ID || 'MANQUANT',
+        BASEROW_FACTORY_SECTIONS_ID: SECTIONS_TABLE_ID || 'MANQUANT',
+      }
+    };
+  }
+
+  // Test 3: Connexion Baserow (CONFIG_GLOBAL)
+  if (BASEROW_TOKEN && CONFIG_GLOBAL_TABLE_ID) {
     try {
-      const response = await fetch(`${BASEROW_API_URL}/database/rows/table/751/?user_field_names=true&size=1`, {
-        headers: { Authorization: `Token ${BASEROW_TOKEN}` },
-        cache: 'no-store',
-      });
+      const response = await fetch(
+        `${BASEROW_API_URL}/database/rows/table/${CONFIG_GLOBAL_TABLE_ID}/?user_field_names=true&size=1`, 
+        {
+          headers: { Authorization: `Token ${BASEROW_TOKEN}` },
+          cache: 'no-store',
+        }
+      );
       
       if (response.ok) {
-        tests.baserow_connection = { status: 'ok', message: 'Connexion réussie', details: { table: 751 } };
+        const data = await response.json();
+        tests.baserow_connection = { 
+          status: 'ok', 
+          message: 'Connexion CONFIG_GLOBAL réussie', 
+          details: { table: CONFIG_GLOBAL_TABLE_ID, rows: data.count || data.results?.length || 0 } 
+        };
       } else {
         tests.baserow_connection = { 
           status: 'error', 
