@@ -82,7 +82,7 @@ function CollapsibleSection({
   title, 
   icon, 
   children, 
-  defaultOpen = true,
+  defaultOpen = false,
   color = 'from-pink-500/20 to-rose-500/20'
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);

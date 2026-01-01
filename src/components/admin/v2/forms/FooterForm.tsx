@@ -2,14 +2,16 @@
 
 import { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   FileText, Type, Palette, ChevronDown, Link as LinkIcon,
-  Linkedin, Instagram, Twitter, Youtube, Github, 
+  Linkedin, Instagram, Twitter, Youtube, Github,
   MessageCircle, Calendar, Mail, Phone, MapPin, Sparkles
 } from 'lucide-react';
 import { LocalInput, LocalTextarea } from '@/components/admin/ui/LocalInput';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
 import { ListEditor, type ListItem } from '@/components/admin/v2/ui/ListEditor';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import type { GlobalConfig } from '@/lib/schemas/factory';
 
 // ============================================
@@ -70,11 +72,11 @@ interface CollapsibleSectionProps {
   color?: string;
 }
 
-function CollapsibleSection({ 
-  title, 
-  icon, 
-  children, 
-  defaultOpen = true, 
+function CollapsibleSection({
+  title,
+  icon,
+  children,
+  defaultOpen = false,
   badge,
   color = 'from-slate-500/20 to-zinc-500/20'
 }: CollapsibleSectionProps) {
@@ -104,7 +106,7 @@ function CollapsibleSection({
         </div>
         <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
+
       <motion.div
         initial={false}
         animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
@@ -225,11 +227,10 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
                   key={col}
                   type="button"
                   onClick={() => onChange({ ...item, column: col })}
-                  className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm transition-all ${
-                    item.column === col
-                      ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
-                      : 'border-white/10 text-slate-400 hover:border-white/20'
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm transition-all ${item.column === col
+                    ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
+                    : 'border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
                 >
                   {col}
                 </button>
@@ -243,9 +244,76 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
 
   return (
     <div className="space-y-6">
+      {/* ========== FOOTER LOGO ========== */}
+      <CollapsibleSection
+        title="Logo du footer"
+        icon={<Sparkles className="w-5 h-5" />}
+        color="from-amber-500/20 to-orange-500/20"
+        defaultOpen={false}
+      >
+        {/* 🆕 Logo dédié footer (optionnel, sinon utilise logoDark ou logo principal) */}
+        <LocalImageInput
+          label="Logo footer (dédié)"
+          value={config.footer.footerLogoUrl || ''}
+          onChange={(v) => updateFooter('footerLogoUrl', v || null)}
+          hint="Logo spécifique au footer (laissez vide pour utiliser le logo mode sombre ou principal)"
+          category="branding"
+          fieldKey="footerLogoUrl"
+          aspectRatio="free"
+        />
+
+        <LocalImageInput
+          label="Logo mode sombre (fallback)"
+          value={config.assets.logoDarkUrl || config.assets.logoUrl || ''}
+          onChange={(v) => updateAssets('logoDarkUrl', v || null)}
+          hint="Utilisé si aucun logo footer dédié n'est défini"
+          category="branding"
+          fieldKey="logoDarkUrl"
+          aspectRatio="free"
+        />
+
+        {/* Logo Size */}
+        <div className="space-y-2 pt-4 border-t border-white/5">
+          <label className="text-white font-medium text-sm">Taille du logo</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={24}
+              max={80}
+              value={config.footer.footerLogoSize}
+              onChange={(e) => updateFooter('footerLogoSize', parseInt(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-cyan-400 font-medium w-12 text-right">
+              {config.footer.footerLogoSize}px
+            </span>
+          </div>
+        </div>
+
+        {/* Logo Animation */}
+        <div className="space-y-2 pt-4 border-t border-white/5">
+          <label className="text-white font-medium text-sm">Animation du logo</label>
+          <div className="flex flex-wrap gap-2">
+            {LOGO_ANIMATION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateFooter('footerLogoAnimation', opt.value)}
+                className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${config.footer.footerLogoAnimation === opt.value
+                  ? 'border-amber-500 bg-amber-500/20 text-amber-400'
+                  : 'border-white/10 text-slate-400 hover:border-white/20'
+                  }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </CollapsibleSection>
+
       {/* ========== COPYRIGHT & TEXT ========== */}
-      <CollapsibleSection 
-        title="Textes du footer" 
+      <CollapsibleSection
+        title="Textes du footer"
         icon={<Type className="w-5 h-5" />}
         color="from-slate-500/20 to-zinc-500/20"
       >
@@ -275,11 +343,10 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
           <button
             type="button"
             onClick={() => updateFooter('showLegalLinks', !config.footer.showLegalLinks)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm transition-all ${
-              config.footer.showLegalLinks
-                ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-                : 'border-white/10 text-slate-400'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm transition-all ${config.footer.showLegalLinks
+              ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
+              : 'border-white/10 text-slate-400'
+              }`}
           >
             <FileText className="w-4 h-4" />
             Afficher les liens légaux
@@ -288,8 +355,8 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       </CollapsibleSection>
 
       {/* ========== CONTACT INFO ========== */}
-      <CollapsibleSection 
-        title="Informations de contact" 
+      <CollapsibleSection
+        title="Informations de contact"
         icon={<Mail className="w-5 h-5" />}
         color="from-blue-500/20 to-indigo-500/20"
       >
@@ -339,8 +406,8 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       </CollapsibleSection>
 
       {/* ========== SOCIAL LINKS ========== */}
-      <CollapsibleSection 
-        title="Réseaux sociaux" 
+      <CollapsibleSection
+        title="Réseaux sociaux"
         icon={<Linkedin className="w-5 h-5" />}
         color="from-blue-600/20 to-indigo-600/20"
       >
@@ -348,7 +415,7 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
           {SOCIAL_LINKS.map((social) => {
             const Icon = social.icon;
             const value = config.contact[social.key as keyof typeof config.contact] as string | null;
-            
+
             return (
               <div key={social.key} className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${social.color} flex items-center justify-center ${social.textColor}`}>
@@ -373,8 +440,8 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       </CollapsibleSection>
 
       {/* ========== FOOTER LINKS ========== */}
-      <CollapsibleSection 
-        title="Liens du footer" 
+      <CollapsibleSection
+        title="Liens du footer"
         icon={<LinkIcon className="w-5 h-5" />}
         badge={`${footerLinks.length}`}
         color="from-slate-600/20 to-zinc-600/20"
@@ -394,8 +461,8 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       </CollapsibleSection>
 
       {/* ========== CTA FOOTER ========== */}
-      <CollapsibleSection 
-        title="Appel à l'action (CTA)" 
+      <CollapsibleSection
+        title="Appel à l'action (CTA)"
         icon={<Sparkles className="w-5 h-5" />}
         color="from-violet-500/20 to-purple-500/20"
         defaultOpen={false}
@@ -417,66 +484,11 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
         </div>
       </CollapsibleSection>
 
-      {/* ========== FOOTER LOGO ========== */}
-      <CollapsibleSection 
-        title="Logo du footer" 
-        icon={<Sparkles className="w-5 h-5" />}
-        color="from-amber-500/20 to-orange-500/20"
-        defaultOpen={false}
-      >
-        <LocalImageInput
-          label="Logo footer (optionnel)"
-          value={config.assets.logoDarkUrl || config.assets.logoUrl || ''}
-          onChange={(v) => updateAssets('logoDarkUrl', v || null)}
-          hint="Logo affiché dans le footer (peut être différent du header)"
-          category="branding"
-          fieldKey="footerLogo"
-          aspectRatio="free"
-        />
 
-        {/* Logo Size */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm">Taille du logo</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min={24}
-              max={80}
-              value={config.footer.footerLogoSize}
-              onChange={(e) => updateFooter('footerLogoSize', parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-cyan-400 font-medium w-12 text-right">
-              {config.footer.footerLogoSize}px
-            </span>
-          </div>
-        </div>
-
-        {/* Logo Animation */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm">Animation du logo</label>
-          <div className="flex flex-wrap gap-2">
-            {LOGO_ANIMATION_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => updateFooter('footerLogoAnimation', opt.value)}
-                className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${
-                  config.footer.footerLogoAnimation === opt.value
-                    ? 'border-amber-500 bg-amber-500/20 text-amber-400'
-                    : 'border-white/10 text-slate-400 hover:border-white/20'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </CollapsibleSection>
 
       {/* ========== STYLE ========== */}
-      <CollapsibleSection 
-        title="Style du footer" 
+      <CollapsibleSection
+        title="Style du footer"
         icon={<Palette className="w-5 h-5" />}
         defaultOpen={false}
         color="from-cyan-500/20 to-blue-500/20"
@@ -489,16 +501,14 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
                 key={opt.value}
                 type="button"
                 onClick={() => updateFooter('footerVariant', opt.value)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${
-                  config.footer.footerVariant === opt.value
-                    ? 'border-cyan-500 bg-cyan-500/20'
-                    : 'border-white/10 hover:border-white/20'
-                }`}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${config.footer.footerVariant === opt.value
+                  ? 'border-cyan-500 bg-cyan-500/20'
+                  : 'border-white/10 hover:border-white/20'
+                  }`}
               >
                 <span className="text-2xl block mb-2">{opt.emoji}</span>
-                <span className={`font-medium text-sm block ${
-                  config.footer.footerVariant === opt.value ? 'text-cyan-400' : 'text-white'
-                }`}>
+                <span className={`font-medium text-sm block ${config.footer.footerVariant === opt.value ? 'text-cyan-400' : 'text-white'
+                  }`}>
                   {opt.label}
                 </span>
                 <span className="text-slate-500 text-xs">{opt.description}</span>
@@ -506,7 +516,94 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
             ))}
           </div>
         </div>
+
+        {/* 🆕 Couleurs personnalisées */}
+        <div className="pt-4 border-t border-white/5 space-y-4">
+          <h4 className="text-white font-medium text-sm flex items-center gap-2">
+            <Palette className="w-4 h-4 text-cyan-400" />
+            Couleurs personnalisées
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Background Color */}
+            <div className="space-y-1">
+              <label className="text-slate-400 text-xs">Fond du footer</label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={config.footer.footerBgColor || '#0a0a0f'}
+                  onChange={(e) => updateFooter('footerBgColor', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateFooter('footerBgColor', null)}
+                  className="px-3 py-2 text-xs text-slate-400 hover:text-white border border-white/10 rounded-lg"
+                >
+                  Auto
+                </button>
+              </div>
+            </div>
+
+            {/* Text Color */}
+            <div className="space-y-1">
+              <label className="text-slate-400 text-xs">Couleur du texte</label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={config.footer.footerTextColor || '#ffffff'}
+                  onChange={(e) => updateFooter('footerTextColor', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateFooter('footerTextColor', null)}
+                  className="px-3 py-2 text-xs text-slate-400 hover:text-white border border-white/10 rounded-lg"
+                >
+                  Auto
+                </button>
+              </div>
+            </div>
+
+            {/* Border Color */}
+            <div className="space-y-1">
+              <label className="text-slate-400 text-xs">Bordure</label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={config.footer.footerBorderColor || '#ffffff'}
+                  onChange={(e) => updateFooter('footerBorderColor', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateFooter('footerBorderColor', null)}
+                  className="px-3 py-2 text-xs text-slate-400 hover:text-white border border-white/10 rounded-lg"
+                >
+                  Aucune
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </CollapsibleSection>
+
+      {/* ========== EFFETS & ANIMATIONS ========== */}
+      <SectionEffects
+        effects={(config.footer.footerEffects || {}) as EffectSettings}
+        onChange={(updates) => updateFooter('footerEffects', { ...(config.footer.footerEffects || {}), ...updates })}
+        showLogoOptions={true}
+        showBackgroundOptions={true}
+      />
+
+      {/* ========== TYPOGRAPHIE ========== */}
+      <SectionText
+        text={(config.footer.footerTextSettings || {}) as TextSettings}
+        onChange={(updates) => updateFooter('footerTextSettings', { ...(config.footer.footerTextSettings || {}), ...updates })}
+        showTitleOptions={true}
+        showSubtitleOptions={false}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

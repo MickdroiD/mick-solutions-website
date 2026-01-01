@@ -26,6 +26,12 @@ export function adaptGlobalConfigToLegacy(
   const heroContent = heroSection?.content;
   const heroDesign = heroSection?.design;
 
+  // ⭐ FIX CRITIQUE: Lire effects et textSettings DIRECTEMENT depuis heroSection
+  // (ils ont été extraits du Content JSON dans factory-client.ts)
+  // NE PAS chercher dans heroContent car ils n'y sont plus !
+  const heroEffects = (heroSection as Record<string, unknown>)?.effects as GlobalSettingsComplete['effects'];
+  const heroTextSettings = (heroSection as Record<string, unknown>)?.textSettings as GlobalSettingsComplete['textSettings'];
+
   return {
     // ID
     id: config.id || 0,
@@ -106,8 +112,18 @@ export function adaptGlobalConfigToLegacy(
     customFooterText: config.footer.customFooterText,
     footerCtaText: config.footer.footerCtaText,
     footerCtaUrl: config.footer.footerCtaUrl,
-    footerLogoSize: config.footer.footerLogoSize,
-    footerLogoAnimation: config.footer.footerLogoAnimation as GlobalSettingsComplete['footerLogoAnimation'],
+    footerLogoSize: config.footer.footerEffects?.logoSize ?? config.footer.footerLogoSize ?? 40,
+    footerLogoAnimation: (config.footer.footerEffects?.logoAnimation || config.footer.footerLogoAnimation || 'none') as GlobalSettingsComplete['footerLogoAnimation'],
+    // 🆕 Logo dédié footer (peut être différent du logo principal) si non défini)
+    footerLogoUrl: config.footer.footerLogoUrl || config.assets.logoDarkUrl || config.assets.logoUrl,
+    footerLogoSvgCode: config.footer.footerLogoSvgCode || config.assets.logoSvgCode,
+    // 🆕 Style footer personnalisé
+    footerBgColor: config.footer.footerBgColor || null,
+    footerTextColor: config.footer.footerTextColor || null,
+    footerBorderColor: config.footer.footerBorderColor || null,
+    // 🆕 Effects & Text settings pour le footer
+    footerEffects: config.footer.footerEffects || undefined,
+    footerTextSettings: config.footer.footerTextSettings || undefined,
 
     // ========== I. ANALYTICS ==========
     umamiSiteId: config.integrations.umamiSiteId,
@@ -165,11 +181,26 @@ export function adaptGlobalConfigToLegacy(
     logoFrameStyle: heroDesign?.logoFrameStyle as GlobalSettingsComplete['logoFrameStyle'],
     textAnimation: (heroDesign?.textAnimation || config.animations.textAnimation) as GlobalSettingsComplete['textAnimation'],
     galleryAnimation: 'Fade',
-    // 🔧 FIX: Mapper headerLogoSize et headerLogoAnimation depuis Branding au lieu de hardcoder
-    headerLogoSize: config.branding.headerLogoSize ?? 40,
-    headerLogoAnimation: (config.branding.headerLogoAnimation || 'spin') as GlobalSettingsComplete['headerLogoAnimation'],
+    // 🔧 FIX: Mapper headerLogoSize et headerLogoAnimation depuis Branding ou Effects au lieu de hardcoder
+    headerLogoSize: config.branding.headerEffects?.logoSize ?? config.branding.headerLogoSize ?? 40,
+    headerLogoAnimation: (config.branding.headerEffects?.logoAnimation || config.branding.headerLogoAnimation || 'spin') as GlobalSettingsComplete['headerLogoAnimation'],
     heroLogoAnimation: (heroDesign?.logoAnimation || 'electric') as GlobalSettingsComplete['heroLogoAnimation'],
     heroLogoSize: heroDesign?.logoSize || 280,
+    // 🆕 Logo dédié header (utilise le logo principal si non défini)
+    headerLogoUrl: config.branding.headerLogoUrl || config.assets.logoUrl,
+    headerLogoSvgCode: config.branding.headerLogoSvgCode || config.assets.logoSvgCode,
+    // 🆕 Style header personnalisé
+    headerBgColor: config.branding.headerBgColor || null,
+    headerTextColor: config.branding.headerTextColor || null,
+    headerBorderColor: config.branding.headerBorderColor || null,
+    // 🆕 Effects & Text settings pour le header
+    headerEffects: config.branding.headerEffects || undefined,
+    headerTextSettings: config.branding.headerTextSettings || undefined,
+
+    // ========== M.1. HERO EFFECTS & TEXT SETTINGS ==========
+    // ⭐ NOUVEAU: Mapping des effects et textSettings du Hero
+    effects: heroEffects,
+    textSettings: heroTextSettings,
 
     // ========== N. PHOTOS & MÉDIAS ==========
     imageStyle: 'Rounded',
@@ -243,7 +274,15 @@ export function adaptHeroSectionToLegacy(
   section: HeroSection,
   globalConfig: GlobalConfig
 ): GlobalSettingsComplete {
-  return adaptGlobalConfigToLegacy(globalConfig, section);
+  const baseConfig = adaptGlobalConfigToLegacy(globalConfig, section);
+
+  // ⭐ FIX: effects et textSettings sont des champs DIRECTS de HeroSection
+  // Ils ont été extraits du Content JSON dans factory-client.ts
+  return {
+    ...baseConfig,
+    ...(section.effects && { effects: section.effects }),
+    ...(section.textSettings && { textSettings: section.textSettings }),
+  };
 }
 
 /**

@@ -4,6 +4,7 @@ import { motion, Transition, TargetAndTransition } from 'framer-motion';
 import { ArrowRight, Mail, Linkedin, Github, Instagram } from 'lucide-react';
 import Image from 'next/image';
 import type { FooterModuleProps } from '../types';
+import { hexToRgb } from '@/lib/helpers/effects-renderer';
 import type { LogoAnimation } from '@/lib/types/global-settings';
 import AnimatedLogoFrame from '../../AnimatedLogoFrame';
 import { CSSProperties } from 'react';
@@ -17,24 +18,24 @@ interface AnimationVariants {
   style?: CSSProperties;
 }
 
-function FooterLogoWithAnimation({ 
-  logoUrl, 
+function FooterLogoWithAnimation({
+  logoUrl,
   logoSvgCode,
-  nomSite, 
-  animation, 
+  nomSite,
+  animation,
   size = 40,
   forceElectric = false // 🔧 FIX: Nouveau prop pour forcer l'effet électrique
-}: { 
-  logoUrl: string; 
+}: {
+  logoUrl: string;
   logoSvgCode?: string | null;
-  nomSite: string; 
-  animation?: LogoAnimation | null; 
+  nomSite: string;
+  animation?: LogoAnimation | null;
   size?: number | null;
   forceElectric?: boolean;
 }) {
   const logoSize = size || 40;
   const normalizedAnimation = animation?.toLowerCase() || 'none';
-  
+
   const getAnimationVariants = (): AnimationVariants => {
     switch (normalizedAnimation) {
       case 'spin-glow':
@@ -145,7 +146,7 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
     { icon: Github, url: config.lienGithub, label: 'GitHub' },
     { icon: Instagram, url: config.lienInstagram, label: 'Instagram' },
   ].filter(s => s.url);
-  
+
   // 🔧 FIX: Forcer l'effet électrique si le style global est 'mick-electric' ou thème 'Electric'
   const animationStyle = config.animationStyle || 'mick-electric';
   const themeGlobal = config.themeGlobal || 'Electric';
@@ -154,22 +155,92 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
     themeGlobal === 'Electric'
   );
 
-  return (
-    <footer className="relative overflow-hidden">
-      {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary-950/50 to-background pointer-events-none" />
-      
-      {/* Pattern grid */}
-      <div 
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: `linear-gradient(var(--primary) 1px, transparent 1px),
-                           linear-gradient(to right, var(--primary) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px',
-        }}
-      />
+  // 🆕 Couleurs personnalisées footer
+  const footerBgColor = config.footerBgColor || null;
+  const footerTextColor = config.footerTextColor || null;
+  const footerBorderColor = config.footerBorderColor || null;
 
-      <div className="relative max-w-7xl mx-auto px-6 py-20">
+  // 🆕 Effets footer (padding, background, opacity, blur)
+  const paddingYClass = config.footerEffects?.paddingY === 'none' ? 'py-0' :
+    config.footerEffects?.paddingY === 'sm' ? 'py-12' :
+      config.footerEffects?.paddingY === 'lg' ? 'py-28' :
+        config.footerEffects?.paddingY === 'xl' ? 'py-32' :
+          'py-20';
+
+  const bgOpacity = config.footerEffects?.backgroundOpacity !== undefined ? config.footerEffects.backgroundOpacity / 100 : 1;
+  const bgBlur = config.footerEffects?.backgroundBlur || 0;
+
+  // 🆕 Overlay configuration
+  const overlayColor = config.footerEffects?.overlayColor || 'black';
+  const overlayOpacity = config.footerEffects?.overlayOpacity !== undefined ? config.footerEffects.overlayOpacity / 100 : 0.5;
+  const getOverlayColorValue = (color: string) => {
+    switch (color) {
+      case 'white': return '255, 255, 255';
+      case 'primary': return 'var(--primary-900)';
+      case 'accent': return 'var(--accent-900)';
+      case 'slate': return '15, 23, 42';
+      case 'black': default: return '0, 0, 0';
+    }
+  };
+
+  // 🆕 Typography Settings
+  const titleFontFamily = config.footerTextSettings?.titleFontFamily || 'var(--font-heading)';
+  const bodyFontFamily = config.footerTextSettings?.bodyFontFamily || 'var(--font-primary)';
+  const bodyFontSize = config.footerTextSettings?.bodyFontSize || 'text-base';
+
+  // Helper pour injecter le style de font
+  const getFontStyle = (family: string) => {
+    if (family.startsWith('var(')) return { fontFamily: family };
+    return { fontFamily: `'${family}', sans-serif` };
+  };
+
+  return (
+    <footer
+      className="relative overflow-hidden"
+      style={{
+        backgroundColor: config.footerEffects?.backgroundUrl
+          ? 'transparent'
+          : (footerBgColor
+            ? `rgba(${hexToRgb(footerBgColor) || '15, 23, 42'}, ${bgOpacity})`
+            : undefined), // Si bg personnalisé, on applique l'opacité ici
+
+        backgroundImage: config.footerEffects?.backgroundUrl ? `url(${config.footerEffects.backgroundUrl})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backdropFilter: bgBlur ? `blur(${bgBlur}px)` : undefined,
+        color: footerTextColor || undefined,
+        borderTop: footerBorderColor ? `1px solid ${footerBorderColor}` : undefined,
+        ...getFontStyle(bodyFontFamily)
+      }}
+    >
+      {/* Gradient background - désactivé si couleur personnalisée ou image de fond */}
+      {!footerBgColor && !config.footerEffects?.backgroundUrl && (
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-primary-950/50 to-background pointer-events-none" />
+      )}
+
+      {/* Pattern grid - désactivé si couleur personnalisée ou image de fond */}
+      {!footerBgColor && !config.footerEffects?.backgroundUrl && (
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `linear-gradient(var(--primary) 1px, transparent 1px),
+                             linear-gradient(to right, var(--primary) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px',
+          }}
+        />
+      )}
+
+      {/* Overlay optionnel pour image de fond */}
+      {config.footerEffects?.backgroundUrl && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundColor: `rgba(${getOverlayColorValue(overlayColor)}, ${overlayOpacity})`
+          }}
+        />
+      )}
+
+      <div className={`relative max-w-7xl mx-auto px-6 ${paddingYClass}`}>
         {/* CTA Final */}
         {config.footerCtaText && (
           <motion.div
@@ -178,7 +249,10 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
+            <h2
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
+              style={getFontStyle(titleFontFamily)}
+            >
               {config.footerCtaText}
             </h2>
             {config.footerCtaUrl && (
@@ -205,32 +279,32 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
           >
             <div className="flex items-center gap-3 mb-4">
-              {/* Logo: SVG inline prioritaire, sinon Image, sinon initiales */}
-              {(config.logoSvgCode || config.logoDarkUrl || config.logoUrl) ? (
-                <FooterLogoWithAnimation 
-                  logoUrl={config.logoDarkUrl || config.logoUrl || ''}
-                  logoSvgCode={config.logoSvgCode}
+              {/* Logo: 🆕 Priorité footerLogoUrl/footerLogoSvgCode > logoDarkUrl/logoSvgCode */}
+              {(config.footerLogoSvgCode || config.footerLogoUrl || config.logoSvgCode || config.logoDarkUrl || config.logoUrl) ? (
+                <FooterLogoWithAnimation
+                  logoUrl={config.footerLogoUrl || config.logoDarkUrl || config.logoUrl || ''}
+                  logoSvgCode={config.footerLogoSvgCode || config.logoSvgCode}
                   nomSite={config.nomSite}
                   animation={config.footerLogoAnimation}
                   size={config.footerLogoSize}
                   forceElectric={forceElectricEffect}
                 />
               ) : (
-                <AnimatedLogoFrame 
-                  initiales={config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('')} 
+                <AnimatedLogoFrame
+                  initiales={config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('')}
                   size="md"
                   variant={config.logoFrameStyle}
                 />
               )}
-              <span className="text-xl font-bold">
+              <span className="text-xl font-bold" style={getFontStyle(titleFontFamily)}>
                 {config.nomSite.split(' ')[0]}{' '}
                 <span className="text-gradient">{config.nomSite.split(' ').slice(1).join(' ')}</span>
               </span>
             </div>
-            <p className="text-primary-300/70 text-sm mb-6">
+            <p className={`text-primary-300/70 mb-6 ${bodyFontSize}`}>
               {config.slogan}
             </p>
-            
+
             {/* Social links */}
             <div className="flex gap-3">
               {socialLinks.map((social) => (
@@ -258,20 +332,23 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+            <h4
+              className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
+              style={getFontStyle(titleFontFamily)}
+            >
               Contact
             </h4>
             <ul className="space-y-3">
               <li>
                 <a
                   href={`mailto:${config.email}`}
-                  className="flex items-center gap-3 text-primary-300/70 hover:text-primary-400 transition-colors"
+                  className={`flex items-center gap-3 text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
                 >
                   <Mail className="w-4 h-4" />
                   {config.email}
                 </a>
               </li>
-              <li className="text-primary-300/70 text-sm">
+              <li className={`text-primary-300/70 ${bodyFontSize}`}>
                 {config.adresse}
               </li>
               <li className="text-primary-500 text-xs">
@@ -287,7 +364,10 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+            <h4
+              className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
+              style={getFontStyle(titleFontFamily)}
+            >
               Légal
             </h4>
             <ul className="space-y-3">
@@ -295,7 +375,7 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
                 <li key={doc.id}>
                   <a
                     href={`/legal/${doc.slug}`}
-                    className="text-primary-300/70 hover:text-primary-400 transition-colors text-sm"
+                    className={`text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
                   >
                     {doc.titre}
                   </a>

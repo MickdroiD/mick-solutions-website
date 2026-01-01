@@ -724,11 +724,169 @@ NEXT_PUBLIC_SITE_URL=https://${clientSlug}.ch
     log.success(`Configuration sauvegardée dans ${filename}`);
   }
 
-  // ========== 9. NEXT STEPS ==========
+  // ========== 9. DOCKER DEPLOYMENT FILES ==========
+  log.category('9. FICHIERS DOCKER (Optionnel)');
+
+  const createDockerFiles = await confirm('🐳 Voulez-vous générer les fichiers Docker pour ce client?');
+  
+  if (createDockerFiles) {
+    // Demander le type de domaine
+    console.log(`
+${Colors.CYAN}Type de domaine:${Colors.RESET}
+  1) Sous-domaine .mick-solutions.ch (ex: ${clientSlug}.mick-solutions.ch)
+  2) Domaine externe du client (ex: ${clientSlug}.ch)
+`);
+    const domainType = await prompt('Choix (1 ou 2): ');
+    
+    let domain: string;
+    const routerName = clientSlug.replace(/-/g, '');
+    
+    if (domainType === '2') {
+      domain = await prompt(`Domaine du client (ex: ${clientSlug}.ch): `);
+      if (!domain) domain = `${clientSlug}.ch`;
+    } else {
+      domain = `${clientSlug}.mick-solutions.ch`;
+    }
+    
+    // Créer le dossier client
+    const clientDir = `/home/mickadmin/docker/clients/${clientSlug}`;
+    
+    try {
+      let shouldGenerate = true;
+      
+      // Vérifier si le dossier existe déjà
+      if (fs.existsSync(clientDir)) {
+        const overwrite = await confirm(`⚠️ Le dossier ${clientDir} existe déjà. Écraser?`);
+        if (!overwrite) {
+          log.info('Génération Docker annulée.');
+          shouldGenerate = false;
+        }
+      } else {
+        fs.mkdirSync(clientDir, { recursive: true });
+      }
+      
+      if (shouldGenerate) {
+        // Fichier .env
+        const envContent = `# ============================================
+# Configuration pour: ${clientName}
+# ============================================
+# Créé le: ${new Date().toISOString()}
+# Database ID: ${newDatabase.id}
+# Slug: ${clientSlug}
+
+# === BASEROW CONFIG ===
+BASEROW_API_URL=https://baserow.mick-solutions.ch/api
+BASEROW_API_TOKEN=${token}
+BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
+BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}
+${leadsTable ? `BASEROW_FACTORY_LEADS_ID=${leadsTable.id}` : '# BASEROW_FACTORY_LEADS_ID= # Table LEADS non présente'}
+
+# === ADMIN AUTH ===
+ADMIN_PASSWORD=${adminPin}
+
+# === SITE CONFIG ===
+NODE_ENV=production
+SITE_NAME=${clientName}
+NEXT_PUBLIC_SITE_URL=https://${domain}
+`;
+
+        // docker-compose.yml
+        const dockerComposeContent = domainType === '2' 
+          ? `# Docker Compose pour: ${clientName}
+# Domaine externe: ${domain}
+services:
+  website:
+    image: website-website:latest
+    container_name: client-${clientSlug}-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # Domaine principal + www
+      - "traefik.http.routers.${routerName}.rule=Host(\`${domain}\`) || Host(\`www.${domain}\`)"
+      - "traefik.http.routers.${routerName}.entrypoints=websecure"
+      - "traefik.http.routers.${routerName}.tls.certresolver=myresolver"
+      - "traefik.http.services.${routerName}.loadbalancer.server.port=3000"
+
+networks:
+  proxy:
+    external: true
+`
+          : `# Docker Compose pour: ${clientName}
+# Sous-domaine: ${domain}
+services:
+  website:
+    image: website-website:latest
+    container_name: client-${clientSlug}-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${routerName}.rule=Host(\`${domain}\`)"
+      - "traefik.http.routers.${routerName}.entrypoints=websecure"
+      - "traefik.http.routers.${routerName}.tls.certresolver=myresolver"
+      - "traefik.http.services.${routerName}.loadbalancer.server.port=3000"
+
+networks:
+  proxy:
+    external: true
+`;
+
+        // Écrire les fichiers
+        fs.writeFileSync(path.join(clientDir, '.env'), envContent);
+        fs.writeFileSync(path.join(clientDir, 'docker-compose.yml'), dockerComposeContent);
+        
+        log.success(`Fichiers Docker créés dans ${clientDir}`);
+        log.dim(`→ .env`);
+        log.dim(`→ docker-compose.yml`);
+
+        // Instructions pour le domaine externe
+        if (domainType === '2') {
+          console.log(`
+${Colors.YELLOW}⚠️  CONFIGURATION DNS REQUISE:${Colors.RESET}
+${Colors.DIM}Le client doit configurer ses DNS:
+  Type    Nom     Valeur
+  ────────────────────────────────
+  A       @       83.228.218.6
+  A       www     83.228.218.6${Colors.RESET}
+`);
+        }
+
+        // Proposer de démarrer le conteneur
+        console.log(`
+${Colors.CYAN}🚀 Pour démarrer le site:${Colors.RESET}
+${Colors.DIM}  cd ${clientDir}
+  docker compose up -d${Colors.RESET}
+`);
+      }
+    } catch (err) {
+      log.error(`Erreur lors de la création des fichiers Docker: ${err}`);
+    }
+  }
+
+  // ========== 10. NEXT STEPS ==========
   console.log(`
 ${Colors.MAGENTA}📋 PROCHAINES ÉTAPES:${Colors.RESET}
-${Colors.DIM}1. Copiez les variables d'environnement ci-dessus
-2. Déployez une nouvelle instance du site avec ces variables
+${Colors.DIM}1. ${createDockerFiles ? 'Les fichiers Docker ont été générés' : 'Copiez les variables d\'environnement ci-dessus'}
+2. ${createDockerFiles ? 'Lancez "docker compose up -d" dans le dossier client' : 'Déployez une nouvelle instance du site avec ces variables'}
 3. Accédez à /admin/v2 pour personnaliser le contenu
 4. Configurez le domaine personnalisé si nécessaire${Colors.RESET}
 `);

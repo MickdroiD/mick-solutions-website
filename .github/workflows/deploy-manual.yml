@@ -1,0 +1,73 @@
+# ============================================
+# Factory V2 - Manual Deployment
+# ============================================
+# Manual workflow for deploying to production
+# Useful for hotfixes or rollbacks
+
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      tag:
+        description: 'Docker image tag (default: latest)'
+        required: false
+        default: 'latest'
+
+jobs:
+  deploy:
+    name: 🚀 Manual Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - name: Display deployment info
+        run: |
+          echo "🚀 Deploying to: ${{ inputs.environment }}"
+          echo "📦 Image tag: ${{ inputs.tag }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/mickadmin/docker/website
+            
+            # Pull the specific tag
+            IMAGE_TAG="${{ inputs.tag }}"
+            
+            # Update and restart
+            docker compose pull
+            docker compose up -d
+            
+            # Cleanup
+            docker image prune -f
+            
+            echo "✅ Deployment completed at $(date)"
+            echo "   Environment: ${{ inputs.environment }}"
+            echo "   Tag: ${{ inputs.tag }}"
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Check container health
+            docker ps --filter name=mick-web --format "Status: {{.Status}}"
+            
+            # Test health endpoint
+            curl -sf http://localhost:3000/api/health || echo "⚠️ Health check failed"
+

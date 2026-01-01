@@ -789,3 +789,371 @@ img, video, svg {
 .hover\:animate-shake:hover {
   animation: shake 0.5s ease-in-out;
 }
+
+/* ============================================
+   NOUVELLES ANIMATIONS - Effects System
+   ============================================ */
+
+/* Float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float 1.5s ease-in-out infinite;
+}
+
+/* Swing animation */
+@keyframes swing {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.animate-swing {
+  animation: swing 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-swing-slow {
+  animation: swing 4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.animate-swing-fast {
+  animation: swing 1s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Enhanced pulse & bounce with speed variants */
+.animate-pulse-slow {
+  animation: logo-pulse 4s ease-in-out infinite;
+}
+
+.animate-pulse-fast {
+  animation: logo-pulse 1s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: logo-bounce 3s ease-in-out infinite;
+}
+
+.animate-bounce-fast {
+  animation: logo-bounce 1s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 60s linear infinite;
+}
+
+.animate-spin-fast {
+  animation: spin 10s linear infinite;
+}
+
+/* Rotate-X animation */
+@keyframes rotate-x {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(360deg); }
+}
+
+.animate-rotate-x {
+  animation: rotate-x 3s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.animate-rotate-x-slow {
+  animation: rotate-x 6s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.animate-rotate-x-fast {
+  animation: rotate-x 1.5s linear infinite;
+  transform-style: preserve-3d;
+}
+
+/* Scale-up animation */
+@keyframes scale-up {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-scale-up {
+  animation: scale-up 2s ease-in-out infinite;
+}
+
+.animate-scale-up-slow {
+  animation: scale-up 4s ease-in-out infinite;
+}
+
+.animate-scale-up-fast {
+  animation: scale-up 1s ease-in-out infinite;
+}
+
+/* Wobble animation */
+@keyframes wobble {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-5px) rotate(-5deg); }
+  75% { transform: translateX(5px) rotate(5deg); }
+}
+
+.animate-wobble {
+  animation: wobble 1s ease-in-out infinite;
+}
+
+.animate-wobble-slow {
+  animation: wobble 2s ease-in-out infinite;
+}
+
+.animate-wobble-fast {
+  animation: wobble 0.5s ease-in-out infinite;
+}
+
+/* Flash animation */
+@keyframes flash {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.5; }
+}
+
+.animate-flash {
+  animation: flash 2s ease-in-out infinite;
+}
+
+.animate-flash-slow {
+  animation: flash 4s ease-in-out infinite;
+}
+
+.animate-flash-fast {
+  animation: flash 1s ease-in-out infinite;
+}
+
+/* Ripple animation */
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7),
+                0 0 0 10px rgba(34, 211, 238, 0.4),
+                0 0 0 20px rgba(34, 211, 238, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(34, 211, 238, 0.4),
+                0 0 0 20px rgba(34, 211, 238, 0.1),
+                0 0 0 30px rgba(34, 211, 238, 0);
+  }
+}
+
+/* Glitch animation */
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+/* Orbit animation */
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   CLIP PATHS FOR FRAME SHAPES
+   ============================================ */
+
+.clip-path-hexagon {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.clip-path-octagon {
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+}
+
+.clip-path-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* ============================================
+   LOGO FRAME ANIMATIONS (Enseigne Lumineuse)
+   ============================================ */
+
+/* Animation: Flux de couleur (color-flow) */
+@keyframes frame-color-flow {
+  0% {
+    border-color: var(--frame-color-1, #22d3ee);
+    box-shadow: 0 0 10px var(--frame-color-1, #22d3ee);
+  }
+  50% {
+    border-color: var(--frame-color-2, #a78bfa);
+    box-shadow: 0 0 15px var(--frame-color-2, #a78bfa);
+  }
+  100% {
+    border-color: var(--frame-color-1, #22d3ee);
+    box-shadow: 0 0 10px var(--frame-color-1, #22d3ee);
+  }
+}
+
+.frame-animation-flow {
+  animation: frame-color-flow 3s ease-in-out infinite;
+}
+
+.frame-animation-flow.speed-slow {
+  animation-duration: 6s;
+}
+
+.frame-animation-flow.speed-fast {
+  animation-duration: 1.5s;
+}
+
+/* Animation: Pulsation glow */
+@keyframes frame-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--frame-color-1, #22d3ee),
+                0 0 10px var(--frame-color-1, #22d3ee);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--frame-color-1, #22d3ee),
+                0 0 30px var(--frame-color-2, #a78bfa),
+                0 0 45px var(--frame-color-1, #22d3ee);
+  }
+}
+
+.frame-animation-pulse {
+  animation: frame-glow-pulse 2s ease-in-out infinite;
+}
+
+.frame-animation-pulse.speed-slow {
+  animation-duration: 4s;
+}
+
+.frame-animation-pulse.speed-fast {
+  animation-duration: 1s;
+}
+
+/* Animation: Bordure qui tourne (comme enseigne lumineuse) */
+@keyframes frame-spin-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.frame-animation-spin {
+  position: relative;
+}
+
+.frame-animation-spin::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--frame-color-1, #22d3ee),
+    var(--frame-color-2, #a78bfa),
+    var(--frame-color-1, #22d3ee),
+    var(--frame-color-2, #a78bfa),
+    var(--frame-color-1, #22d3ee)
+  );
+  background-size: 200% 100%;
+  animation: frame-spin-border 3s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+}
+
+.frame-animation-spin.speed-slow::before {
+  animation-duration: 6s;
+}
+
+.frame-animation-spin.speed-fast::before {
+  animation-duration: 1.5s;
+}
+
+/* Animation: Enseigne néon (couleur qui fait le tour) */
+@keyframes frame-neon-sign {
+  0% {
+    box-shadow: 
+      inset 0 2px 0 0 var(--frame-color-1, #22d3ee),
+      0 -2px 10px 0 var(--frame-color-1, #22d3ee);
+  }
+  25% {
+    box-shadow: 
+      inset 2px 0 0 0 var(--frame-color-1, #22d3ee),
+      2px 0 10px 0 var(--frame-color-1, #22d3ee);
+  }
+  50% {
+    box-shadow: 
+      inset 0 -2px 0 0 var(--frame-color-2, #a78bfa),
+      0 2px 10px 0 var(--frame-color-2, #a78bfa);
+  }
+  75% {
+    box-shadow: 
+      inset -2px 0 0 0 var(--frame-color-2, #a78bfa),
+      -2px 0 10px 0 var(--frame-color-2, #a78bfa);
+  }
+  100% {
+    box-shadow: 
+      inset 0 2px 0 0 var(--frame-color-1, #22d3ee),
+      0 -2px 10px 0 var(--frame-color-1, #22d3ee);
+  }
+}
+
+.frame-animation-neon-sign {
+  animation: frame-neon-sign 2s linear infinite;
+}
+
+.frame-animation-neon-sign.speed-slow {
+  animation-duration: 4s;
+}
+
+.frame-animation-neon-sign.speed-fast {
+  animation-duration: 1s;
+}
+
+/* Animation intensité variants */
+.frame-intensity-subtle {
+  --frame-glow-size: 5px;
+}
+
+.frame-intensity-normal {
+  --frame-glow-size: 10px;
+}
+
+.frame-intensity-strong {
+  --frame-glow-size: 20px;
+}
+
+.frame-intensity-intense {
+  --frame-glow-size: 30px;
+}
+

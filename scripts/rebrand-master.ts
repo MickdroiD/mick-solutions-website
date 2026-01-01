@@ -726,7 +726,7 @@ ${Colors.RESET}`);
         // Obtenir le contenu pédagogique pour ce type
         const sectionUpdate = getSectionContent(sectionType);
 
-        await client.updateRow(TABLE_SECTIONS_ID, rowId, sectionUpdate);
+        await client.updateRow(TABLE_SECTIONS_ID, rowId, sectionUpdate as unknown as Record<string, unknown>);
         log.success(`Section "${sectionName}" → contenu pédagogique appliqué`);
 
         await sleep(150); // Rate limiting

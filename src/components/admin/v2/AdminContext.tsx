@@ -22,20 +22,24 @@ interface AdminV2ContextValue {
   allSections: (Section & { _rowId?: number })[];
   isLoading: boolean;
   error: string | null;
-  
+
+  // 🔧 NEW: Dernière erreur d'opération (pour affichage toast/notification)
+  lastError: string | null;
+  clearError: () => void;
+
   // Actions - Global
   updateGlobal: (updates: Partial<GlobalConfig>) => Promise<void>;
-  
+
   // Actions - Sections
   updateSection: (rowId: number, updates: Partial<Section>) => Promise<void>;
   addSection: (section: Omit<Section, 'id'>) => Promise<number | null>;
   deleteSection: (rowId: number) => Promise<void>;
   reorderSections: (orderedIds: number[]) => Promise<void>;
   toggleSectionActive: (rowId: number, isActive: boolean) => Promise<void>;
-  
+
   // Refetch
   refresh: () => Promise<void>;
-  
+
   // UI State
   hasUnsavedChanges: boolean;
   saveAll: () => Promise<void>;
@@ -58,7 +62,7 @@ interface AdminV2ProviderProps {
 
 export function AdminV2Provider({ children }: AdminV2ProviderProps) {
   const router = useRouter();
-  
+
   // State
   const [globalConfig, setGlobalConfig] = useState<GlobalConfig | null>(null);
   const [sections, setSections] = useState<(Section & { _rowId?: number })[]>([]);
@@ -66,7 +70,11 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
+  // 🔧 NEW: État pour la dernière erreur d'opération
+  const [lastError, setLastError] = useState<string | null>(null);
+  const clearError = useCallback(() => setLastError(null), []);
+
   // Pending changes queue
   const pendingGlobalChanges = useRef<Partial<GlobalConfig>>({});
   // Use Record<string, unknown> for flexible section updates
@@ -81,30 +89,30 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const res = await fetch('/api/admin/config', { cache: 'no-store' });
-      
+
       // Redirect to login if not authenticated
       if (res.status === 401) {
         console.log('[AdminV2] Not authenticated, redirecting to /admin');
         router.push('/admin?redirect=/admin/v2');
         return;
       }
-      
+
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       }
-      
+
       const data: FactoryV2Data = await res.json();
-      
+
       if (data.version !== 'v2') {
         throw new Error('Admin V2 requires Factory V2 architecture');
       }
-      
+
       setGlobalConfig(data.global);
       setSections(data.sections);
       setAllSections(data.allSections || data.sections);
-      
+
     } catch (err) {
       console.error('[AdminV2Context] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
@@ -123,14 +131,14 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
 
   const updateGlobal = useCallback(async (updates: Partial<GlobalConfig>) => {
     if (!globalConfig) return;
-    
+
     // Optimistic UI: Update local state immediately
     setGlobalConfig(prev => {
       if (!prev) return prev;
-      
+
       // Deep merge
       const merged = { ...prev };
-      
+
       for (const [key, value] of Object.entries(updates)) {
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
           (merged as Record<string, unknown>)[key] = {
@@ -141,17 +149,17 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
           (merged as Record<string, unknown>)[key] = value;
         }
       }
-      
+
       return merged as GlobalConfig;
     });
-    
+
     // Queue changes
     pendingGlobalChanges.current = {
       ...pendingGlobalChanges.current,
       ...updates,
     };
     setHasUnsavedChanges(true);
-    
+
     // API call
     try {
       const res = await fetch('/api/admin/config', {
@@ -162,16 +170,16 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
           data: updates,
         }),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${res.status}`);
       }
-      
+
       // Clear pending on success
       pendingGlobalChanges.current = {};
       setHasUnsavedChanges(pendingSectionChanges.current.size > 0);
-      
+
     } catch (err) {
       console.error('[AdminV2Context] Update global error:', err);
       // Don't revert optimistic update - let user retry
@@ -184,18 +192,18 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
 
   const updateSection = useCallback(async (rowId: number, updates: Partial<Section>) => {
     // Optimistic UI
-    setAllSections(prev => 
+    setAllSections(prev =>
       prev.map(s => s._rowId === rowId ? { ...s, ...updates } as Section & { _rowId?: number } : s)
     );
-    setSections(prev => 
+    setSections(prev =>
       prev.map(s => s._rowId === rowId ? { ...s, ...updates } as Section & { _rowId?: number } : s)
     );
-    
+
     // Queue changes
     const existing = pendingSectionChanges.current.get(rowId) || {};
     pendingSectionChanges.current.set(rowId, { ...existing, ...updates });
     setHasUnsavedChanges(true);
-    
+
     // API call
     try {
       const res = await fetch('/api/admin/config', {
@@ -207,19 +215,19 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
           data: updates,
         }),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${res.status}`);
       }
-      
+
       // Clear pending on success
       pendingSectionChanges.current.delete(rowId);
       setHasUnsavedChanges(
-        Object.keys(pendingGlobalChanges.current).length > 0 || 
+        Object.keys(pendingGlobalChanges.current).length > 0 ||
         pendingSectionChanges.current.size > 0
       );
-      
+
     } catch (err) {
       console.error('[AdminV2Context] Update section error:', err);
     }
@@ -239,16 +247,16 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
           data: section,
         }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Erreur création section');
       }
-      
+
       const { id } = await res.json();
-      
+
       // Refresh to get new section
       await fetchData();
-      
+
       return id;
     } catch (err) {
       console.error('[AdminV2Context] Add section error:', err);
@@ -264,12 +272,12 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
     // Optimistic UI
     setAllSections(prev => prev.filter(s => s._rowId !== rowId));
     setSections(prev => prev.filter(s => s._rowId !== rowId));
-    
+
     try {
       const res = await fetch(`/api/admin/config?sectionId=${rowId}`, {
         method: 'DELETE',
       });
-      
+
       if (!res.ok) {
         throw new Error('Erreur suppression');
       }
@@ -289,7 +297,7 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
   }, [updateSection]);
 
   // ============================================
-  // REORDER SECTIONS
+  // REORDER SECTIONS (with rollback)
   // ============================================
 
   const reorderSections = useCallback(async (orderedIds: number[]) => {
@@ -298,7 +306,10 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
       rowId: id,
       order: index,
     }));
-    
+
+    // 🔧 FIX: Sauvegarder l'état original pour rollback
+    const originalSections = [...allSections];
+
     // Optimistic UI
     setAllSections(prev => {
       const copy = [...prev];
@@ -310,11 +321,13 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
       }
       return copy.sort((a, b) => a.order - b.order);
     });
-    
-    // API calls (batch would be better but not implemented)
+
+    // 🔧 FIX: Tracker les erreurs et rollback si nécessaire
+    const errors: string[] = [];
+
     for (const { rowId, order } of updates) {
       try {
-        await fetch('/api/admin/config', {
+        const res = await fetch('/api/admin/config', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -323,11 +336,25 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
             data: { order },
           }),
         });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          errors.push(`Section ${rowId}: ${errorData.error || res.status}`);
+        }
       } catch (err) {
         console.error(`[AdminV2Context] Reorder error for ${rowId}:`, err);
+        errors.push(`Section ${rowId}: ${err instanceof Error ? err.message : 'Erreur réseau'}`);
       }
     }
-  }, []);
+
+    // 🔧 FIX: Si des erreurs, rollback + notification
+    if (errors.length > 0) {
+      console.error('[AdminV2Context] Reorder failed, rolling back:', errors);
+      setAllSections(originalSections);
+      setSections(originalSections.filter(s => s.isActive));
+      setLastError(`Erreur de réorganisation: ${errors[0]}${errors.length > 1 ? ` (+${errors.length - 1} autres)` : ''}`);
+    }
+  }, [allSections]);
 
   // ============================================
   // SAVE ALL (Batch pending changes)
@@ -335,9 +362,9 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
 
   const saveAll = useCallback(async () => {
     if (!hasUnsavedChanges) return;
-    
+
     setIsSaving(true);
-    
+
     try {
       // Save global if pending
       if (Object.keys(pendingGlobalChanges.current).length > 0) {
@@ -351,7 +378,7 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
         });
         pendingGlobalChanges.current = {};
       }
-      
+
       // Save sections if pending
       for (const [rowId, changes] of Array.from(pendingSectionChanges.current)) {
         await fetch('/api/admin/config', {
@@ -365,9 +392,9 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
         });
       }
       pendingSectionChanges.current.clear();
-      
+
       setHasUnsavedChanges(false);
-      
+
     } catch (err) {
       console.error('[AdminV2Context] Save all error:', err);
     } finally {
@@ -385,6 +412,8 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
     allSections,
     isLoading,
     error,
+    lastError,
+    clearError,
     updateGlobal,
     updateSection,
     addSection,

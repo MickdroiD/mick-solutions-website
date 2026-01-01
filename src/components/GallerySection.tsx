@@ -11,7 +11,10 @@ import type { GalleryItem, GalleryDisplayType } from '@/lib/baserow';
 // PROPS INTERFACE
 // ============================================
 
-interface GallerySectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+
+interface GallerySectionProps extends SectionEffectsProps {
   galleryItems: GalleryItem[];
   variant?: 'Grid' | 'Slider' | 'Masonry' | 'AI';
   columns?: '2' | '3' | '4' | 'Auto' | string | null;
@@ -197,12 +200,14 @@ function LightboxModal({
 // SLIDER VIEW
 // ============================================
 
-function SliderView({ items, onImageClick, styleClasses = '', filterClasses = '' }: { 
+function SliderView({ items, onImageClick, styleClasses: _styleClasses = '', filterClasses: _filterClasses = '' }: { 
   items: GalleryItem[]; 
   onImageClick: (index: number) => void;
   styleClasses?: string;
   filterClasses?: string;
 }) {
+  // Note: styleClasses and filterClasses are received for API consistency but not used in slider view
+  void _styleClasses; void _filterClasses;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -586,7 +591,9 @@ export default function GallerySection({
   imageFilter = 'None',
   aspectRatio = '1:1',
   title = 'Notre Galerie',
-  subtitle = 'Découvrez nos réalisations et notre univers en images.'
+  subtitle = 'Découvrez nos réalisations et notre univers en images.',
+  effects,
+  textSettings,
 }: GallerySectionProps) {
   // Classes dynamiques basées sur les props
   const styleClasses = getImageStyleClasses(imageStyle);
@@ -658,12 +665,33 @@ export default function GallerySection({
     }
   };
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
+
   return (
     <section id="galerie" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/30 to-background" />
-      <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[150px] -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-[120px]" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/30 to-background" />
+        )}
+        {showBlobs && (
+          <>
+            <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[150px] -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary-500/5 rounded-full blur-[120px]" />
+          </>
+        )}
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -673,10 +701,16 @@ export default function GallerySection({
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>

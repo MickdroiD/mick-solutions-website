@@ -44,8 +44,16 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Initiales du logo
+  // Initiales du logo (fallback si pas d'image)
   const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
+
+  // 🆕 Logo image URL (priorité: headerLogoUrl > logoUrl)
+  const logoImageUrl = config.headerLogoUrl || config.logoUrl;
+
+  // 🆕 Couleurs personnalisées du header
+  const headerBgColor = config.headerBgColor || 'rgba(10, 10, 15, 0.95)';
+  const headerTextColor = config.headerTextColor || '#ffffff';
+  const headerBorderColor = config.headerBorderColor;
 
   return (
     <motion.header
@@ -53,22 +61,34 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-      style={{ 
-        backgroundColor: isScrolled ? 'rgba(10, 10, 15, 0.95)' : 'transparent',
-        borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+      style={{
+        backgroundColor: isScrolled ? headerBgColor : 'transparent',
+        borderBottom: isScrolled ? `1px solid ${headerBorderColor || 'rgba(255, 255, 255, 0.05)'}` : 'none',
         backdropFilter: isScrolled ? 'blur(12px)' : 'none',
+        color: headerTextColor,
       }}
     >
       <nav className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo avec AnimatedLogoFrame (cadre tournant) */}
-          <a 
-            href="#" 
+          {/* Logo - Image ou AnimatedLogoFrame */}
+          <a
+            href="#"
             onClick={handleLogoClick}
             className="flex items-center gap-2 sm:gap-3 group touch-manipulation"
           >
-            <AnimatedLogoFrame initiales={initiales} size="md" variant={config.logoFrameStyle} />
-            <span className="text-sm sm:text-lg font-semibold text-white whitespace-nowrap">
+            {logoImageUrl ? (
+              // 🆕 Afficher l'image du logo si disponible
+              <img
+                src={logoImageUrl}
+                alt={config.nomSite}
+                className="h-8 md:h-10 w-auto object-contain"
+                style={{ maxHeight: config.headerLogoSize || 40 }}
+              />
+            ) : (
+              // Fallback: AnimatedLogoFrame avec initiales
+              <AnimatedLogoFrame initiales={initiales} size="md" variant={config.logoFrameStyle} />
+            )}
+            <span className="text-sm sm:text-lg font-semibold whitespace-nowrap" style={{ color: headerTextColor }}>
               {config.nomSite.split(' ')[0]} <span className="text-gradient">{config.nomSite.split(' ').slice(1).join(' ')}</span>
             </span>
           </a>

@@ -3,6 +3,9 @@ services:
     build: .
     container_name: mick-web
     restart: always
+    env_file:
+      - .env
+      - /home/mickadmin/.secrets/api-keys.env
     environment:
       - NODE_ENV=production
       - BASEROW_API_TOKEN=${BASEROW_API_TOKEN}
@@ -16,6 +19,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-}
       - BASEROW_SERVICES_TABLE_ID=${BASEROW_SERVICES_TABLE_ID:-748}
       - NEXT_PUBLIC_BASEROW_API_URL=https://baserow.mick-solutions.ch
+      # Note: AI API Keys sont chargées via env_file depuis /home/mickadmin/.secrets/api-keys.env
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s

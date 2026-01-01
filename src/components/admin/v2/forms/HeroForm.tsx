@@ -4,10 +4,12 @@ import { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Sparkles, Type, MousePointer, Image as ImageIcon, 
-  Zap, Play, Settings, ChevronDown, Plus, Trash2
+  ChevronDown, Plus, Trash2
 } from 'lucide-react';
-import { LocalInput, LocalTextarea, LocalSlider } from '@/components/admin/ui/LocalInput';
+import { LocalInput, LocalTextarea } from '@/components/admin/ui/LocalInput';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import type { HeroSection } from '@/lib/schemas/factory';
 
 // ============================================
@@ -19,45 +21,6 @@ interface HeroFormProps {
   onUpdate: (updates: Partial<HeroSection>) => void;
 }
 
-// ============================================
-// VARIANT OPTIONS
-// ============================================
-
-const VARIANT_OPTIONS = [
-  { value: 'Minimal', label: 'Minimal', emoji: '🎯' },
-  { value: 'Corporate', label: 'Corporate', emoji: '🏢' },
-  { value: 'Electric', label: 'Electric', emoji: '⚡' },
-  { value: 'Bold', label: 'Bold', emoji: '💪' },
-  { value: 'AI', label: 'AI', emoji: '🤖' },
-];
-
-const HEIGHT_OPTIONS = [
-  { value: 'Short', label: 'Court', description: '70vh' },
-  { value: 'Medium', label: 'Moyen', description: '85vh' },
-  { value: 'Tall', label: 'Grand', description: '95vh' },
-  { value: 'FullScreen', label: 'Plein écran', description: '100vh' },
-];
-
-const LOGO_ANIMATION_OPTIONS = [
-  { value: 'none', label: 'Aucune' },
-  { value: 'pulse', label: 'Pulse' },
-  { value: 'electric', label: 'Electric ⚡' },
-  { value: 'spin', label: 'Rotation' },
-  { value: 'bounce', label: 'Rebond' },
-  { value: 'lightning-circle', label: 'Lightning Circle' },
-];
-
-const TEXT_ANIMATION_OPTIONS = [
-  { value: 'None', label: 'Aucune' },
-  { value: 'Gradient', label: 'Gradient animé' },
-  { value: 'Typing', label: 'Machine à écrire' },
-  { value: 'Fade', label: 'Fondu' },
-];
-
-// ============================================
-// SECTION CARD WRAPPER
-// ============================================
-
 interface CollapsibleSectionProps {
   title: string;
   icon: React.ReactNode;
@@ -66,7 +29,7 @@ interface CollapsibleSectionProps {
   badge?: string;
 }
 
-function CollapsibleSection({ title, icon, children, defaultOpen = true, badge }: CollapsibleSectionProps) {
+function CollapsibleSection({ title, icon, children, defaultOpen = false, badge }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -122,16 +85,6 @@ function HeroFormComponent({ section, onUpdate }: HeroFormProps) {
       },
     });
   }, [section.content, onUpdate]);
-
-  // ========== DESIGN HANDLERS ==========
-  const updateDesign = useCallback((key: string, value: unknown) => {
-    onUpdate({
-      design: {
-        ...section.design,
-        [key]: value,
-      },
-    });
-  }, [section.design, onUpdate]);
 
   // ========== CTA HANDLERS ==========
   const updateCtaPrincipal = useCallback((key: 'text' | 'url', value: string) => {
@@ -337,100 +290,45 @@ function HeroFormComponent({ section, onUpdate }: HeroFormProps) {
         />
       </CollapsibleSection>
 
-      {/* ========== DESIGN & STYLE ========== */}
-      <CollapsibleSection title="Design & Style" icon={<Settings className="w-5 h-5" />}>
-        {/* Variant Selection */}
-        <div className="space-y-2">
-          <label className="text-white font-medium text-sm">Style du Hero</label>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            {VARIANT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => updateDesign('variant', opt.value)}
-                className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                  section.design.variant === opt.value
-                    ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
-                    : 'border-white/10 text-slate-400 hover:border-white/20'
-                }`}
-              >
-                <span className="block text-lg mb-1">{opt.emoji}</span>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Height */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm">Hauteur du Hero</label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {HEIGHT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => updateDesign('height', opt.value)}
-                className={`px-4 py-3 rounded-xl border-2 text-sm transition-all ${
-                  section.design.height === opt.value
-                    ? 'border-violet-500 bg-violet-500/20 text-violet-400'
-                    : 'border-white/10 text-slate-400 hover:border-white/20'
-                }`}
-              >
-                <span className="block font-medium">{opt.label}</span>
-                <span className="text-xs opacity-60">{opt.description}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Logo Settings */}
-        <div className="space-y-4 pt-4 border-t border-white/5">
-          <h4 className="text-white font-medium flex items-center gap-2">
-            <Zap className="w-4 h-4 text-yellow-400" />
-            Logo dans le Hero
-          </h4>
+      {/* Effects, Animations & Design (FUSIONNÉ) */}
+      <SectionEffects
+        effects={{
+          ...(section.effects || {}),
+          variant: section.design.variant,
+          height: section.design.height,
+          logoSize: section.design.logoSize,
+          backgroundUrl: section.content.backgroundUrl,
+        } as EffectSettings}
+        onChange={(updates) => {
+          // Extraire les champs design, content et effects
+          const { variant, height, logoSize, backgroundUrl, ...effectsOnly } = updates;
           
-          <LocalSlider
-            label="Taille du logo"
-            value={section.design.logoSize}
-            onChange={(v) => updateDesign('logoSize', v)}
-            min={100}
-            max={500}
-            step={10}
-            unit="px"
-          />
+          const designUpdates: Record<string, unknown> = {};
+          if (variant !== undefined) designUpdates.variant = variant;
+          if (height !== undefined) designUpdates.height = height;
+          if (logoSize !== undefined) designUpdates.logoSize = logoSize;
+          
+          const contentUpdates: Record<string, unknown> = {};
+          if (backgroundUrl !== undefined) contentUpdates.backgroundUrl = backgroundUrl;
+          
+          onUpdate({
+            ...(Object.keys(designUpdates).length > 0 ? { design: { ...section.design, ...designUpdates } } : {}),
+            ...(Object.keys(contentUpdates).length > 0 ? { content: { ...section.content, ...contentUpdates } } : {}),
+            ...(Object.keys(effectsOnly).length > 0 ? { effects: { ...(section.effects || {}), ...effectsOnly } } : {}),
+          });
+        }}
+        showLogoOptions={true}
+        showBackgroundOptions={true}
+      />
 
-          <div className="space-y-1">
-            <label className="text-white font-medium text-sm">Animation du logo</label>
-            <select
-              value={section.design.logoAnimation}
-              onChange={(e) => updateDesign('logoAnimation', e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500"
-            >
-              {LOGO_ANIMATION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Text Animation */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm flex items-center gap-2">
-            <Play className="w-4 h-4 text-cyan-400" />
-            Animation du texte
-          </label>
-          <select
-            value={section.design.textAnimation}
-            onChange={(e) => updateDesign('textAnimation', e.target.value)}
-            className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500"
-          >
-            {TEXT_ANIMATION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      </CollapsibleSection>
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

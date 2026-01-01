@@ -111,6 +111,27 @@ function normalizeAnimationType(raw: string | null | undefined): string {
     'bounce': 'bounce',
     'rebond': 'bounce',
     
+    // NEW: Direct effect variants
+    'float': 'float',
+    'levitation': 'float',
+    'flottement': 'float',
+    
+    'swing': 'swing',
+    'balancement': 'swing',
+    'pendule': 'swing',
+    
+    'flip_3d': 'flip-3d',
+    'flip3d': 'flip-3d',
+    'retournement': 'flip-3d',
+    
+    'stretch': 'stretch',
+    'etirement': 'stretch',
+    'elastique': 'stretch',
+    
+    'morph': 'morph',
+    'morphing': 'morph',
+    'deformation': 'morph',
+    
     // None variants
     'none': 'none',
     'aucun': 'none',
@@ -171,6 +192,49 @@ function getAnimationConfig(animationType: string): AnimationConfig {
         animate: { y: [0, -10, 0] },
         transition: { duration: 1.5, repeat: Infinity },
         className: 'animate-bounce-soft',
+      };
+    
+    // NEW: Direct effects
+    case 'float':
+      return {
+        animate: { y: [-8, 8, -8] },
+        transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+        className: '',
+      };
+    
+    case 'swing':
+      return {
+        animate: { rotate: [-12, 12, -12] },
+        transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+        style: { transformOrigin: 'top center' },
+        className: '',
+      };
+    
+    case 'flip-3d':
+      return {
+        animate: { rotateY: 360 },
+        transition: { duration: 4, repeat: Infinity, ease: 'linear' },
+        className: '',
+      };
+    
+    case 'stretch':
+      return {
+        animate: { 
+          scaleX: [1, 1.15, 1, 0.85, 1],
+          scaleY: [1, 0.9, 1, 1.1, 1],
+        },
+        transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+        className: '',
+      };
+    
+    case 'morph':
+      return {
+        animate: { 
+          borderRadius: ['30%', '40%', '50%', '40%', '30%'],
+          scale: [1, 1.02, 1, 0.98, 1],
+        },
+        transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+        className: '',
       };
     
     case 'none':

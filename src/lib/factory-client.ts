@@ -68,6 +68,7 @@ interface BaserowConfigRow {
   Nom?: string;  // Nom du site (champ DB réel)
   Notes?: string | null;  // Notes optionnelles
   Actif?: boolean;  // Statut actif/inactif
+  Identity?: string;  // 🆕 Champ JSON pour identity complet
   SEO_Metadata?: string;
   Branding?: string;
   Contact?: string;
@@ -279,13 +280,18 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
   const row = rows[0];
   logInfo(`Fetched config row ID: ${row.id}`);
 
-  // 🔧 Parse JSON + validate avec fallback automatique via safeJsonParseWithSchema
+  // 🔧 FIX: Lire Identity depuis le champ JSON dédié avec fallback sur Nom
+  const identityJson = safeJsonParse<{ nomSite?: string; slogan?: string; initialesLogo?: string }>(
+    row.Identity,
+    {},
+    'Identity'
+  );
   const identity = IdentitySchema.safeParse({
-    nomSite: row.Nom || 'Mon Site',
-    slogan: '',
-    initialesLogo: row.Nom?.substring(0, 2).toUpperCase() || 'MS',
+    nomSite: identityJson?.nomSite || row.Nom || 'Mon Site',
+    slogan: identityJson?.slogan || '',
+    initialesLogo: identityJson?.initialesLogo || row.Nom?.substring(0, 2).toUpperCase() || 'MS',
   });
-  
+
   // Chaque champ JSON est parsé et validé en une seule opération avec fallback sur les defaults
   const seo = safeJsonParseWithSchema(row.SEO_Metadata, SEOSchema, DEFAULT_SEO, 'SEO_Metadata');
   const branding = safeJsonParseWithSchema(row.Branding, BrandingSchema, DEFAULT_BRANDING, 'Branding');
@@ -376,8 +382,16 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
     const sectionType = typeValidation.data as SectionType;
 
     // Parse JSON content and design
-    const content = safeJsonParse(row.Content, {}, `Section ${row.id} Content`);
+    const contentRaw = safeJsonParse(row.Content, {}, `Section ${row.id} Content`);
     const design = safeJsonParse(row.Design, {}, `Section ${row.id} Design`);
+
+    // ⭐ FIX CRITIQUE: Extraire effects et textSettings du content
+    // Ils sont stockés DANS le JSON content mais doivent être des champs séparés de la section
+    const { effects, textSettings, ...content } = contentRaw as {
+      effects?: Record<string, unknown>;
+      textSettings?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
 
     // Build section object
     // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
@@ -388,6 +402,8 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
       page: row.Page || 'home',
       content,
       design,
+      effects,      // ⭐ Maintenant extrait du content !
+      textSettings, // ⭐ Maintenant extrait du content !
     };
 
     // Validate with discriminated union
@@ -451,8 +467,16 @@ export async function getAllSections(): Promise<Section[]> {
     if (!typeValidation.success) continue;
 
     const sectionType = typeValidation.data as SectionType;
-    const content = safeJsonParse(row.Content, {}, `Section ${row.id} Content`);
+    const contentRaw = safeJsonParse(row.Content, {}, `Section ${row.id} Content`);
     const design = safeJsonParse(row.Design, {}, `Section ${row.id} Design`);
+
+    // ⭐ NOUVEAU: Extraire effects et textSettings du content
+    const { effects, textSettings, ...content } = contentRaw as {
+      effects?: Record<string, unknown>;
+      textSettings?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
+
 
     // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
     const sectionData = {
@@ -463,12 +487,17 @@ export async function getAllSections(): Promise<Section[]> {
       page: row.Page || 'home',
       content,
       design,
+      effects,
+      textSettings,
     };
 
     const validation = SectionSchema.safeParse(sectionData);
     if (validation.success) {
       // Add rowId for admin operations
       sections.push({ ...validation.data, _rowId: row.id } as Section & { _rowId: number });
+    } else {
+      // Log validation errors
+      logWarn(`Section ${row.id} (${sectionType}) validation failed`, validation.error.issues);
     }
   }
 
@@ -503,12 +532,11 @@ export async function updateGlobalConfig(
   const updateData: Record<string, unknown> = {};
 
   if (partialConfig.identity) {
-    // Name is a special field (not JSON)
+    // 🔧 FIX: Sauvegarder identity complet en JSON + Nom pour compatibilité
+    updateData['Identity'] = JSON.stringify(partialConfig.identity);
     if (partialConfig.identity.nomSite) {
-      updateData['Name'] = partialConfig.identity.nomSite;
+      updateData['Nom'] = partialConfig.identity.nomSite;
     }
-    // Rest goes to JSON... but Identity is spread across Name + Identity JSON
-    // For simplicity, we store full identity in Name field as JSON isn't separate
   }
 
   if (partialConfig.seo) {
@@ -623,8 +651,9 @@ export async function updateSection(
 // CREATE SECTION
 // ============================================
 
-// Mapping des types de section vers les IDs Baserow single_select
-const SECTION_TYPE_IDS: Record<string, number> = {
+// 🔧 FIX: IDs par défaut (fallback si API échoue)
+// Ces IDs correspondent au template FACTORY_V2 original
+const FALLBACK_SECTION_TYPE_IDS: Record<string, number> = {
   'hero': 3413,
   'services': 3414,
   'advantages': 3415,
@@ -639,6 +668,85 @@ const SECTION_TYPE_IDS: Record<string, number> = {
   'custom': 3424,
 };
 
+// 🔧 FIX: Cache pour les IDs dynamiques (évite appels répétés)
+let cachedSectionTypeIds: Record<string, number> | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Récupère dynamiquement les IDs des types de sections depuis Baserow.
+ * Utilise un cache avec TTL pour éviter les appels répétés.
+ * Fallback sur les valeurs hardcodées en cas d'erreur.
+ */
+async function getSectionTypeIds(): Promise<Record<string, number>> {
+  // Vérifier le cache
+  const now = Date.now();
+  if (cachedSectionTypeIds && (now - cacheTimestamp) < CACHE_TTL_MS) {
+    return cachedSectionTypeIds;
+  }
+
+  if (!BASEROW_TOKEN || !SECTIONS_TABLE_ID) {
+    logWarn('No token or table ID, using fallback section type IDs');
+    return FALLBACK_SECTION_TYPE_IDS;
+  }
+
+  try {
+    // Récupérer les champs de la table SECTIONS
+    const response = await fetch(
+      `${BASEROW_API_URL}/database/fields/table/${SECTIONS_TABLE_ID}/`,
+      {
+        headers: { Authorization: `Token ${BASEROW_TOKEN}` },
+        cache: 'no-store',
+      }
+    );
+
+    if (!response.ok) {
+      logWarn(`Failed to fetch field info (${response.status}), using fallback`);
+      return FALLBACK_SECTION_TYPE_IDS;
+    }
+
+    const fields = await response.json();
+
+    // Trouver le champ "Type" (single_select)
+    const typeField = fields.find(
+      (f: { name: string; type: string }) => f.name === 'Type' && f.type === 'single_select'
+    );
+
+    if (!typeField || !typeField.select_options) {
+      logWarn('Type field or select_options not found, using fallback');
+      return FALLBACK_SECTION_TYPE_IDS;
+    }
+
+    // Construire le mapping value → id
+    const dynamicIds: Record<string, number> = {};
+    for (const option of typeField.select_options) {
+      dynamicIds[option.value.toLowerCase()] = option.id;
+    }
+
+    // Vérifier que tous les types requis sont présents
+    const requiredTypes = Object.keys(FALLBACK_SECTION_TYPE_IDS);
+    const missingTypes = requiredTypes.filter(t => !dynamicIds[t]);
+
+    if (missingTypes.length > 0) {
+      logWarn(`Missing type IDs for: ${missingTypes.join(', ')}. Merging with fallback.`);
+      // Fusionner avec fallback pour les types manquants
+      for (const type of missingTypes) {
+        dynamicIds[type] = FALLBACK_SECTION_TYPE_IDS[type];
+      }
+    }
+
+    // Mettre en cache
+    cachedSectionTypeIds = dynamicIds;
+    cacheTimestamp = now;
+    logInfo(`✅ Section type IDs loaded dynamically: ${Object.keys(dynamicIds).length} types`);
+
+    return dynamicIds;
+  } catch (error) {
+    logError('Error fetching section type IDs', error);
+    return FALLBACK_SECTION_TYPE_IDS;
+  }
+}
+
 export async function createSection(
   section: Omit<Section, 'id'>
 ): Promise<{ success: boolean; id?: number; error?: string }> {
@@ -646,22 +754,23 @@ export async function createSection(
     return { success: false, error: 'Configuration manquante' };
   }
 
-  // 🔧 FIX: Utiliser l'ID du type pour le champ single_select
-  const typeId = SECTION_TYPE_IDS[section.type];
+  // 🔧 FIX: Récupérer les IDs dynamiquement (avec cache + fallback)
+  const sectionTypeIds = await getSectionTypeIds();
+  const typeId = sectionTypeIds[section.type];
+
   if (!typeId) {
     logError(`Unknown section type: ${section.type}`);
     return { success: false, error: `Type de section inconnu: ${section.type}` };
   }
 
   const createData: Record<string, unknown> = {
-    Type: typeId, // 🔧 FIX: ID au lieu de string pour single_select
-    Actif: section.isActive, // 🔧 FIX: Utiliser Actif (champ principal)
-    Is_Active: section.isActive, // Legacy fallback
-    Order: String(section.order), // 🔧 FIX: String pour champ decimal
+    Type: typeId, // ID dynamique récupéré depuis Baserow
+    Actif: section.isActive,
+    Order: String(section.order),
     Content: JSON.stringify(section.content),
     Design: JSON.stringify(section.design),
     Page: section.page || 'home',
-    Nom: section.type.toUpperCase(), // Nom lisible pour la DB
+    Nom: section.type.toUpperCase(),
   };
 
   logInfo(`Creating section type=${section.type} (ID: ${typeId})`);

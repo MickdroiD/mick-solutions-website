@@ -14,7 +14,10 @@ import type { Review } from '@/lib/baserow';
 type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
 type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
 
-interface TestimonialsSectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+
+interface TestimonialsSectionProps extends SectionEffectsProps {
   testimonials: Review[];
   variant?: 'Minimal' | 'Carousel' | 'Cards' | 'Video' | 'AI';
   cardStyle?: CardStyle;
@@ -245,6 +248,8 @@ export default function TestimonialsSection({
   hoverEffect = 'Glow',
   title = 'Ce que disent nos clients',
   subtitle = 'Les témoignages rassurent vos futurs clients.',
+  effects,
+  textSettings,
 }: TestimonialsSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -292,12 +297,33 @@ export default function TestimonialsSection({
     }
   };
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
+
   return (
     <section id="temoignages" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/30 to-background" />
-      <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[150px]" />
-      <div className="absolute bottom-1/3 left-0 w-[400px] h-[400px] bg-accent-500/5 rounded-full blur-[120px]" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/30 to-background" />
+        )}
+        {showBlobs && (
+          <>
+            <div className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[150px]" />
+            <div className="absolute bottom-1/3 left-0 w-[400px] h-[400px] bg-accent-500/5 rounded-full blur-[120px]" />
+          </>
+        )}
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -311,10 +337,16 @@ export default function TestimonialsSection({
             <Star className="w-4 h-4 text-accent-400" />
             <span className="text-sm font-medium text-accent-300">Témoignages clients</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>

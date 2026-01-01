@@ -108,11 +108,11 @@ export function safeJsonParseWithSchema<T extends z.ZodTypeAny>(
 
     const parsed = JSON.parse(cleaned) as unknown;
     const result = schema.safeParse(parsed);
-    
+
     if (result.success) {
       return result.data;
     }
-    
+
     if (process.env.NODE_ENV === 'development' && fieldName) {
       console.warn(`[Factory] ${fieldName} validation failed:`, result.error.issues);
     }
@@ -191,11 +191,25 @@ export const ImageFilterEnum = z.enum([
   'Blur',
 ]);
 
+export const AspectRatioEnum = z.enum([
+  '1:1',
+  '4:3',
+  '16:9',
+  '3:4',
+  'auto',
+]);
+
 export const CardStyleEnum = z.enum([
   'Flat',
   'Shadow',
   'Border',
   'Glassmorphism',
+]);
+
+export const LayoutEnum = z.enum([
+  'Grid',
+  'Masonry',
+  'Carousel',
 ]);
 
 export const BorderRadiusEnum = z.enum([
@@ -234,6 +248,12 @@ export const LogoAnimationEnum = z.enum([
   'lightning-circle',
   'rotate',
   'spin-glow',
+  // New direct effects
+  'float',
+  'swing',
+  'flip-3d',
+  'stretch',
+  'morph',
 ]);
 
 export const LogoFrameStyleEnum = z.enum([
@@ -370,6 +390,91 @@ export const SEOSchema = z.object({
   sitemapPriority: z.number().min(0).max(1).default(0.8),
 });
 
+// 3.2.5 Effect Settings Sub-Schema (shared across sections)
+// 🔧 Mis à jour avec toutes les nouvelles options de personnalisation (Janvier 2026)
+export const EffectSettingsSchema = z.object({
+  // ========== LEGACY Design options ==========
+  height: z.enum(['Short', 'Medium', 'Tall', 'FullScreen']).optional(),
+  logoSize: z.number().min(100).max(600).optional(),
+  variant: z.string().optional(), // Legacy variant support
+
+  // ========== LAYOUT OPTIONS (NEW) ==========
+  heroLayout: z.enum(['text-left', 'text-right', 'centered', 'split']).optional(),
+  columnGap: z.enum(['none', 'sm', 'md', 'lg', 'xl', '2xl']).optional(),
+  maxWidth: z.enum(['sm', 'md', 'lg', 'xl', '2xl', 'full']).optional(),
+  paddingY: z.enum(['none', 'sm', 'md', 'lg', 'xl', '2xl']).optional(),
+
+  // ========== BUTTON OPTIONS (NEW) ==========
+  buttonShape: z.enum(['rounded', 'pill', 'square']).optional(),
+  buttonSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(),
+  buttonStyle: z.enum(['solid', 'gradient', 'outline', 'ghost']).optional(),
+  showButtonIcon: z.boolean().optional(),
+  buttonHoverScale: z.number().optional(),
+
+  // ========== LOGO ANIMATIONS & EFFECTS ==========
+  logoAnimation: LogoAnimationEnum.optional(),
+  logoDirectEffect: z.string().optional(),
+  logoIndirectEffect: z.string().optional(),
+  logoFrameShape: z.string().optional(),
+  logoFrameAnimation: z.string().optional(),
+  logoFrameColorMode: z.string().optional(),
+  logoFrameColor: z.string().optional(),
+  logoFrameThickness: z.number().min(1).max(10).optional(),
+
+  // ========== ANIMATION SETTINGS (NEW) ==========
+  animationSpeed: z.enum(['slow', 'normal', 'fast']).optional(),
+  animationIntensity: z.enum(['subtle', 'normal', 'strong', 'intense']).optional(),
+
+  // ========== EFFECT CUSTOMIZATION ==========
+  effectIntensity: z.enum(['subtle', 'normal', 'strong', 'intense']).optional(), // Legacy alias
+  effectPrimaryColor: z.string().optional(),
+  effectSecondaryColor: z.string().optional(),
+
+  // ========== BACKGROUND EFFECTS ==========
+  backgroundOpacity: z.number().min(0).max(100).optional(),
+  backgroundBlur: z.number().min(0).max(30).optional(),
+  backgroundUrl: z.string().nullable().optional(),
+
+  // ========== OVERLAY OPTIONS (NEW) ==========
+  overlayColor: z.enum(['black', 'white', 'primary', 'accent', 'slate']).optional(),
+  overlayOpacity: z.number().min(0).max(90).optional(),
+
+  // ========== BLOB OPTIONS (NEW) ==========
+  showBlobs: z.boolean().optional(),
+  blobSize: z.enum(['none', 'sm', 'md', 'lg', 'xl', '2xl']).optional(),
+  blob1Color: z.string().optional(),
+  blob2Color: z.string().optional(),
+
+  // ========== ADVANCED OPTIONS (NEW) ==========
+  showScrollIndicator: z.boolean().optional(),
+  scrollIndicatorStyle: z.enum(['mouse', 'arrow', 'chevron', 'dot']).optional(),
+  statsLayout: z.enum(['horizontal', 'vertical', 'grid-2', 'grid-3']).optional(),
+}).passthrough(); // Allow additional properties for future extensibility
+
+// Export type for EffectSettings
+export type EffectSettings = z.infer<typeof EffectSettingsSchema>;
+
+// 3.2.6 Text Settings Sub-Schema (shared across sections)
+export const TextSettingsSchema = z.object({
+  titleFontFamily: z.string().optional(),
+  titleFontSize: z.string().optional(),
+  titleFontWeight: z.string().optional(),
+  titleColor: z.string().optional(),
+  titleAlign: z.string().optional(),
+  titleTransform: z.string().optional(),
+  subtitleFontFamily: z.string().optional(),
+  subtitleFontSize: z.string().optional(),
+  subtitleFontWeight: z.string().optional(),
+  subtitleColor: z.string().optional(),
+  bodyFontFamily: z.string().optional(),
+  bodyFontSize: z.string().optional(),
+  bodyLineHeight: z.string().optional(),
+  bodyColor: z.string().optional(),
+}).optional();
+
+// Export type for TextSettings
+export type TextSettings = z.infer<typeof TextSettingsSchema>;
+
 // 3.3 Branding Sub-Schema
 export const BrandingSchema = z.object({
   couleurPrimaire: z
@@ -399,6 +504,16 @@ export const BrandingSchema = z.object({
   headerLogoSize: z.number().int().min(20).max(120).default(40),
   headerLogoAnimation: LogoAnimationEnum.default('spin'),
   stickyHeader: z.boolean().default(true),
+  // 🆕 Logo dédié header (différent du logo principal si besoin)
+  headerLogoUrl: z.string().nullable().default(null),
+  headerLogoSvgCode: z.string().nullable().default(null),
+  // 🆕 Style header personnalisé
+  headerBgColor: z.string().nullable().default(null), // null = transparent ou auto
+  headerTextColor: z.string().nullable().default(null), // null = inherit
+  headerBorderColor: z.string().nullable().default(null),
+  // 🆕 Effects & Text settings pour le header
+  headerEffects: EffectSettingsSchema.optional(),
+  headerTextSettings: TextSettingsSchema.optional(),
 });
 
 // 3.4 Contact Sub-Schema
@@ -508,6 +623,16 @@ export const FooterConfigSchema = z.object({
   footerLogoSize: z.number().int().positive().default(40),
   footerLogoAnimation: LogoAnimationEnum.default('none'),
   footerVariant: VariantStyleEnum.default('Electric'),
+  // 🆕 Logo dédié footer (différent du logo principal si besoin)
+  footerLogoUrl: z.string().nullable().default(null),
+  footerLogoSvgCode: z.string().nullable().default(null),
+  // 🆕 Style footer personnalisé  
+  footerBgColor: z.string().nullable().default(null),
+  footerTextColor: z.string().nullable().default(null),
+  footerBorderColor: z.string().nullable().default(null),
+  // 🆕 Effects & Text settings pour le footer
+  footerEffects: EffectSettingsSchema.optional(),
+  footerTextSettings: TextSettingsSchema.optional(),
 });
 
 // === GLOBAL CONFIG MASTER SCHEMA ===
@@ -579,6 +704,8 @@ export const HeroSectionSchema = z.object({
   page: z.string().default('home'),
   content: HeroContentSchema,
   design: HeroDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.2 SERVICES SECTION
@@ -616,6 +743,8 @@ export const ServicesSectionSchema = z.object({
   page: z.string().default('home'),
   content: ServicesContentSchema,
   design: ServicesDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.3 ADVANTAGES SECTION
@@ -636,6 +765,7 @@ export const AdvantagesContentSchema = z.object({
 export const AdvantagesDesignSchema = z.object({
   variant: VariantStyleEnum.default('Electric'),
   cardStyle: CardStyleEnum.default('Shadow'),
+  hoverEffect: HoverEffectEnum.default('Glow'),
 });
 
 export const AdvantagesSectionSchema = z.object({
@@ -645,6 +775,8 @@ export const AdvantagesSectionSchema = z.object({
   page: z.string().default('home'),
   content: AdvantagesContentSchema,
   design: AdvantagesDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.4 GALLERY SECTION
@@ -667,6 +799,7 @@ export const GalleryDesignSchema = z.object({
   animation: GalleryAnimationEnum.default('Fade'),
   imageStyle: ImageStyleEnum.default('Rounded'),
   imageFilter: ImageFilterEnum.default('None'),
+  aspectRatio: AspectRatioEnum.default('16:9'),
 });
 
 export const GallerySectionSchema = z.object({
@@ -676,6 +809,8 @@ export const GallerySectionSchema = z.object({
   page: z.string().default('home'),
   content: GalleryContentSchema,
   design: GalleryDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.5 PORTFOLIO SECTION
@@ -706,6 +841,7 @@ export const PortfolioDesignSchema = z.object({
   variant: VariantStyleEnum.default('Electric'),
   cardStyle: CardStyleEnum.default('Shadow'),
   hoverEffect: HoverEffectEnum.default('Scale'),
+  layout: LayoutEnum.default('Grid'),
 });
 
 export const PortfolioSectionSchema = z.object({
@@ -715,6 +851,8 @@ export const PortfolioSectionSchema = z.object({
   page: z.string().default('home'),
   content: PortfolioContentSchema,
   design: PortfolioDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.6 TESTIMONIALS SECTION
@@ -736,6 +874,7 @@ export const TestimonialsContentSchema = z.object({
 export const TestimonialsDesignSchema = z.object({
   variant: TestimonialsVariantEnum.default('Cards'),
   cardStyle: CardStyleEnum.default('Shadow'),
+  hoverEffect: HoverEffectEnum.default('Scale'),
 });
 
 export const TestimonialsSectionSchema = z.object({
@@ -745,6 +884,8 @@ export const TestimonialsSectionSchema = z.object({
   page: z.string().default('home'),
   content: TestimonialsContentSchema,
   design: TestimonialsDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.7 TRUST SECTION
@@ -765,6 +906,7 @@ export const TrustContentSchema = z.object({
 export const TrustDesignSchema = z.object({
   variant: VariantStyleEnum.default('Electric'),
   cardStyle: CardStyleEnum.default('Shadow'),
+  hoverEffect: HoverEffectEnum.default('Scale'),
 });
 
 export const TrustSectionSchema = z.object({
@@ -774,6 +916,8 @@ export const TrustSectionSchema = z.object({
   page: z.string().default('home'),
   content: TrustContentSchema,
   design: TrustDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.8 FAQ SECTION
@@ -792,6 +936,8 @@ export const FAQContentSchema = z.object({
 
 export const FAQDesignSchema = z.object({
   variant: FAQVariantEnum.default('Accordion'),
+  cardStyle: CardStyleEnum.default('Shadow'),
+  hoverEffect: HoverEffectEnum.default('Scale'),
 });
 
 export const FAQSectionSchema = z.object({
@@ -801,6 +947,8 @@ export const FAQSectionSchema = z.object({
   page: z.string().default('home'),
   content: FAQContentSchema,
   design: FAQDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.9 CONTACT SECTION
@@ -834,6 +982,8 @@ export const ContactSectionSchema = z.object({
   page: z.string().default('home'),
   content: ContactContentSchema,
   design: ContactDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.10 BLOG SECTION
@@ -847,6 +997,7 @@ export const BlogContentSchema = z.object({
 export const BlogDesignSchema = z.object({
   variant: VariantStyleEnum.default('Electric'),
   cardStyle: CardStyleEnum.default('Shadow'),
+  hoverEffect: HoverEffectEnum.default('Scale'),
 });
 
 export const BlogSectionSchema = z.object({
@@ -856,6 +1007,8 @@ export const BlogSectionSchema = z.object({
   page: z.string().default('home'),
   content: BlogContentSchema,
   design: BlogDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.11 AI ASSISTANT SECTION
@@ -882,6 +1035,8 @@ export const AIAssistantSectionSchema = z.object({
   page: z.string().default('home'),
   content: AIAssistantContentSchema,
   design: AIAssistantDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // 4.12 CUSTOM SECTION
@@ -902,6 +1057,8 @@ export const CustomSectionSchema = z.object({
   page: z.string().default('home'),
   content: CustomContentSchema,
   design: CustomDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
 });
 
 // ============================================
@@ -972,6 +1129,13 @@ export const DEFAULT_BRANDING = {
   headerLogoSize: 40,
   headerLogoAnimation: 'spin' as const,
   stickyHeader: true,
+  // 🆕 Logo dédié header
+  headerLogoUrl: null,
+  headerLogoSvgCode: null,
+  // 🆕 Style header personnalisé
+  headerBgColor: null,
+  headerTextColor: null,
+  headerBorderColor: null,
 };
 
 export const DEFAULT_CONTACT = {
@@ -1063,6 +1227,13 @@ export const DEFAULT_FOOTER = {
   footerLogoSize: 40,
   footerLogoAnimation: 'none' as const,
   footerVariant: 'Electric' as const,
+  // 🆕 Logo dédié footer
+  footerLogoUrl: null,
+  footerLogoSvgCode: null,
+  // 🆕 Style footer personnalisé
+  footerBgColor: null,
+  footerTextColor: null,
+  footerBorderColor: null,
 };
 
 // --- Schéma CONFIG_GLOBAL avec JSON auto-parsing ---
@@ -1151,6 +1322,13 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     headerLogoSize: 40,
     headerLogoAnimation: 'spin',
     stickyHeader: true,
+    // 🆕 Logo dédié header
+    headerLogoUrl: null,
+    headerLogoSvgCode: null,
+    // 🆕 Style header personnalisé
+    headerBgColor: null,
+    headerTextColor: null,
+    headerBorderColor: null,
   },
   contact: {
     email: 'contact@example.com',
@@ -1235,6 +1413,13 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     footerLogoSize: 40,
     footerLogoAnimation: 'none',
     footerVariant: 'Electric',
+    // 🆕 Logo dédié footer
+    footerLogoUrl: null,
+    footerLogoSvgCode: null,
+    // 🆕 Style footer personnalisé
+    footerBgColor: null,
+    footerTextColor: null,
+    footerBorderColor: null,
   },
 };
 
@@ -1280,7 +1465,7 @@ export function parseGlobalConfigRow(
 ): GlobalConfig {
   return {
     id: row.id,
-    identity: { 
+    identity: {
       nomSite: row.Nom,
       slogan: '', // Sera mergé depuis d'autres champs si besoin
       initialesLogo: row.Nom?.substring(0, 2).toUpperCase() || 'MS',

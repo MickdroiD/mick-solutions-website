@@ -44,6 +44,12 @@ const LogoAnimationSchema = z.enum([
   'lightning_circle',
   'rotate',
   'spin_glow',
+  // New direct effects
+  'float',
+  'swing',
+  'flip-3d',
+  'stretch',
+  'morph',
   // Legacy values (backward compatibility)
   'Spin-Glow',
   'Pulse',

@@ -36,6 +36,9 @@ import {
   type Review,
 } from '@/lib/baserow';
 
+// Section Props Helper
+import { extractSectionEffects } from '@/lib/types/section-props';
+
 // Factory V2 imports
 import { 
   isFactoryV2Configured, 
@@ -310,6 +313,7 @@ function SectionRendererWithFallback({
   switch (section.type) {
     case 'advantages': {
       const advSection = section as import('@/lib/schemas/factory').AdvantagesSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "avantages" ou "items"
       const rawContent = advSection.content as Record<string, unknown>;
       const v2Items = (rawContent.avantages || rawContent.items || []) as Array<{
@@ -340,12 +344,15 @@ function SectionRendererWithFallback({
           hoverEffect={hoverEffect}
           title={advSection.content.titre}
           subtitle={advSection.content.sousTitre || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
 
     case 'services': {
       const servSection = section as import('@/lib/schemas/factory').ServicesSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "services" ou "items" selon le schéma
       const rawContent = servSection.content as Record<string, unknown>;
       const v2Items = (rawContent.services || rawContent.items || []) as Array<{
@@ -391,12 +398,15 @@ function SectionRendererWithFallback({
             sectionTitleHighlight,
             sectionSubtitle: servSection.content.sousTitre || '',
           }}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
 
     case 'portfolio': {
       const portSection = section as import('@/lib/schemas/factory').PortfolioSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "projets" 
       const rawContent = portSection.content as Record<string, unknown>;
       const v2Items = (rawContent.projets || []) as Array<{
@@ -437,12 +447,15 @@ function SectionRendererWithFallback({
           layout={layout}
           title={portSection.content.titre}
           subtitle={portSection.content.sousTitre || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
 
     case 'trust': {
       const trustSection = section as import('@/lib/schemas/factory').TrustSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "trustPoints" ou "items"
       const rawContent = trustSection.content as Record<string, unknown>;
       const v2Items = (rawContent.trustPoints || rawContent.items || []) as Array<{
@@ -473,6 +486,8 @@ function SectionRendererWithFallback({
           hoverEffect={hoverEffect}
           title={trustSection.content.titre}
           subtitle={trustSection.content.sousTitre || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
@@ -480,6 +495,7 @@ function SectionRendererWithFallback({
     case 'gallery': {
       // ⚡ FACTORY V2: Utiliser strictement section.content.items
       const gallerySection = section as import('@/lib/schemas/factory').GallerySection;
+      const { effects, textSettings } = extractSectionEffects(section);
       const v2Items = gallerySection.content.items || [];
       
       // Si pas d'items V2, afficher un message vide (pas de fallback V1)
@@ -513,12 +529,15 @@ function SectionRendererWithFallback({
           aspectRatio={gallerySection.design.aspectRatio as '1:1' | '4:3' | '16:9' | '3:4' | 'auto' | undefined}
           title={gallerySection.content.titre || 'Notre Galerie'}
           subtitle={gallerySection.content.sousTitre || 'Découvrez nos réalisations.'}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
 
     case 'testimonials': {
       const testSection = section as import('@/lib/schemas/factory').TestimonialsSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "temoignages" ou "items"
       const rawContent = testSection.content as Record<string, unknown>;
       const v2Items = (rawContent.temoignages || rawContent.items || []) as Array<{
@@ -551,12 +570,15 @@ function SectionRendererWithFallback({
           hoverEffect={hoverEffect}
           title={testSection.content.titre}
           subtitle={testSection.content.sousTitre || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       ) : null;
     }
 
     case 'faq': {
       const faqSection = section as import('@/lib/schemas/factory').FAQSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       // Factory V2 utilise "questions" ou "items"
       const rawContent = faqSection.content as Record<string, unknown>;
       const v2Items = (rawContent.questions || rawContent.items || []) as Array<{
@@ -579,12 +601,15 @@ function SectionRendererWithFallback({
           hoverEffect={faqSection.design.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined}
           title={faqSection.content.titre}
           subtitle={faqSection.content.sousTitre || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       ) : null;
     }
 
     case 'blog': {
       const blogSection = section as import('@/lib/schemas/factory').BlogSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       return (
         <BlogSection 
           posts={legacyProps.blogPosts} 
@@ -594,18 +619,23 @@ function SectionRendererWithFallback({
           variant={blogSection.design?.variant as 'Electric' | 'Minimal' | 'Corporate' | 'Bold' | undefined}
           cardStyle={blogSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Outlined' | 'Glass' | undefined}
           hoverEffect={blogSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }
 
     case 'contact': {
       const contactSection = section as import('@/lib/schemas/factory').ContactSection;
+      const { effects, textSettings } = extractSectionEffects(section);
       return (
         <ContactForm
           title={contactSection.content.titre}
           subtitle={contactSection.content.sousTitre || undefined}
           submitText={contactSection.content.submitText || undefined}
           successMessage={contactSection.content.successMessage || undefined}
+          effects={effects}
+          textSettings={textSettings}
         />
       );
     }

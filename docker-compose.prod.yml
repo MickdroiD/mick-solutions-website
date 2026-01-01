@@ -30,10 +30,10 @@ services:
     restart: unless-stopped
     
     # ============================================
-    # PORT MAPPING
+    # PORT MAPPING (désactivé car Traefik accède via le réseau proxy)
     # ============================================
-    ports:
-      - "${HOST_PORT:-3000}:3000"
+    # ports:
+    #   - "${HOST_PORT:-3000}:3000"
     
     # ============================================
     # ENVIRONMENT VARIABLES
@@ -58,14 +58,14 @@ services:
       - DEFAULT_AI_API_KEY=${DEFAULT_AI_API_KEY:-}
     
     # ============================================
-    # HEALTH CHECK
+    # HEALTH CHECK (désactivé car géré par Traefik)
     # ============================================
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    # healthcheck:
+    #   test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
     
     # ============================================
     # RESOURCES (optional, ajuster selon le VPS)
@@ -90,14 +90,12 @@ services:
     # ============================================
     labels:
       - "traefik.enable=true"
-      # Route principale
-      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.rule=Host(`${DOMAIN}`)"
+      - "traefik.docker.network=proxy"
+      # Route principale (avec et sans www)
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
       - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.entrypoints=websecure"
       - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-factory-client}.tls.certresolver=myresolver"
       - "traefik.http.services.${TRAEFIK_ROUTER_NAME:-factory-client}.loadbalancer.server.port=3000"
-      # Redirection www (optionnel)
-      # - "traefik.http.middlewares.www-redirect-${TRAEFIK_ROUTER_NAME:-factory-client}.redirectregex.regex=^https://${DOMAIN_WITHOUT_WWW}/(.*)"
-      # - "traefik.http.middlewares.www-redirect-${TRAEFIK_ROUTER_NAME:-factory-client}.redirectregex.replacement=https://www.${DOMAIN_WITHOUT_WWW}/$${1}"
 
 # ============================================
 # NETWORKS

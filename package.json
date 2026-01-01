@@ -10,7 +10,10 @@
     "db:setup": "npx tsx scripts/setup-factory-db.ts",
     "db:migrate": "npx tsx scripts/setup-factory-db.ts",
     "db:seed": "npx tsx scripts/seed-factory-content.ts",
-    "client:new": "npx tsx scripts/create-client.ts"
+    "client:new": "npx tsx scripts/create-client.ts",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
   },
   "dependencies": {
     "@types/dompurify": "^3.0.5",
@@ -26,6 +29,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -8,7 +8,11 @@ import { submitContact } from '@/app/actions/submitContact';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 // Props pour rendre le formulaire configurable depuis Baserow
-interface ContactFormProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+import Image from 'next/image';
+
+interface ContactFormProps extends SectionEffectsProps {
   title?: string;
   subtitle?: string;
   submitText?: string;
@@ -19,8 +23,11 @@ export default function ContactForm({
   title = 'Contactez-nous',
   subtitle = 'Une question, un projet ? Remplissez le formulaire ci-dessous.',
   submitText = 'Envoyer le message',
-  successMessage = 'Merci ! Nous vous répondrons dans les plus brefs délais.',
+  successMessage: _successMessage = 'Merci ! Nous vous répondrons dans les plus brefs délais.',
+  effects,
+  textSettings,
 }: ContactFormProps) {
+  void _successMessage; // Available for future use
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const ref = useRef(null);
@@ -38,11 +45,30 @@ export default function ContactForm({
     });
   };
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
+
   return (
     <section id="contact" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-primary-500/10 to-transparent blur-[100px]" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
+        )}
+        {showBlobs && (
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-primary-500/10 to-transparent blur-[100px]" />
+        )}
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -52,10 +78,16 @@ export default function ContactForm({
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>

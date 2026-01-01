@@ -10,9 +10,12 @@
 //
 // CATEGORIES:
 // - logo: For logo animations (header, footer, hero)
+// - logo-direct: Direct transformations applied to the element itself
+// - logo-indirect: External effects around the element (auras, particles, etc.)
 // - text: For text animations (titles, subtitles)
 // - entrance: For section entrance animations
 // - hover: For hover state animations
+// - frame: For animated logo frames
 
 import type { Variants } from 'framer-motion';
 
@@ -20,13 +23,17 @@ import type { Variants } from 'framer-motion';
 // TYPES
 // ============================================
 
-export type AnimationCategory = 'logo' | 'text' | 'entrance' | 'hover';
+export type AnimationCategory = 'logo' | 'logo-direct' | 'logo-indirect' | 'text' | 'entrance' | 'hover' | 'frame';
+
+export type EffectType = 'direct' | 'indirect';
 
 export interface AnimationConfig {
   /** Display label in admin */
   label: string;
   /** Category for filtering */
   category: AnimationCategory;
+  /** Effect type: direct (transforms element) or indirect (external effects) */
+  effectType?: EffectType;
   /** Description shown in admin tooltip */
   description?: string;
   /** Framer Motion variants */
@@ -35,7 +42,46 @@ export interface AnimationConfig {
   className?: string;
   /** Preview emoji/icon */
   icon?: string;
+  /** Supports color customization */
+  supportsColor?: boolean;
+  /** Supports intensity adjustment */
+  supportsIntensity?: boolean;
+  /** Default primary color */
+  defaultPrimaryColor?: string;
+  /** Default secondary color */
+  defaultSecondaryColor?: string;
 }
+
+// ============================================
+// INTENSITY PRESETS
+// ============================================
+
+export const INTENSITY_PRESETS = {
+  subtle: { scale: 0.5, duration: 1.5 },
+  normal: { scale: 1, duration: 1 },
+  strong: { scale: 1.5, duration: 0.7 },
+  extreme: { scale: 2, duration: 0.5 },
+} as const;
+
+export type IntensityLevel = keyof typeof INTENSITY_PRESETS;
+
+// ============================================
+// COLOR PRESETS FOR NEON EFFECTS
+// ============================================
+
+export const NEON_COLOR_PRESETS = {
+  cyan: { primary: 'rgba(34, 211, 238, 0.8)', secondary: 'rgba(6, 182, 212, 0.5)' },
+  purple: { primary: 'rgba(168, 85, 247, 0.8)', secondary: 'rgba(139, 92, 246, 0.5)' },
+  pink: { primary: 'rgba(236, 72, 153, 0.8)', secondary: 'rgba(219, 39, 119, 0.5)' },
+  green: { primary: 'rgba(34, 197, 94, 0.8)', secondary: 'rgba(22, 163, 74, 0.5)' },
+  orange: { primary: 'rgba(249, 115, 22, 0.8)', secondary: 'rgba(234, 88, 12, 0.5)' },
+  gold: { primary: 'rgba(250, 204, 21, 0.8)', secondary: 'rgba(234, 179, 8, 0.5)' },
+  red: { primary: 'rgba(239, 68, 68, 0.8)', secondary: 'rgba(220, 38, 38, 0.5)' },
+  blue: { primary: 'rgba(59, 130, 246, 0.8)', secondary: 'rgba(37, 99, 235, 0.5)' },
+  white: { primary: 'rgba(255, 255, 255, 0.9)', secondary: 'rgba(229, 231, 235, 0.6)' },
+} as const;
+
+export type NeonColorPreset = keyof typeof NEON_COLOR_PRESETS;
 
 // ============================================
 // ANIMATION REGISTRY
@@ -199,8 +245,10 @@ export const ANIMATION_REGISTRY: Record<string, AnimationConfig> = {
   vibration: {
     label: 'Vibration',
     category: 'logo',
+    effectType: 'direct',
     description: 'Micro-vibration subtile',
     icon: '〰️',
+    supportsIntensity: true,
     variants: {
       initial: { x: 0, y: 0 },
       animate: {
@@ -210,6 +258,247 @@ export const ANIMATION_REGISTRY: Record<string, AnimationConfig> = {
           duration: 0.3,
           repeat: Infinity,
           repeatDelay: 1,
+        },
+      },
+    },
+  },
+
+  // ============================================
+  // NEW DIRECT EFFECTS (5 nouveaux)
+  // ============================================
+
+  float: {
+    label: 'Lévitation',
+    category: 'logo-direct',
+    effectType: 'direct',
+    description: 'Flotte doucement de haut en bas',
+    icon: '🎈',
+    supportsIntensity: true,
+    variants: {
+      initial: { y: 0 },
+      animate: {
+        y: [-8, 8, -8],
+        transition: {
+          duration: 4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    },
+  },
+
+  swing: {
+    label: 'Balancement',
+    category: 'logo-direct',
+    effectType: 'direct',
+    description: 'Mouvement de pendule',
+    icon: '🎭',
+    supportsIntensity: true,
+    variants: {
+      initial: { rotate: 0, transformOrigin: 'top center' },
+      animate: {
+        rotate: [-12, 12, -12],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    },
+  },
+
+  'flip-3d': {
+    label: 'Flip 3D',
+    category: 'logo-direct',
+    effectType: 'direct',
+    description: 'Retournement 3D continu',
+    icon: '🔄',
+    supportsIntensity: true,
+    variants: {
+      initial: { rotateY: 0 },
+      animate: {
+        rotateY: 360,
+        transition: {
+          duration: 4,
+          repeat: Infinity,
+          ease: 'linear',
+        },
+      },
+    },
+  },
+
+  stretch: {
+    label: 'Étirement',
+    category: 'logo-direct',
+    effectType: 'direct',
+    description: 'Étirement élastique',
+    icon: '↔️',
+    supportsIntensity: true,
+    variants: {
+      initial: { scaleX: 1, scaleY: 1 },
+      animate: {
+        scaleX: [1, 1.15, 1, 0.85, 1],
+        scaleY: [1, 0.9, 1, 1.1, 1],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    },
+  },
+
+  morph: {
+    label: 'Morphing',
+    category: 'logo-direct',
+    effectType: 'direct',
+    description: 'Déformation fluide organique',
+    icon: '🫧',
+    supportsIntensity: true,
+    variants: {
+      initial: { borderRadius: '30%', scale: 1 },
+      animate: {
+        borderRadius: ['30%', '40%', '50%', '40%', '30%'],
+        scale: [1, 1.02, 1, 0.98, 1],
+        transition: {
+          duration: 3,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    },
+  },
+
+  // ============================================
+  // NEW INDIRECT EFFECTS (5 nouveaux)
+  // ============================================
+
+  'neon-outline': {
+    label: 'Contour Néon',
+    category: 'logo-indirect',
+    effectType: 'indirect',
+    description: 'Contour lumineux néon pulsant',
+    icon: '💡',
+    supportsColor: true,
+    supportsIntensity: true,
+    defaultPrimaryColor: 'rgba(34, 211, 238, 0.8)',
+    defaultSecondaryColor: 'rgba(168, 139, 250, 0.5)',
+    variants: {
+      initial: { 
+        boxShadow: '0 0 0px rgba(34, 211, 238, 0), inset 0 0 0px rgba(34, 211, 238, 0)',
+      },
+      animate: {
+        boxShadow: [
+          '0 0 10px rgba(34, 211, 238, 0.6), inset 0 0 5px rgba(34, 211, 238, 0.2)',
+          '0 0 20px rgba(34, 211, 238, 0.8), inset 0 0 10px rgba(34, 211, 238, 0.3)',
+          '0 0 10px rgba(34, 211, 238, 0.6), inset 0 0 5px rgba(34, 211, 238, 0.2)',
+        ],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    },
+  },
+
+  'particle-orbit': {
+    label: 'Orbite Particules',
+    category: 'logo-indirect',
+    effectType: 'indirect',
+    description: 'Particules en orbite autour',
+    icon: '✨',
+    supportsColor: true,
+    supportsIntensity: true,
+    defaultPrimaryColor: 'rgba(34, 211, 238, 0.9)',
+    defaultSecondaryColor: 'rgba(168, 139, 250, 0.9)',
+    variants: {
+      initial: { rotate: 0 },
+      animate: {
+        rotate: 360,
+        transition: {
+          duration: 8,
+          repeat: Infinity,
+          ease: 'linear',
+        },
+      },
+    },
+  },
+
+  ripple: {
+    label: 'Ondulations',
+    category: 'logo-indirect',
+    effectType: 'indirect',
+    description: 'Vagues circulaires comme une goutte d\'eau',
+    icon: '💧',
+    supportsColor: true,
+    supportsIntensity: true,
+    defaultPrimaryColor: 'rgba(34, 211, 238, 0.6)',
+    defaultSecondaryColor: 'rgba(34, 211, 238, 0.3)',
+    variants: {
+      initial: { scale: 1, opacity: 0.6 },
+      animate: {
+        scale: [1, 1.5, 2],
+        opacity: [0.6, 0.3, 0],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeOut',
+        },
+      },
+    },
+  },
+
+  'lightning-strike': {
+    label: 'Éclairs',
+    category: 'logo-indirect',
+    effectType: 'indirect',
+    description: 'Éclairs aléatoires autour de l\'élément',
+    icon: '⚡',
+    supportsColor: true,
+    supportsIntensity: true,
+    defaultPrimaryColor: 'rgba(250, 204, 21, 0.9)',
+    defaultSecondaryColor: 'rgba(234, 179, 8, 0.7)',
+    variants: {
+      initial: { opacity: 0 },
+      animate: {
+        opacity: [0, 1, 1, 0, 0, 0, 1, 0],
+        transition: {
+          duration: 1.5,
+          repeat: Infinity,
+          times: [0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 1],
+        },
+      },
+    },
+  },
+
+  aurora: {
+    label: 'Aurore Boréale',
+    category: 'logo-indirect',
+    effectType: 'indirect',
+    description: 'Effet aurore boréale derrière l\'élément',
+    icon: '🌌',
+    supportsColor: true,
+    supportsIntensity: true,
+    defaultPrimaryColor: 'rgba(34, 211, 238, 0.5)',
+    defaultSecondaryColor: 'rgba(168, 85, 247, 0.5)',
+    variants: {
+      initial: { 
+        background: 'linear-gradient(45deg, rgba(34, 211, 238, 0.3), rgba(168, 85, 247, 0.3))',
+        filter: 'blur(20px)',
+      },
+      animate: {
+        background: [
+          'linear-gradient(45deg, rgba(34, 211, 238, 0.4), rgba(168, 85, 247, 0.3))',
+          'linear-gradient(90deg, rgba(168, 85, 247, 0.4), rgba(34, 211, 238, 0.3))',
+          'linear-gradient(135deg, rgba(34, 211, 238, 0.4), rgba(168, 85, 247, 0.3))',
+          'linear-gradient(180deg, rgba(168, 85, 247, 0.4), rgba(34, 211, 238, 0.3))',
+          'linear-gradient(45deg, rgba(34, 211, 238, 0.4), rgba(168, 85, 247, 0.3))',
+        ],
+        transition: {
+          duration: 6,
+          repeat: Infinity,
+          ease: 'linear',
         },
       },
     },
@@ -399,6 +688,13 @@ export function getAnimationClassName(key: string): string {
 }
 
 /**
+ * Get full animation config by key
+ */
+export function getAnimationConfig(key: string): AnimationConfig | null {
+  return ANIMATION_REGISTRY[key] || null;
+}
+
+/**
  * Get all animations by category
  */
 export function getAnimationsByCategory(category: AnimationCategory): Array<{ key: string; config: AnimationConfig }> {
@@ -408,9 +704,18 @@ export function getAnimationsByCategory(category: AnimationCategory): Array<{ ke
 }
 
 /**
+ * Get all animations by effect type (direct or indirect)
+ */
+export function getAnimationsByEffectType(effectType: EffectType): Array<{ key: string; config: AnimationConfig }> {
+  return Object.entries(ANIMATION_REGISTRY)
+    .filter(([, config]) => config.effectType === effectType)
+    .map(([key, config]) => ({ key, config }));
+}
+
+/**
  * Get animation options for select dropdown
  */
-export function getAnimationOptions(category?: AnimationCategory): Array<{ value: string; label: string; icon?: string }> {
+export function getAnimationOptions(category?: AnimationCategory): Array<{ value: string; label: string; icon?: string; description?: string }> {
   const animations = category
     ? getAnimationsByCategory(category)
     : Object.entries(ANIMATION_REGISTRY).map(([key, config]) => ({ key, config }));
@@ -419,14 +724,60 @@ export function getAnimationOptions(category?: AnimationCategory): Array<{ value
     value: key,
     label: config.label,
     icon: config.icon,
+    description: config.description,
   }));
 }
 
 /**
- * Get logo animation options (most common use case)
+ * Get all DIRECT effect options (transformations applied to the element)
+ */
+export function getDirectEffectOptions(): Array<{ value: string; label: string; icon?: string; description?: string }> {
+  const directEffects = getAnimationsByEffectType('direct');
+  // Also include legacy logo animations that are direct transformations
+  const legacyDirect = Object.entries(ANIMATION_REGISTRY)
+    .filter(([key, config]) => config.category === 'logo' && !config.effectType && key !== 'none')
+    .map(([key, config]) => ({ key, config }));
+  
+  return [...legacyDirect, ...directEffects].map(({ key, config }) => ({
+    value: key,
+    label: config.label,
+    icon: config.icon,
+    description: config.description,
+  }));
+}
+
+/**
+ * Get all INDIRECT effect options (external animations around element)
+ */
+export function getIndirectEffectOptions(): Array<{ value: string; label: string; icon?: string; description?: string; supportsColor?: boolean }> {
+  const indirectEffects = getAnimationsByEffectType('indirect');
+  
+  return indirectEffects.map(({ key, config }) => ({
+    value: key,
+    label: config.label,
+    icon: config.icon,
+    description: config.description,
+    supportsColor: config.supportsColor,
+  }));
+}
+
+/**
+ * Get logo animation options (most common use case - includes all logo-related)
  */
 export function getLogoAnimationOptions(): Array<{ value: string; label: string; icon?: string }> {
-  return getAnimationOptions('logo');
+  const logoAnims = Object.entries(ANIMATION_REGISTRY)
+    .filter(([, config]) => 
+      config.category === 'logo' || 
+      config.category === 'logo-direct' || 
+      config.category === 'logo-indirect'
+    )
+    .map(([key, config]) => ({ key, config }));
+
+  return logoAnims.map(({ key, config }) => ({
+    value: key,
+    label: config.label,
+    icon: config.icon,
+  }));
 }
 
 /**
@@ -434,6 +785,20 @@ export function getLogoAnimationOptions(): Array<{ value: string; label: string;
  */
 export function getTextAnimationOptions(): Array<{ value: string; label: string; icon?: string }> {
   return getAnimationOptions('text');
+}
+
+/**
+ * Get intensity multiplier values
+ */
+export function getIntensityMultiplier(intensity: IntensityLevel): { scale: number; duration: number } {
+  return INTENSITY_PRESETS[intensity];
+}
+
+/**
+ * Get neon colors from preset name
+ */
+export function getNeonColors(preset: NeonColorPreset): { primary: string; secondary: string } {
+  return NEON_COLOR_PRESETS[preset];
 }
 
 // ============================================
@@ -444,4 +809,6 @@ export const LOGO_ANIMATIONS = getLogoAnimationOptions();
 export const TEXT_ANIMATIONS = getTextAnimationOptions();
 export const ENTRANCE_ANIMATIONS = getAnimationOptions('entrance');
 export const HOVER_ANIMATIONS = getAnimationOptions('hover');
+export const DIRECT_EFFECTS = getDirectEffectOptions();
+export const INDIRECT_EFFECTS = getIndirectEffectOptions();
 

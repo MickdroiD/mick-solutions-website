@@ -17,20 +17,20 @@ interface AnimationVariants {
   style?: CSSProperties;
 }
 
-function FooterLogoWithAnimation({ 
-  logoUrl, 
-  nomSite, 
-  animation, 
-  size = 40 
-}: { 
-  logoUrl: string; 
-  nomSite: string; 
-  animation?: LogoAnimation | null; 
+function FooterLogoWithAnimation({
+  logoUrl,
+  nomSite,
+  animation,
+  size = 40
+}: {
+  logoUrl: string;
+  nomSite: string;
+  animation?: LogoAnimation | null;
   size?: number | null;
 }) {
   const logoSize = size || 40;
   const normalizedAnimation = animation?.toLowerCase() || 'none';
-  
+
   const getAnimationVariants = (): AnimationVariants => {
     switch (normalizedAnimation) {
       case 'spin-glow':
@@ -95,11 +95,19 @@ function FooterLogoWithAnimation({
  */
 export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
   const currentYear = new Date().getFullYear();
-  
-  // Initiales du logo
+
+  // 🆕 Custom Colors & Styles
+  const bgColor = config.footerBgColor || '#0a0a0f';
+  const textColor = config.footerTextColor || '#ffffff';
+  const borderColor = config.footerBorderColor || 'rgba(255,255,255,0.1)';
+
+  // 🆕 Logo Configuration
+  const logoUrl = config.footerLogoUrl || config.logoDarkUrl || config.logoUrl;
+  const logoSize = config.footerLogoSize || 40;
+  const logoAnim = config.footerLogoAnimation || 'none';
   const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
 
-  // Navigation dynamique basée sur les modules activés dans la config
+  // 🆕 Navigation
   const navLinks = [
     config.showAdvantages && { name: 'Avantages', href: '#avantages' },
     config.showServices && { name: 'Services', href: '#services' },
@@ -107,17 +115,41 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
     config.showContact && { name: 'Contact', href: '#contact' },
   ].filter((link): link is { name: string; href: string } => Boolean(link));
 
+  // 🆕 Social Links
   const socialLinks = [
     { icon: Linkedin, url: config.lienLinkedin, label: 'LinkedIn' },
     { icon: Instagram, url: config.lienInstagram, label: 'Instagram' },
     { icon: Twitter, url: config.lienTwitter, label: 'Twitter' },
   ].filter(s => s.url);
 
+  // 🆕 Typography Styles
+  const titleFont = config.footerTextSettings?.titleFontFamily ? { fontFamily: config.footerTextSettings.titleFontFamily } : {};
+  const bodyFont = config.footerTextSettings?.bodyFontFamily ? { fontFamily: config.footerTextSettings.bodyFontFamily } : {};
+
   return (
-    <footer className="border-t border-white/10" style={{ backgroundColor: 'rgba(10, 10, 15, 0.8)' }}>
-      <div className="max-w-7xl mx-auto px-6 py-16">
+    <footer
+      className="border-t transition-colors duration-300 relative overflow-hidden"
+      style={{
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        color: textColor,
+        ...bodyFont
+      }}
+    >
+      {/* Background Image / Overlay from Effects */}
+      {config.footerEffects?.backgroundUrl && (
+        <>
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
+            style={{ backgroundImage: `url(${config.footerEffects.backgroundUrl})` }}
+          />
+          <div className="absolute inset-0 z-0 bg-black/60" />
+        </>
+      )}
+
+      <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          
+
           {/* Colonne 1 : À propos */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -125,22 +157,22 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
           >
             <div className="flex items-center gap-3 mb-4">
-              {(config.logoDarkUrl || config.logoUrl) ? (
-                <FooterLogoWithAnimation 
-                  logoUrl={config.logoDarkUrl || config.logoUrl || ''}
+              {logoUrl ? (
+                <FooterLogoWithAnimation
+                  logoUrl={logoUrl}
                   nomSite={config.nomSite}
-                  animation={config.footerLogoAnimation}
-                  size={config.footerLogoSize}
+                  animation={logoAnim}
+                  size={logoSize}
                 />
               ) : (
                 <AnimatedLogoFrame initiales={initiales} size="md" variant={config.logoFrameStyle} />
               )}
-              <span className="font-semibold text-lg text-foreground">
+              <span className="font-semibold text-lg" style={titleFont}>
                 {config.nomSite}
               </span>
             </div>
-            <p className="text-sm text-primary-400 mb-6">
-              {config.slogan}
+            <p className="text-sm opacity-70 mb-6 font-medium">
+              {config.customFooterText || config.slogan}
             </p>
             {socialLinks.length > 0 && (
               <div className="flex gap-3">
@@ -151,8 +183,8 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-10 h-10 rounded-lg bg-white/5 border border-white/10
-                             flex items-center justify-center text-primary-400
-                             hover:bg-primary-500 hover:border-primary-500 hover:text-white transition-colors"
+                             flex items-center justify-center opacity-70
+                             hover:bg-primary-500 hover:border-primary-500 hover:text-white hover:opacity-100 transition-all"
                     aria-label={social.label}
                   >
                     <social.icon className="w-5 h-5" />
@@ -169,7 +201,7 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h4 className="font-semibold text-foreground mb-4">
+            <h4 className="font-semibold mb-4" style={titleFont}>
               Navigation
             </h4>
             <ul className="space-y-3">
@@ -177,7 +209,7 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
                 <li key={link.name}>
                   <a
                     href={link.href}
-                    className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
+                    className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-colors"
                   >
                     {link.name}
                   </a>
@@ -193,25 +225,25 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h4 className="font-semibold text-foreground mb-4">
+            <h4 className="font-semibold mb-4" style={titleFont}>
               Contact
             </h4>
             <ul className="space-y-3">
-              <li className="flex items-center gap-3 text-sm text-primary-400">
+              <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
                 <Mail className="w-4 h-4 text-primary-500" />
-                <a href={`mailto:${config.email}`} className="hover:text-primary-300 transition-colors">
+                <a href={`mailto:${config.email}`}>
                   {config.email}
                 </a>
               </li>
               {config.telephone && (
-                <li className="flex items-center gap-3 text-sm text-primary-400">
+                <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
                   <Phone className="w-4 h-4 text-primary-500" />
-                  <a href={`tel:${config.telephone}`} className="hover:text-primary-300 transition-colors">
+                  <a href={`tel:${config.telephone}`}>
                     {config.telephone}
                   </a>
                 </li>
               )}
-              <li className="flex items-start gap-3 text-sm text-primary-400">
+              <li className="flex items-start gap-3 text-sm opacity-70">
                 <MapPin className="w-4 h-4 text-primary-500 mt-0.5" />
                 <span>{config.adresse}</span>
               </li>
@@ -225,30 +257,35 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h4 className="font-semibold text-foreground mb-4">
+            <h4 className="font-semibold mb-4" style={titleFont}>
               Légal
             </h4>
-            <ul className="space-y-3">
-              {legalDocs.filter(d => d.isActive).map((doc) => (
-                <li key={doc.id}>
-                  <a
-                    href={`/legal/${doc.slug}`}
-                    className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
-                  >
-                    {doc.titre}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {config.showLegalLinks !== false && (
+              <ul className="space-y-3">
+                {legalDocs.filter(d => d.isActive).map((doc) => (
+                  <li key={doc.id}>
+                    <a
+                      href={`/legal/${doc.slug}`}
+                      className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-colors"
+                    >
+                      {doc.titre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </motion.div>
         </div>
 
         {/* Barre du bas */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-primary-500">
-            © {currentYear} {config.nomSite}. Tous droits réservés.
+        <div
+          className="mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
+          style={{ borderColor: borderColor, borderTopWidth: '1px' }}
+        >
+          <p className="text-xs opacity-60">
+            {config.copyrightTexte || `© ${currentYear} ${config.nomSite}. Tous droits réservés.`}
           </p>
-          <p className="text-xs text-primary-500">
+          <p className="text-xs opacity-60">
             {config.paysHebergement}
           </p>
         </div>

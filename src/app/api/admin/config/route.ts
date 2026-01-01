@@ -174,13 +174,66 @@ export async function PUT(request: NextRequest) {
         order?: number;
         content?: Record<string, unknown>;
         design?: Record<string, unknown>;
+        effects?: Record<string, unknown>;
+        textSettings?: Record<string, unknown>;
       };
+
+      // ⭐ FIX ROBUSTE: TOUJOURS récupérer le content existant pour un merge sécurisé
+      // Cela évite de perdre des données si le client n'envoie pas tout
+      let mergedContent: Record<string, unknown> = {};
+      
+      // Récupérer le content existant de Baserow
+        const { getFactoryDataForAdmin } = await import('@/lib/factory-client');
+        const factoryData = await getFactoryDataForAdmin();
+        const existingSection = factoryData?.allSections?.find((s: Section & { _rowId?: number }) => s._rowId === sectionId);
+        
+        if (existingSection) {
+        // 🔧 Commencer avec le content existant
+          mergedContent = { ...(existingSection.content as Record<string, unknown>) };
+        
+        // 🔧 Réintégrer effects/textSettings existants (ils ont été extraits dans factory-client)
+        if ((existingSection as Record<string, unknown>).effects) {
+          mergedContent.effects = (existingSection as Record<string, unknown>).effects;
+        }
+        if ((existingSection as Record<string, unknown>).textSettings) {
+          mergedContent.textSettings = (existingSection as Record<string, unknown>).textSettings;
+        }
+      }
+      
+      // 🔧 Appliquer les mises à jour du content (si fournies)
+      if (sectionData.content) {
+        // Merger le nouveau content (backgroundUrl, titre, etc.)
+        mergedContent = { ...mergedContent, ...sectionData.content };
+      }
+
+      // 🔧 Appliquer les mises à jour des effects (si fournies)
+      if (sectionData.effects) {
+        // Merger avec les effects existants
+        const existingEffects = mergedContent.effects as Record<string, unknown> || {};
+        mergedContent.effects = { ...existingEffects, ...sectionData.effects };
+      }
+      
+      // 🔧 Appliquer les mises à jour des textSettings (si fournies)
+      if (sectionData.textSettings) {
+        // Merger avec les textSettings existants
+        const existingTextSettings = mergedContent.textSettings as Record<string, unknown> || {};
+        mergedContent.textSettings = { ...existingTextSettings, ...sectionData.textSettings };
+      }
+
+      // 🔧 Merger aussi le design pour ne pas perdre les paramètres existants
+      let mergedDesign: Record<string, unknown> | undefined = undefined;
+      if (sectionData.design || existingSection?.design) {
+        mergedDesign = {
+          ...(existingSection?.design as Record<string, unknown> || {}),
+          ...(sectionData.design || {}),
+        };
+      }
 
       const result = await updateSection(sectionId, {
         isActive: sectionData.isActive,
         order: sectionData.order,
-        content: sectionData.content as Record<string, unknown>,
-        design: sectionData.design as Record<string, unknown>,
+        content: Object.keys(mergedContent).length > 0 ? mergedContent : undefined,
+        design: mergedDesign,
         page: sectionData.page,
       });
 

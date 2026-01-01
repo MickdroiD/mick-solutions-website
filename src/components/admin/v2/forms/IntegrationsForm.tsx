@@ -36,7 +36,7 @@ function CollapsibleSection({
   title, 
   icon, 
   children, 
-  defaultOpen = true, 
+  defaultOpen = false, 
   badge,
   color = 'from-emerald-500/20 to-teal-500/20'
 }: CollapsibleSectionProps) {

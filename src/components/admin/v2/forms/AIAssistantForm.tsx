@@ -7,6 +7,8 @@ import {
   Mic, MicOff
 } from 'lucide-react';
 import { LocalInput } from '@/components/admin/ui/LocalInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
 import type { AIAssistantSection } from '@/lib/schemas/factory';
 
@@ -236,6 +238,23 @@ function AIAssistantFormComponent({ section, onUpdate }: AIAssistantFormProps) {
           </div>
         )}
       </motion.div>
+
+      {/* Effects & Animations */}
+      <SectionEffects
+        effects={(section.effects || {}) as EffectSettings}
+        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        showLogoOptions={false}
+        showBackgroundOptions={true}
+      />
+
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

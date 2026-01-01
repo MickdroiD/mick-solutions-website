@@ -84,7 +84,7 @@ export type AITone = 'Professional' | 'Friendly' | 'Casual' | 'Formal';
 export type AIIndustry = 'Tech' | 'Finance' | 'Health' | 'Retail' | 'Services' | 'Other';
 export type VoiceLanguage = 'fr-FR' | 'en-US' | 'de-DE' | 'it-IT';
 export type GalleryColumns = '2' | '3' | '4' | 'Auto';
-export type LogoAnimation = 
+export type LogoAnimation =
   | 'none'
   | 'spin'
   | 'pulse'
@@ -93,11 +93,68 @@ export type LogoAnimation =
   | 'lightning_circle'
   | 'rotate'
   | 'spin_glow'
+  // New direct effects
+  | 'float'
+  | 'swing'
+  | 'flip-3d'
+  | 'stretch'
+  | 'morph'
   // Legacy values (backward compatibility)
   | 'Spin-Glow'
   | 'Pulse'
   | 'Bounce'
   | 'None';
+
+// New indirect effects (external animations around elements)
+export type IndirectEffect =
+  | 'none'
+  | 'neon-outline'
+  | 'particle-orbit'
+  | 'ripple'
+  | 'lightning-strike'
+  | 'aurora';
+
+// Effect intensity levels
+export type EffectIntensity = 'subtle' | 'normal' | 'strong' | 'extreme';
+
+// Neon color presets
+export type NeonColorPreset =
+  | 'cyan'
+  | 'purple'
+  | 'pink'
+  | 'green'
+  | 'orange'
+  | 'gold'
+  | 'red'
+  | 'blue'
+  | 'white';
+
+// Enhanced frame shapes
+export type FrameShape =
+  | 'none'
+  | 'square'
+  | 'rounded-square'
+  | 'circle'
+  | 'hexagon'
+  | 'octagon'
+  | 'diamond';
+
+// Frame animations
+export type FrameAnimation =
+  | 'none'
+  | 'rotate'
+  | 'pulse'
+  | 'color-flow'
+  | 'dash-flow'
+  | 'glow-pulse';
+
+// Frame color modes
+export type FrameColorMode =
+  | 'solid'
+  | 'gradient'
+  | 'moving-gradient'
+  | 'rainbow';
+
 export type LogoFrameStyle = 'Square' | 'Circle' | 'ThickCircle' | 'None';
 export type TextAnimation = 'Gradient' | 'Typing' | 'Fade' | 'None';
 export type GalleryAnimation = 'Fade' | 'Slide' | 'Zoom' | 'Flip' | 'None';
@@ -109,6 +166,87 @@ export type TestimonialsVariant = 'Minimal' | 'Carousel' | 'Cards' | 'Video';
 export type FAQVariant = 'Minimal' | 'Accordion' | 'Tabs' | 'Search';
 export type ContactVariant = 'Minimal' | 'Form' | 'Calendar' | 'Chat';
 export type AIAssistantStyle = 'Chat' | 'Voice' | 'Banner' | 'Hidden';
+
+// ============================================
+// SHARED TYPES (EFFECTS & TEXT)
+// ============================================
+
+export interface EffectSettings {
+  // ========== LAYOUT ==========
+  heroLayout?: 'text-left' | 'text-right' | 'centered' | 'split';
+  columnGap?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  paddingY?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+
+  // ========== DESIGN (Legacy) ==========
+  variant?: 'Minimal' | 'Corporate' | 'Electric' | 'Bold' | 'AI' | 'Custom' | string;
+  height?: 'Short' | 'Medium' | 'Tall' | 'FullScreen';
+  logoSize?: number;
+
+  // ========== BOUTONS ==========
+  buttonShape?: 'rounded' | 'pill' | 'square';
+  buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
+  buttonStyle?: 'solid' | 'gradient' | 'outline' | 'ghost';
+  showButtonIcon?: boolean;
+  buttonHoverScale?: number;
+
+  // ========== LOGO/IMAGE EFFECTS ==========
+  logoAnimation?: 'none' | 'spin' | 'pulse' | 'bounce' | 'electric' | 'float' | string;
+  logoDirectEffect?: string;
+  logoIndirectEffect?: string;
+  logoFrameShape?: string;
+  logoFrameAnimation?: string;
+  logoFrameColor?: string;
+  logoFrameThickness?: number;
+  effectSecondaryColor?: string;
+
+  // ========== ANIMATIONS ==========
+  animationSpeed?: 'slow' | 'normal' | 'fast';
+  animationIntensity?: 'subtle' | 'normal' | 'strong' | 'intense';
+  effectPrimaryColor?: string;
+
+  // ========== BACKGROUND ==========
+  backgroundOpacity?: number;
+  backgroundBlur?: number;
+  backgroundUrl?: string | null;
+
+  // ========== OVERLAY ==========
+  overlayColor?: 'black' | 'white' | 'primary' | 'accent' | 'slate';
+  overlayOpacity?: number;
+
+  // ========== BLOBS ==========
+  showBlobs?: boolean;
+  blobSize?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  blob1Color?: string;
+  blob2Color?: string;
+
+  // ========== ADVANCED ==========
+  showScrollIndicator?: boolean;
+  scrollIndicatorStyle?: 'mouse' | 'arrow' | 'chevron' | 'dot';
+  statsLayout?: 'horizontal' | 'vertical' | 'grid-2' | 'grid-3';
+}
+
+export interface TextSettings {
+  // Title
+  titleFontFamily?: string;
+  titleFontSize?: string;
+  titleFontWeight?: string;
+  titleColor?: string;
+  titleAlign?: string;
+  titleTransform?: string;
+
+  // Subtitle
+  subtitleFontFamily?: string;
+  subtitleFontSize?: string;
+  subtitleFontWeight?: string;
+  subtitleColor?: string;
+
+  // Body text
+  bodyFontFamily?: string;
+  bodyFontSize?: string;
+  bodyLineHeight?: string;
+  bodyColor?: string;
+}
 
 // ============================================
 // INTERFACE PRINCIPALE
@@ -195,6 +333,17 @@ export interface GlobalSettingsComplete {
   footerCtaUrl: string | null;
   footerLogoSize: number | null;
   footerLogoAnimation: LogoAnimation | null;
+  // 🆕 Logo dédié footer (peut être différent du logo principal)
+  footerLogoUrl: string | null;
+  footerLogoSvgCode: string | null;
+  // 🆕 Style footer personnalisé
+  footerBgColor: string | null;
+  footerTextColor: string | null;
+  footerBorderColor: string | null;
+
+  // 🆕 Effects & Text settings pour le footer
+  footerEffects?: EffectSettings;
+  footerTextSettings?: TextSettings;
 
   // ========== I. ANALYTICS ==========
   umamiSiteId: string | null;
@@ -253,6 +402,30 @@ export interface GlobalSettingsComplete {
   headerLogoAnimation: LogoAnimation | null;  // Animation logo menu header
   heroLogoAnimation: LogoAnimation | null;  // Animation logo central hero
   heroLogoSize: number | null;  // Taille logo hero en pixels (100-600)
+  // 🆕 Logo dédié header (peut être différent du logo principal)
+  headerLogoUrl: string | null;
+  headerLogoSvgCode: string | null;
+  // 🆕 Style header personnalisé
+  headerBgColor: string | null;
+  headerTextColor: string | null;
+  headerBorderColor: string | null;
+
+  // 🆕 Effects & Text settings pour le header
+  headerEffects?: EffectSettings;
+  headerTextSettings?: TextSettings;
+
+  // ========== M.1. HERO EFFECTS & TEXT SETTINGS (New) ==========
+  effects?: EffectSettings;
+  textSettings?: TextSettings;
+  titleFontFamily?: string;
+  titleFontSize?: string;
+  titleFontWeight?: string;
+  titleColor?: string;
+  titleAlign?: string;
+  titleTransform?: string;
+  subtitleFontFamily?: string;
+  subtitleFontSize?: string;
+  subtitleFontWeight?: string;
 
   // ========== N. PHOTOS & MÉDIAS ==========
   imageStyle: ImageStyle | null;
@@ -343,6 +516,12 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   slogan: 'Slogan par défaut',
   initialesLogo: 'MS',
 
+  // New Header & Footer Effects default
+  headerEffects: {},
+  headerTextSettings: {},
+  footerEffects: {},
+  footerTextSettings: {},
+
   // Assets - White Label: pas de logo par défaut
   logoUrl: null,
   logoDarkUrl: null,
@@ -415,6 +594,13 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   footerCtaUrl: null,
   footerLogoSize: 40,
   footerLogoAnimation: 'none',
+  // 🆕 Logo dédié footer
+  footerLogoUrl: null,
+  footerLogoSvgCode: null,
+  // 🆕 Style footer personnalisé
+  footerBgColor: null,
+  footerTextColor: null,
+  footerBorderColor: null,
 
   // Analytics
   umamiSiteId: null,
@@ -473,6 +659,13 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   headerLogoAnimation: 'spin',  // Animation logo header (menu)
   heroLogoAnimation: 'electric',  // Animation logo hero (big center)
   heroLogoSize: 280,  // Taille logo hero en pixels
+  // 🆕 Logo dédié header
+  headerLogoUrl: null,
+  headerLogoSvgCode: null,
+  // 🆕 Style header personnalisé
+  headerBgColor: null,
+  headerTextColor: null,
+  headerBorderColor: null,
 
   // Photos
   imageStyle: 'Rounded',

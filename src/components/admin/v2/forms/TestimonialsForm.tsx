@@ -4,6 +4,8 @@ import { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Type, Palette, ChevronDown, Star, User } from 'lucide-react';
 import { LocalInput, LocalTextarea } from '@/components/admin/ui/LocalInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
 import { ListEditor, type ListItem } from '@/components/admin/v2/ui/ListEditor';
 import type { TestimonialsSection } from '@/lib/schemas/factory';
@@ -63,7 +65,7 @@ interface CollapsibleSectionProps {
   badge?: string;
 }
 
-function CollapsibleSection({ title, icon, children, defaultOpen = true, badge }: CollapsibleSectionProps) {
+function CollapsibleSection({ title, icon, children, defaultOpen = false, badge }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -375,6 +377,23 @@ function TestimonialsFormComponent({ section, onUpdate }: TestimonialsFormProps)
           </div>
         </div>
       </CollapsibleSection>
+
+      {/* Effects & Animations */}
+      <SectionEffects
+        effects={(section.effects || {}) as EffectSettings}
+        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        showLogoOptions={false}
+        showBackgroundOptions={true}
+      />
+
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

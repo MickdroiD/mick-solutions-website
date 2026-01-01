@@ -262,7 +262,9 @@ export default function LeadsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/leads');
+      const response = await fetch('/api/admin/leads', {
+        credentials: 'include', // ✅ FIX: Envoyer les cookies de session
+      });
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to fetch leads');
@@ -315,6 +317,7 @@ export default function LeadsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, status }),
+        credentials: 'include', // ✅ FIX: Envoyer les cookies de session
       });
 
       if (!response.ok) {
@@ -344,6 +347,7 @@ export default function LeadsPage() {
     try {
       const response = await fetch(`/api/admin/leads?leadId=${leadId}`, {
         method: 'DELETE',
+        credentials: 'include', // ✅ FIX: Envoyer les cookies de session
       });
 
       if (!response.ok) {

@@ -6,6 +6,8 @@ import {
   FileText, Layout, Eye, Settings
 } from 'lucide-react';
 import { LocalInput } from '@/components/admin/ui/LocalInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import type { BlogSection } from '@/lib/schemas/factory';
 
 // ============================================
@@ -259,6 +261,23 @@ function BlogFormComponent({ section, onUpdate }: BlogFormProps) {
           💡 Les articles de blog sont gérés séparément. Cette section configure uniquement l&apos;affichage de la liste des articles sur la page d&apos;accueil.
         </p>
       </motion.div>
+
+      {/* Effects & Animations */}
+      <SectionEffects
+        effects={(section.effects || {}) as EffectSettings}
+        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        showLogoOptions={false}
+        showBackgroundOptions={true}
+      />
+
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

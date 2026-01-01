@@ -6,6 +6,68 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // Safelist pour les classes générées dynamiquement (admin panel)
+  safelist: [
+    // ========== TAILLES DE TEXTE ==========
+    'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl', 'text-6xl',
+    'text-lg', 'text-xl', 'text-base', 'text-sm', 'text-xs',
+    
+    // ========== POIDS DE POLICE ==========
+    'font-normal', 'font-medium', 'font-semibold', 'font-bold', 'font-extrabold',
+    
+    // ========== COULEURS DE TEXTE ==========
+    'text-white', 'text-slate-100', 'text-slate-300', 'text-slate-500',
+    'text-cyan-400', 'text-violet-400', 'text-pink-400', 'text-emerald-400',
+    'text-foreground', 'text-muted-foreground', 'text-primary-400', 'text-primary-300',
+    
+    // ========== ALIGNEMENT ==========
+    'text-left', 'text-center', 'text-right',
+    
+    // ========== TRANSFORMATION ==========
+    'normal-case', 'uppercase', 'lowercase', 'capitalize',
+    
+    // ========== HAUTEUR DE LIGNE ==========
+    'leading-tight', 'leading-snug', 'leading-normal', 'leading-relaxed', 'leading-loose',
+    
+    // ========== BOUTONS - FORMES ==========
+    'rounded-xl', 'rounded-full', 'rounded-none', 'rounded-lg', 'rounded-2xl', 'rounded-3xl',
+    
+    // ========== BOUTONS - TAILLES ==========
+    'px-4', 'px-6', 'px-8', 'px-10', 'py-2', 'py-3', 'py-4', 'py-5',
+    
+    // ========== GAPS (ESPACEMENT) ==========
+    'gap-0', 'gap-4', 'gap-6', 'gap-8', 'gap-12', 'gap-16', 'gap-20', 'gap-24',
+    'lg:gap-6', 'lg:gap-8', 'lg:gap-12', 'lg:gap-16', 'lg:gap-20', 'lg:gap-24',
+    
+    // ========== PADDING ==========
+    'py-0', 'py-6', 'py-10', 'py-16', 'py-20', 'py-24',
+    'lg:py-8', 'lg:py-16', 'lg:py-24', 'lg:py-32', 'lg:py-40',
+    
+    // ========== MAX WIDTH ==========
+    'max-w-3xl', 'max-w-5xl', 'max-w-6xl', 'max-w-7xl', 'max-w-full',
+    
+    // ========== GRID ==========
+    'grid', 'lg:grid-cols-2', 'grid-cols-2', 'grid-cols-3', 'grid-cols-4',
+    'flex', 'flex-col', 'flex-wrap', 'items-center',
+    
+    // ========== ANIMATIONS ==========
+    'animate-float', 'animate-float-slow', 'animate-float-fast',
+    'animate-swing', 'animate-swing-slow', 'animate-swing-fast',
+    'animate-pulse', 'animate-pulse-slow', 'animate-pulse-fast',
+    'animate-bounce', 'animate-bounce-slow', 'animate-bounce-fast',
+    'animate-spin', 'animate-spin-slow', 'animate-spin-fast',
+    'animate-gradient-x', 'animate-fade-in',
+    
+    // ========== BACKGROUNDS ==========
+    'bg-primary-600', 'bg-primary-700', 'bg-white/10', 'bg-white/20', 'bg-white/5',
+    'bg-gradient-to-r', 'from-primary-600', 'to-accent-600',
+    
+    // ========== BORDERS ==========
+    'border', 'border-2', 'border-white/10', 'border-white/20', 'border-primary-500',
+    
+    // ========== SHADOWS ==========
+    'shadow-lg', 'shadow-primary-500/20', 'shadow-primary-500/40',
+  ],
   theme: {
     extend: {
       // ========================================

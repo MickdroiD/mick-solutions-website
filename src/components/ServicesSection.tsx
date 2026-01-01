@@ -500,7 +500,11 @@ type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake';
 // ============================================
 // MAIN COMPONENT
 // ============================================
-interface ServicesSectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+import Image from 'next/image';
+
+interface ServicesSectionProps extends SectionEffectsProps {
   services?: Service[];
   labels?: Partial<SectionLabels>;
   variant?: ServiceVariant;
@@ -514,6 +518,8 @@ export default function ServicesSection({
   variant = 'Grid',
   cardStyle = 'Shadow',
   hoverEffect = 'Scale',
+  effects,
+  textSettings,
 }: ServicesSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -573,11 +579,33 @@ export default function ServicesSection({
     document.body.style.overflow = 'unset';
   };
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
+
   return (
     <section id="services" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background - Thème Corporate Light bleu clair */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-blue-100/50 to-blue-50" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-300/20 rounded-full blur-[150px]" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Image background if configured */}
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          /* Default gradient background */
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-blue-100/50 to-blue-50" />
+        )}
+        {/* Decorative blob */}
+        {showBlobs && (
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-300/20 rounded-full blur-[150px]" />
+        )}
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -587,10 +615,16 @@ export default function ServicesSection({
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-900 mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-primary-900'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {sectionLabels.sectionTitle} <span className="text-gradient">{sectionLabels.sectionTitleHighlight}</span>
           </h2>
-          <p className="text-lg text-primary-700 max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-primary-700'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {sectionLabels.sectionSubtitle}
           </p>
         </motion.div>

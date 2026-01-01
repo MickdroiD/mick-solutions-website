@@ -197,7 +197,9 @@ export async function getGlobalSettingsComplete(): Promise<GlobalSettingsComplet
 // SECTION DATA FETCHERS
 // ============================================
 
-interface BaserowServiceRow {
+// Legacy interfaces - kept for reference but disabled
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface _BaserowServiceRow {
   id: number;
   Titre: string;
   Description: string;
@@ -217,7 +219,8 @@ export async function getServices(): Promise<Service[] | null> {
   return null;
 }
 
-interface BaserowProjectRow {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface _BaserowProjectRow {
   id: number;
   Nom: string;
   Slug: string;
@@ -234,7 +237,8 @@ export async function getProjects(): Promise<Project[] | null> {
   return null;
 }
 
-interface BaserowReviewRow {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface _BaserowReviewRow {
   id: number;
   'Nom du client': string;
   'Poste / Entreprise': string;
@@ -308,7 +312,8 @@ export async function getTrustPoints(): Promise<TrustPoint[]> {
   return DEFAULT_TRUST_POINTS;
 }
 
-interface BaserowGalleryRow {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface _BaserowGalleryRow {
   id: number;
   Titre: string;
   Image: { url: string; name: string }[];

@@ -22,7 +22,11 @@ type VariantType = 'Minimal' | 'Electric' | 'Corporate' | 'Bold';
 type CardStyle = 'Flat' | 'Shadow' | 'Outlined' | 'Glass';
 type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
 
-interface BlogSectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+import Image from 'next/image';
+
+interface BlogSectionProps extends SectionEffectsProps {
   posts: BlogPost[] | null;
   /** Mode admin/dev pour afficher les placeholders */
   isDevMode?: boolean;
@@ -40,11 +44,13 @@ interface BlogSectionProps {
 export default function BlogSection({ 
   posts, 
   isDevMode = false,
-  variant = 'Electric',
+  variant: _variant = 'Electric', // eslint-disable-line @typescript-eslint/no-unused-vars
   cardStyle = 'Shadow',
   hoverEffect = 'Glow',
   title = 'Nos derniers articles',
   subtitle = 'Découvrez nos conseils, actualités et retours d\'expérience.',
+  effects,
+  textSettings,
 }: BlogSectionProps) {
   const hasPosts = posts && posts.length > 0;
 
@@ -75,9 +81,28 @@ export default function BlogSection({
     return null;
   }
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+
   return (
-    <section id="blog" className="py-20 md:py-28 bg-slate-900/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="blog" className="relative py-20 md:py-28 overflow-hidden">
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-slate-900/30" />
+        )}
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header de section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -89,10 +114,16 @@ export default function BlogSection({
             <BookOpen className="w-4 h-4" />
             Blog
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl md:text-4xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title}
           </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>

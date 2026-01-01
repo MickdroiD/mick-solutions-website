@@ -47,11 +47,16 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
   }, []);
 
   // Configuration du logo header depuis Baserow
+  // 🆕 Priorité: headerLogoUrl/headerLogoSvgCode > logoUrl/logoSvgCode (logo principal)
   const headerLogoSize = Number(config.headerLogoSize) || 40; // Taille en pixels
   const clampedLogoSize = Math.min(Math.max(headerLogoSize, 32), 80); // Clamp entre 32-80px pour le header
   const headerLogoAnimation = config.headerLogoAnimation || 'electric';
-  const hasLogoSvg = Boolean(config.logoSvgCode && String(config.logoSvgCode).trim());
-  const hasLogoUrl = Boolean(config.logoUrl && config.logoUrl.trim());
+  
+  // 🆕 Support logo dédié header
+  const headerSvgCode = config.headerLogoSvgCode || config.logoSvgCode;
+  const headerLogoUrl = config.headerLogoUrl || config.logoUrl;
+  const hasLogoSvg = Boolean(headerSvgCode && String(headerSvgCode).trim());
+  const hasLogoUrl = Boolean(headerLogoUrl && headerLogoUrl.trim());
   const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
   
   // 🔧 FIX: Forcer l'effet électrique si le style global est 'mick-electric' ou thème 'Electric'
@@ -62,6 +67,20 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
     themeGlobal === 'Electric'
   );
 
+  // 🆕 Couleurs personnalisées header
+  const headerBgColor = config.headerBgColor || null;
+  const headerTextColor = config.headerTextColor || null;
+  const headerBorderColor = config.headerBorderColor || null;
+
+  // Calculer les couleurs finales
+  const bgColorScrolled = headerBgColor || '#0a0a0f';
+  const bgColorTransparent = headerBgColor 
+    ? `${headerBgColor}e6` // Ajouter transparence (90%)
+    : 'rgba(10, 10, 15, 0.9)';
+  const borderColorActive = headerBorderColor 
+    ? `1px solid ${headerBorderColor}` 
+    : '1px solid rgba(255, 255, 255, 0.05)';
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -69,8 +88,9 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
       transition={{ duration: 0.5 }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{ 
-        backgroundColor: isScrolled ? '#0a0a0f' : 'rgba(10, 10, 15, 0.9)',
-        borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.05)' : 'none'
+        backgroundColor: isScrolled ? bgColorScrolled : bgColorTransparent,
+        borderBottom: isScrolled ? borderColorActive : 'none',
+        color: headerTextColor || undefined,
       }}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -82,10 +102,11 @@ export function NavbarElectric({ config, navItems = defaultNavItems }: NavbarMod
             className="flex items-center gap-2 sm:gap-3 group touch-manipulation"
           >
             {/* Logo animé via AnimatedMedia (SVG/Image/Fallback) */}
+            {/* 🆕 Utilise le logo dédié header si défini, sinon le logo principal */}
             {(hasLogoSvg || hasLogoUrl) ? (
               <AnimatedMedia
-                svgCode={hasLogoSvg ? config.logoSvgCode : undefined}
-                imageUrl={!hasLogoSvg && hasLogoUrl ? config.logoUrl : undefined}
+                svgCode={hasLogoSvg ? headerSvgCode : undefined}
+                imageUrl={!hasLogoSvg && hasLogoUrl ? headerLogoUrl : undefined}
                 animationType={headerLogoAnimation}
                 size={clampedLogoSize}
                 alt={config.nomSite}

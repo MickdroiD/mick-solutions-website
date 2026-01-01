@@ -7,6 +7,8 @@ import {
   Grid, Columns, LayoutGrid
 } from 'lucide-react';
 import { LocalInput, LocalTextarea } from '@/components/admin/ui/LocalInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
 import { ListEditor, type ListItem } from '@/components/admin/v2/ui/ListEditor';
 import type { GallerySection } from '@/lib/schemas/factory';
@@ -95,7 +97,7 @@ function CollapsibleSection({
   title, 
   icon, 
   children, 
-  defaultOpen = true, 
+  defaultOpen = false, 
   badge,
   color = 'from-violet-500/20 to-pink-500/20'
 }: CollapsibleSectionProps) {
@@ -430,6 +432,23 @@ function GalleryFormComponent({ section, onUpdate }: GalleryFormProps) {
           </div>
         </div>
       </CollapsibleSection>
+
+      {/* Effects & Animations */}
+      <SectionEffects
+        effects={(section.effects || {}) as EffectSettings}
+        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        showLogoOptions={false}
+        showBackgroundOptions={true}
+      />
+
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

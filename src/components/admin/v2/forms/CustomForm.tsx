@@ -6,6 +6,8 @@ import {
   Code, Palette, AlertTriangle
 } from 'lucide-react';
 import { LocalTextarea } from '@/components/admin/ui/LocalInput';
+import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import type { CustomSection } from '@/lib/schemas/factory';
 
 // ============================================
@@ -196,6 +198,23 @@ function CustomFormComponent({ section, onUpdate }: CustomFormProps) {
           des iframes ou des mises en page complexes non couvertes par les autres sections.
         </p>
       </motion.div>
+
+      {/* Effects & Animations */}
+      <SectionEffects
+        effects={(section.effects || {}) as EffectSettings}
+        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        showLogoOptions={false}
+        showBackgroundOptions={true}
+      />
+
+      {/* Text Styling */}
+      <SectionText
+        text={(section.textSettings || {}) as TextSettings}
+        onChange={(updates) => onUpdate({ textSettings: { ...(section.textSettings || {}), ...updates } })}
+        showTitleOptions={true}
+        showSubtitleOptions={true}
+        showBodyOptions={true}
+      />
     </div>
   );
 }

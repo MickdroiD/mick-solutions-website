@@ -29,5 +29,9 @@ export { AIConfigForm } from './AIConfigForm';
 export { AnimationsForm } from './AnimationsForm';
 export { PremiumForm } from './PremiumForm';
 
+// NEW: Advanced Effects & Text Style Forms
+export { EffectsForm } from './EffectsForm';
+export { TextStyleForm } from './TextStyleForm';
+
 // Utility Form (JSON fallback)
 export { JsonForm } from './JsonForm';

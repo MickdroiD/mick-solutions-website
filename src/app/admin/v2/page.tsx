@@ -8,7 +8,7 @@ import {
   PanelRightClose, PanelRight, Menu, X,
   Sparkles, ChevronRight, ExternalLink, 
   LayoutGrid, Zap, MessageSquare, HelpCircle, Users, Image as ImageIcon,
-  Construction, UserCircle, Webhook, Bot, Palette, Crown
+  Construction, UserCircle, Webhook, Bot, Crown, Shield, LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,7 +18,7 @@ import {
   TestimonialsForm, ContactForm, AdvantagesForm, PortfolioForm,
   TrustForm, GalleryForm, HeaderForm, FooterForm,
   BlogForm, AIAssistantForm, CustomForm,
-  IntegrationsForm, AIConfigForm, AnimationsForm, PremiumForm
+  IntegrationsForm, AIConfigForm, PremiumForm
 } from '@/components/admin/v2/forms';
 import { SitePreviewBlock } from '@/components/admin/ui';
 import type { 
@@ -228,7 +228,7 @@ function DashboardContent() {
   } = useAdminV2();
 
   // UI State - extended with new config panels
-  const [selectedView, setSelectedView] = useState<'global' | 'header' | 'footer' | 'integrations' | 'ai-config' | 'animations' | 'premium' | number>('global');
+  const [selectedView, setSelectedView] = useState<'global' | 'header' | 'footer' | 'integrations' | 'ai-config' | 'premium' | number>('global');
   const [showPreview, setShowPreview] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastSaveTimestamp, setLastSaveTimestamp] = useState(0);
@@ -387,8 +387,9 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Global Settings Button */}
+          {/* Global Settings + Quick Actions */}
           <div className="p-3 border-b border-white/5 space-y-2">
+            {/* Configuration Button */}
             <button
               type="button"
               onClick={() => setSelectedView('global')}
@@ -410,97 +411,86 @@ function DashboardContent() {
               <ChevronRight className={`w-4 h-4 ${selectedView === 'global' ? 'text-violet-400' : 'text-slate-500'}`} />
             </button>
 
-            {/* Header & Footer Buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedView('header')}
-                className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
-                  selectedView === 'header'
-                    ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
-                    : 'bg-slate-700/50 hover:bg-slate-700 text-slate-400'
-                }`}
-              >
-                <Menu className="w-4 h-4" />
-                <span className="text-xs font-medium">Header</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedView('footer')}
-                className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
-                  selectedView === 'footer'
-                    ? 'bg-slate-500/20 border border-slate-400/30 text-slate-300'
-                    : 'bg-slate-700/50 hover:bg-slate-700 text-slate-400'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span className="text-xs font-medium">Footer</span>
-              </button>
-            </div>
-
             {/* Advanced Config Panels */}
-            <div className="mt-3 pt-3 border-t border-white/5">
-              <h4 className="text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-2">Avancé</h4>
-              <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/5">
                 <button
                   type="button"
                   onClick={() => setSelectedView('integrations')}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
                     selectedView === 'integrations'
                       ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400'
                       : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
+                title="Intégrations"
                 >
                   <Webhook className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-medium">Intégrations</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedView('ai-config')}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
                     selectedView === 'ai-config'
                       ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400'
                       : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
+                title="Config IA"
                 >
                   <Bot className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-medium">Config IA</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedView('animations')}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg transition-all ${
-                    selectedView === 'animations'
-                      ? 'bg-pink-500/20 border border-pink-500/30 text-pink-400'
-                      : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
-                  }`}
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-medium">Animations</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedView('premium')}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
                     selectedView === 'premium'
                       ? 'bg-amber-500/20 border border-amber-500/30 text-amber-400'
                       : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
+                title="Premium"
                 >
                   <Crown className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-medium">Premium</span>
                 </button>
-              </div>
             </div>
           </div>
 
           {/* Sections List */}
-          <div className="flex-1 overflow-y-auto overflow-x-visible p-3">
+          <div className="flex-1 overflow-y-auto p-3">
+            {/* Header & Footer as section tiles */}
+            <div className="space-y-1.5 mb-3">
+              <button
+                type="button"
+                onClick={() => setSelectedView('header')}
+                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${
+                  selectedView === 'header'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
+                    : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+                }`}
+              >
+                <span className="text-base">🔝</span>
+                <span className={`text-sm font-medium ${selectedView === 'header' ? 'text-blue-400' : 'text-white'}`}>
+                  Header
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedView('footer')}
+                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${
+                  selectedView === 'footer'
+                    ? 'bg-gradient-to-r from-slate-500/20 to-slate-400/20 border border-slate-400/30'
+                    : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+                }`}
+              >
+                <span className="text-base">📋</span>
+                <span className={`text-sm font-medium ${selectedView === 'footer' ? 'text-slate-300' : 'text-white'}`}>
+                  Footer
+                </span>
+              </button>
+            </div>
+
             {/* Active Sections */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-slate-500 text-xs font-medium flex items-center gap-2 uppercase tracking-wider">
                 <Eye className="w-3 h-3" />
-                Actives ({allSections.filter(s => s.isActive).length})
+                Sections ({allSections.filter(s => s.isActive).length})
               </h3>
             </div>
 
@@ -644,26 +634,15 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Premium Features */}
-          <div className="p-4 border-t border-white/5">
-            <h4 className="text-slate-500 text-xs font-medium mb-3 uppercase tracking-wider">
-              Premium Features
-            </h4>
+          {/* Footer Actions */}
+          <div className="p-4 border-t border-white/5 space-y-2">
             <Link
-              href="/admin/v2/leads"
-              className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 text-cyan-400 hover:from-cyan-500/20 hover:to-blue-500/20 transition-all mb-2"
+              href="/admin/v2/settings"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-700/50 border border-white/10 text-slate-300 hover:text-white hover:bg-slate-700 transition-all text-sm font-medium"
             >
-              <UserCircle className="w-5 h-5" />
-              <div className="text-left">
-                <span className="block font-medium text-sm">CRM Lite</span>
-                <span className="text-xs text-cyan-400/70">Gestion des leads</span>
-              </div>
+              <Shield className="w-4 h-4" />
+              🔐 Sécurité & PIN
             </Link>
-          </div>
-
-          {/* Footer Actions */}
-          {/* Footer Actions */}
-          <div className="p-4 border-t border-white/5">
             <a
               href="/"
               target="_blank"
@@ -673,6 +652,21 @@ function DashboardContent() {
               <ExternalLink className="w-4 h-4" />
               👁️ Voir le site
             </a>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await fetch('/api/admin/auth', { method: 'DELETE', credentials: 'include' });
+                  window.location.href = '/admin';
+                } catch {
+                  window.location.href = '/admin';
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              Déconnexion
+            </button>
           </div>
         </aside>
 
@@ -708,7 +702,6 @@ function DashboardContent() {
                         : selectedView === 'footer' ? '📋'
                         : selectedView === 'integrations' ? '🔗'
                         : selectedView === 'ai-config' ? '🤖'
-                        : selectedView === 'animations' ? '✨'
                         : selectedView === 'premium' ? '👑'
                         : SECTION_ICONS[selectedSection?.type || ''] || '📦'}
                     </span>
@@ -723,8 +716,6 @@ function DashboardContent() {
                         ? 'Intégrations & Webhooks'
                         : selectedView === 'ai-config'
                         ? 'Configuration IA'
-                        : selectedView === 'animations'
-                        ? 'Animations & Effets'
                         : selectedView === 'premium'
                         ? 'Premium & Avancé'
                         : SECTION_LABELS[selectedSection?.type || ''] || 'Section'}
@@ -761,6 +752,16 @@ function DashboardContent() {
                       {globalConfig.premium?.maintenanceMode ? 'Maintenance ON' : 'Maintenance'}
                     </span>
                   </button>
+
+                  {/* CRM Lite Button */}
+                  <Link
+                    href="/admin/v2/leads"
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30 transition-all"
+                    title="Gérer les leads"
+                  >
+                    <UserCircle className="w-4 h-4" />
+                    <span className="text-xs font-medium">CRM</span>
+                  </Link>
 
                   {/* Preview Toggle */}
                   <button
@@ -871,18 +872,6 @@ function DashboardContent() {
                     exit={{ opacity: 0, x: 20 }}
                   >
                     <AIConfigForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'animations' ? (
-                  <motion.div
-                    key="animations"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <AnimationsForm
                       config={globalConfig}
                       onUpdate={handleGlobalUpdate}
                     />

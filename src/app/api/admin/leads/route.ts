@@ -69,7 +69,7 @@ export async function GET() {
 
   try {
     const response = await fetch(
-      `${BASEROW_API_URL}/database/rows/table/${LEADS_TABLE_ID}/?user_field_names=true&order_by=-id&size=200`,
+      `${BASEROW_API_URL}/database/rows/table/${LEADS_TABLE_ID}/?user_field_names=true&size=200`,
       {
         headers: { Authorization: `Token ${BASEROW_TOKEN}` },
         cache: 'no-store',

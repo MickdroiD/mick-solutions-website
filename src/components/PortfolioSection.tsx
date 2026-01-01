@@ -13,7 +13,10 @@ type CardStyle = 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism';
 type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
 type LayoutType = 'Grid' | 'Masonry' | 'Carousel';
 
-interface PortfolioSectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+
+interface PortfolioSectionProps extends SectionEffectsProps {
   projects?: Project[];
   variant?: VariantType;
   cardStyle?: CardStyle;
@@ -70,14 +73,21 @@ const tagColors: Record<string, string> = {
 
 export default function PortfolioSection({ 
   projects,
-  variant = 'Electric',
+  variant: _variant = 'Electric', // eslint-disable-line @typescript-eslint/no-unused-vars
   cardStyle = 'Shadow',
   hoverEffect = 'Scale',
   layout = 'Grid',
   title = 'Nos projets',
   subtitle = 'Découvrez quelques-unes de nos réalisations.',
+  effects,
+  textSettings,
 }: PortfolioSectionProps) {
   const displayProjects = projects && projects.length > 0 ? projects : defaultProjects;
+  
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
   
   // Card style classes
   const getCardStyleClasses = () => {
@@ -118,9 +128,23 @@ export default function PortfolioSection({
 
   return (
     <section id="portfolio" className="relative py-24 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-900/50 to-background" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-900/50 to-background" />
+        )}
+        {showBlobs && (
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
+        )}
+      </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -134,10 +158,16 @@ export default function PortfolioSection({
           <span className="inline-block px-4 py-1.5 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-400 text-sm font-medium mb-4">
             Réalisations
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>

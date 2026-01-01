@@ -16,7 +16,11 @@ type HoverEffect = 'None' | 'Scale' | 'Glow' | 'Lift';
 // PROPS INTERFACE
 // ============================================
 
-interface FAQSectionProps {
+import type { SectionEffectsProps } from '@/lib/types/section-props';
+import { getFontFamilyStyle } from '@/lib/helpers/effects-renderer';
+import Image from 'next/image';
+
+interface FAQSectionProps extends SectionEffectsProps {
   faqItems: FAQ[];
   variant?: 'Minimal' | 'Accordion' | 'Tabs' | 'Search' | 'AI';
   cardStyle?: CardStyle;
@@ -102,6 +106,8 @@ export default function FAQSection({
   hoverEffect = 'Glow',
   title = 'Questions Fréquentes',
   subtitle = 'Retrouvez ici les réponses aux questions les plus courantes.',
+  effects,
+  textSettings,
 }: FAQSectionProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -144,12 +150,33 @@ export default function FAQSection({
       )
     : faqItems;
 
+  // ========== EFFECTS ==========
+  const bgUrl = effects?.backgroundUrl;
+  const bgOpacity = effects?.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
+  const showBlobs = effects?.showBlobs !== false;
+
   return (
     <section id="faq" className="relative py-24 sm:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[120px]" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        {bgUrl ? (
+          <Image
+            src={bgUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ opacity: bgOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-slate-950/50 to-background" />
+        )}
+        {showBlobs && (
+          <>
+            <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-[150px]" />
+            <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[120px]" />
+          </>
+        )}
+      </div>
 
       <div ref={ref} className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -163,10 +190,16 @@ export default function FAQSection({
             <HelpCircle className="w-4 h-4 text-primary-400" />
             <span className="text-sm font-medium text-primary-300">FAQ</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 
+            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+          >
             {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+          <p 
+            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+          >
             {subtitle}
           </p>
         </motion.div>
