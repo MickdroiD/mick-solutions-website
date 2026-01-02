@@ -53,11 +53,13 @@ jobs:
           echo "📅 Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
       - name: 🔑 Setup SSH Key
+        env:
+          SSH_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          echo "${SSH_KEY_BASE64}" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: 🔐 Deploy via SSH
         run: |
