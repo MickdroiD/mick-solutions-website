@@ -1,4 +1,4 @@
-# Deploy to VPS - Simplified
+# Deploy to VPS via SSH
 name: 🚀 Deploy to Production
 
 on:
@@ -13,32 +13,22 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: 📋 Info
-        run: |
-          echo "Commit: ${{ github.sha }}"
-          echo "Checking secrets..."
-          
-      - name: 🔑 Debug secrets
-        run: |
-          if [ -z "${{ secrets.VPS_HOST }}" ]; then echo "❌ VPS_HOST missing"; else echo "✅ VPS_HOST OK"; fi
-          if [ -z "${{ secrets.VPS_USER }}" ]; then echo "❌ VPS_USER missing"; else echo "✅ VPS_USER OK"; fi
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" ]; then echo "❌ SSH_PRIVATE_KEY_BASE64 missing"; else echo "✅ SSH_PRIVATE_KEY_BASE64 OK (length: ${#SSH_KEY})"; fi
-        env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
-
-      - name: 🔑 Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "SSH key created, checking..."
-          ls -la ~/.ssh/deploy_key
-          head -1 ~/.ssh/deploy_key
-
-      - name: 🔐 Test SSH Connection
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo '✅ SSH Connection OK!'"
-
-      - name: 🚀 Deploy
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /home/mickadmin/docker/website && git fetch --all && git reset --hard origin/main && docker build -t factory-v2:latest . && docker compose down && docker compose up -d && docker image prune -f && echo '✅ Deploy done!'"
+      - name: 🔐 Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "🚀 Starting deploy..."
+            cd /home/mickadmin/docker/website
+            git fetch --all
+            git reset --hard origin/main
+            echo "📦 Building Docker image..."
+            docker build -t factory-v2:latest .
+            echo "♻️ Restarting container..."
+            docker compose down
+            docker compose up -d
+            docker image prune -f
+            echo "✅ Deploy completed!"
