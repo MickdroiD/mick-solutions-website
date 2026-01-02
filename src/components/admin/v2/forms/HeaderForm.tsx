@@ -287,6 +287,7 @@ function HeaderFormComponent({
     });
   }, [identity, onUpdate]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateAssets = useCallback((key: string, value: unknown) => {
     onUpdate({
       assets: {

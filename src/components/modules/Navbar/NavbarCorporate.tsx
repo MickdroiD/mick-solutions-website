@@ -3,10 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone, Mail } from 'lucide-react';
-import type { NavbarModuleProps, NavItem } from '../types';
-import {
-  hexToRgb
-} from '@/lib/helpers/effects-renderer';
+import type { NavbarModuleProps } from '../types';
 import AnimatedLogoFrame from '@/components/AnimatedLogoFrame';
 
 // Navigation items provenant de la configuration admin (headerMenuLinks)
@@ -62,10 +59,8 @@ export function NavbarCorporate({ config, navItems: propNavItems }: NavbarModule
   const logoSize = typeof rawSize === 'number' ? rawSize : (sizeMap[rawSize as string] || 40);
 
   // Corporate Light Theme Defaults
-  const isLight = true; // Corporate is always light base
   const defaultText = 'text-slate-700';
   const activeText = 'text-primary-600';
-  const scrolledBg = 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200/60';
 
   // Custom Overrides (from Admin)
   const customBgColor = safeConfig.headerBgColor;

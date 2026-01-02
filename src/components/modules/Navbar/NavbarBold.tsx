@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowRight } from 'lucide-react';
-import type { NavbarModuleProps, NavItem } from '../types';
+import type { NavbarModuleProps } from '../types';
 
 import React from 'react';
 

@@ -378,7 +378,7 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
                 : 'border-white/10 text-slate-400'
                 }`}
             >
-              Afficher "Propulsé par"
+              Afficher &quot;Propulsé par&quot;
             </button>
           </div>
           {config.footer.showFooterPoweredBy && (

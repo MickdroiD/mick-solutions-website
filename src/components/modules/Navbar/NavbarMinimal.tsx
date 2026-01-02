@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
-import type { NavbarModuleProps, NavItem } from '../types';
+import type { NavbarModuleProps } from '../types';
 import AnimatedLogoFrame from '../../AnimatedLogoFrame';
 
 // Navigation items provenant de la configuration admin (headerMenuLinks)
