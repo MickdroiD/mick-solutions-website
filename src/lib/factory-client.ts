@@ -540,7 +540,7 @@ export async function updateGlobalConfig(
           return JSON.stringify({ ...parsed, ...newData });
         }
       }
-    } catch (e) {
+    } catch {
       logWarn(`Failed to parse existing ${fieldName} for merge, using new data only`);
     }
     return JSON.stringify(newData);
