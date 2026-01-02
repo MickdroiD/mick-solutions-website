@@ -191,7 +191,8 @@ export interface EffectSettings {
   buttonHoverScale?: number;
 
   // ========== LOGO/IMAGE EFFECTS ==========
-  logoAnimation?: 'none' | 'spin' | 'pulse' | 'bounce' | 'electric' | 'float' | string;
+  // Animation types: none, spin, rotation, pulse, bounce, electric, lightning-circle, tech_hud, spin-glow, vibration, float, swing, flip-3d, stretch, morph
+  logoAnimation?: 'none' | 'spin' | 'rotation' | 'pulse' | 'bounce' | 'electric' | 'lightning-circle' | 'tech_hud' | 'spin-glow' | 'vibration' | 'float' | 'swing' | 'flip-3d' | 'stretch' | 'morph' | 'rotate' | string;
   logoDirectEffect?: string;
   logoIndirectEffect?: string;
   logoFrameShape?: string;
