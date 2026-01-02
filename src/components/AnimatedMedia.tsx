@@ -6,7 +6,6 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { LogoAnimation } from '@/lib/types/global-settings';
 import TechHUDWrapper from '@/components/animations/TechHUDWrapper';
 import {
-  getDirectAnimationConfig,
   getIndirectEffectStyles,
   getFrameStyles,
   getFrameAnimationClass,

@@ -130,24 +130,26 @@ export function NavbarElectric({ config, navItems: propNavItems }: NavbarModuleP
   // ============================================
   // V2 EFFECT CONFIG - Build from headerEffects or legacy props
   // ============================================
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawHeaderEffects = (config as Record<string, any>).headerEffects || {};
-  
-  const headerEffectsConfig: V2EffectConfig = useMemo(() => ({
-    // V2 effects from admin (priority)
-    logoDirectEffect: rawHeaderEffects.logoDirectEffect || (showElectricEffect ? 'electric' : 'none'),
-    logoIndirectEffect: rawHeaderEffects.logoIndirectEffect || (showElectricEffect ? 'aura-glow' : 'none'),
-    logoFrameShape: rawHeaderEffects.logoFrameShape || 'none',
-    logoFrameAnimation: rawHeaderEffects.logoFrameAnimation || 'none',
-    logoFrameColor: rawHeaderEffects.logoFrameColor || rawHeaderEffects.effectPrimaryColor || 'cyan',
-    logoFrameThickness: rawHeaderEffects.logoFrameThickness || 2,
-    animationSpeed: rawHeaderEffects.animationSpeed || 'normal',
-    animationIntensity: rawHeaderEffects.animationIntensity || 'normal',
-    effectPrimaryColor: rawHeaderEffects.effectPrimaryColor || 'cyan',
-    effectSecondaryColor: rawHeaderEffects.effectSecondaryColor || 'purple',
-    // Legacy animation support (fallback)
-    logoAnimation: headerLogoAnimation,
-  }), [rawHeaderEffects, showElectricEffect, headerLogoAnimation]);
+  const headerEffectsConfig: V2EffectConfig = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawEffects = (config as Record<string, any>).headerEffects || {};
+    
+    return {
+      // V2 effects from admin (priority)
+      logoDirectEffect: rawEffects.logoDirectEffect || (showElectricEffect ? 'electric' : 'none'),
+      logoIndirectEffect: rawEffects.logoIndirectEffect || (showElectricEffect ? 'aura-glow' : 'none'),
+      logoFrameShape: rawEffects.logoFrameShape || 'none',
+      logoFrameAnimation: rawEffects.logoFrameAnimation || 'none',
+      logoFrameColor: rawEffects.logoFrameColor || rawEffects.effectPrimaryColor || 'cyan',
+      logoFrameThickness: rawEffects.logoFrameThickness || 2,
+      animationSpeed: rawEffects.animationSpeed || 'normal',
+      animationIntensity: rawEffects.animationIntensity || 'normal',
+      effectPrimaryColor: rawEffects.effectPrimaryColor || 'cyan',
+      effectSecondaryColor: rawEffects.effectSecondaryColor || 'purple',
+      // Legacy animation support (fallback)
+      logoAnimation: headerLogoAnimation,
+    };
+  }, [config, showElectricEffect, headerLogoAnimation]);
 
   // 🆕 Couleurs personnalisées header - Utilise les couleurs globales du site comme fallback
   const siteBgColor = config.couleurBackground || '#0a0a0f';
