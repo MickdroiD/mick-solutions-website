@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
 import type { NavbarModuleProps, NavItem } from '../types';
-import AnimatedMedia from '../../AnimatedMedia';
+import AnimatedMedia, { type V2EffectConfig } from '../../AnimatedMedia';
 
 // 🚫 PAS de menu par défaut - tout doit être configuré depuis l'admin
 // Si aucun lien n'est configuré, le menu sera vide
@@ -127,6 +127,28 @@ export function NavbarElectric({ config, navItems: propNavItems }: NavbarModuleP
   // L'utilisateur choisit l'animation dans l'admin Header > Animation du Logo
   const showElectricEffect = ['electric', 'lightning-circle', 'storm'].includes(headerLogoAnimation);
 
+  // ============================================
+  // V2 EFFECT CONFIG - Build from headerEffects or legacy props
+  // ============================================
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawHeaderEffects = (config as Record<string, any>).headerEffects || {};
+  
+  const headerEffectsConfig: V2EffectConfig = useMemo(() => ({
+    // V2 effects from admin (priority)
+    logoDirectEffect: rawHeaderEffects.logoDirectEffect || (showElectricEffect ? 'electric' : 'none'),
+    logoIndirectEffect: rawHeaderEffects.logoIndirectEffect || (showElectricEffect ? 'aura-glow' : 'none'),
+    logoFrameShape: rawHeaderEffects.logoFrameShape || 'none',
+    logoFrameAnimation: rawHeaderEffects.logoFrameAnimation || 'none',
+    logoFrameColor: rawHeaderEffects.logoFrameColor || rawHeaderEffects.effectPrimaryColor || 'cyan',
+    logoFrameThickness: rawHeaderEffects.logoFrameThickness || 2,
+    animationSpeed: rawHeaderEffects.animationSpeed || 'normal',
+    animationIntensity: rawHeaderEffects.animationIntensity || 'normal',
+    effectPrimaryColor: rawHeaderEffects.effectPrimaryColor || 'cyan',
+    effectSecondaryColor: rawHeaderEffects.effectSecondaryColor || 'purple',
+    // Legacy animation support (fallback)
+    logoAnimation: headerLogoAnimation,
+  }), [rawHeaderEffects, showElectricEffect, headerLogoAnimation]);
+
   // 🆕 Couleurs personnalisées header - Utilise les couleurs globales du site comme fallback
   const siteBgColor = config.couleurBackground || '#0a0a0f';
   const headerBgColor = config.headerBgColor || siteBgColor;
@@ -212,15 +234,13 @@ export function NavbarElectric({ config, navItems: propNavItems }: NavbarModuleP
                   <AnimatedMedia
                     svgCode={hasLogoSvg ? headerSvgCode : undefined}
                     imageUrl={!hasLogoSvg && hasLogoUrl ? headerLogoUrl : undefined}
-                    animationType={headerLogoAnimation}
                     size={clampedLogoSize}
                     alt={siteTitle}
                     fallback={
                       <span className="text-lg font-bold text-gradient">{initiales}</span>
                     }
-                    primaryColor="var(--primary-400)"
-                    accentColor="var(--accent-400)"
-                    showElectricEffect={showElectricEffect}
+                    // V2 Architecture: Pass complete effectConfig object
+                    effectConfig={headerEffectsConfig}
                     className="max-w-full max-h-full"
                   />
                 ) : (
