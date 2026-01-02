@@ -1,0 +1,185 @@
+# ============================================
+# FACTORY V2 - Auto Deploy on Main
+# ============================================
+# Déploiement automatique vers VPS Infomaniak
+#
+# Trigger:
+#   - Push sur branche 'main' (automatique)
+#   - Manuel via workflow_dispatch
+#
+# Stack détectée:
+#   - Next.js 14 (standalone output)
+#   - Docker multi-stage build
+#   - Traefik reverse proxy
+#
+# Secrets requis dans GitHub:
+#   - VPS_HOST: IP du serveur (83.228.218.6)
+#   - VPS_USER: Utilisateur SSH (mickadmin)
+#   - SSH_PRIVATE_KEY: Clé privée SSH (ed25519 ou rsa)
+
+name: 🚀 Deploy to Production
+
+on:
+  # ============================================
+  # TRIGGER AUTOMATIQUE sur push vers main
+  # ============================================
+  push:
+    branches:
+      - main
+    # Ignorer les commits qui ne changent que la doc
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+  # ============================================
+  # TRIGGER MANUEL (backup)
+  # ============================================
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip Docker rebuild (just restart)'
+        type: boolean
+        default: false
+
+env:
+  # Chemin du projet sur le VPS
+  PROJECT_PATH: /home/mickadmin/docker/website
+  # Nom de l'image Docker
+  DOCKER_IMAGE: factory-v2:latest
+
+jobs:
+  deploy:
+    name: 🔄 Deploy to VPS
+    runs-on: ubuntu-latest
+    
+    # Timeout de sécurité (évite les jobs bloqués)
+    timeout-minutes: 15
+    
+    # Éviter les déploiements simultanés
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    steps:
+      # ============================================
+      # STEP 1: Afficher les infos de déploiement
+      # ============================================
+      - name: 📋 Display deployment info
+        run: |
+          echo "🚀 Déploiement déclenché par: ${{ github.actor }}"
+          echo "🌿 Branche: ${{ github.ref_name }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "💬 Message: ${{ github.event.head_commit.message || 'Manual trigger' }}"
+          echo "📅 Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      # ============================================
+      # STEP 2: Déploiement via SSH
+      # ============================================
+      - name: 🔐 Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          # Timeout de connexion SSH (secondes)
+          timeout: 60s
+          # Timeout du script (secondes)
+          command_timeout: 10m
+          script: |
+            set -e  # Arrêter en cas d'erreur
+            
+            echo "============================================"
+            echo "🚀 DEPLOY FACTORY V2 - NEXT.JS"
+            echo "============================================"
+            echo "📅 Date: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "📁 Dossier: ${{ env.PROJECT_PATH }}"
+            echo ""
+            
+            # --- Aller dans le dossier du projet ---
+            cd ${{ env.PROJECT_PATH }}
+            
+            # --- Vérification du dossier Git ---
+            if [ ! -d ".git" ]; then
+              echo "❌ ERREUR: Ce n'est pas un dépôt Git!"
+              exit 1
+            fi
+            
+            # --- Pull des modifications ---
+            echo "📥 Pull des dernières modifications..."
+            git fetch --all
+            git reset --hard origin/main
+            
+            echo ""
+            echo "📦 Dernier commit récupéré:"
+            git log -1 --pretty=format:"  %h - %s (%cr) <%an>"
+            echo ""
+            
+            # --- Build de l'image Docker ---
+            SKIP_BUILD="${{ inputs.skip_build || 'false' }}"
+            if [ "$SKIP_BUILD" != "true" ]; then
+              echo ""
+              echo "🐳 Reconstruction de l'image Docker..."
+              docker build -t ${{ env.DOCKER_IMAGE }} .
+            else
+              echo ""
+              echo "⏭️ Skip du build Docker (option activée)"
+            fi
+            
+            # --- Redémarrage du conteneur ---
+            echo ""
+            echo "♻️ Redémarrage du conteneur..."
+            docker compose down
+            docker compose up -d
+            
+            # --- Nettoyage des anciennes images ---
+            echo ""
+            echo "🧹 Nettoyage des images orphelines..."
+            docker image prune -f
+            
+            # --- Vérification du statut ---
+            echo ""
+            echo "✅ Vérification du conteneur..."
+            sleep 5
+            docker compose ps
+            
+            # --- Health check ---
+            echo ""
+            echo "🏥 Health check..."
+            sleep 3
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "✅ L'application répond correctement!"
+            else
+              echo "⚠️ Health check échoué - vérifier les logs avec: docker compose logs"
+            fi
+            
+            echo ""
+            echo "============================================"
+            echo "✅ DEPLOY TERMINÉ AVEC SUCCÈS"
+            echo "============================================"
+
+      # ============================================
+      # STEP 3: Notification de succès
+      # ============================================
+      - name: ✅ Deployment successful
+        if: success()
+        run: |
+          echo "🎉 Déploiement réussi!"
+          echo "🔗 Commit: ${{ github.sha }}"
+          echo "🌐 Site: https://mick-solutions.ch"
+
+      # ============================================
+      # STEP 4: Notification d'échec
+      # ============================================
+      - name: ❌ Deployment failed
+        if: failure()
+        run: |
+          echo "❌ Le déploiement a échoué!"
+          echo "📋 Vérifiez les logs ci-dessus pour plus de détails."
+          echo ""
+          echo "🔧 Debug tips:"
+          echo "  1. Vérifier que la clé SSH est correcte (SSH_PRIVATE_KEY)"
+          echo "  2. Vérifier que VPS_HOST = 83.228.218.6"
+          echo "  3. Vérifier que VPS_USER = mickadmin"
+          echo "  4. S'assurer que le dépôt Git existe sur le VPS"
