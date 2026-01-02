@@ -18,8 +18,8 @@ interface AnimatedLogoFrameProps {
  * @description Affiche les initiales dans un cadre avec bordure gradient 
  * animée. Supporte plusieurs formes: Square, Circle, ThickCircle, None.
  */
-export default function AnimatedLogoFrame({ 
-  initiales, 
+export default function AnimatedLogoFrame({
+  initiales,
   size = 'md',
   className = '',
   variant = 'Square'
@@ -109,13 +109,13 @@ export default function AnimatedLogoFrame({
   // Rendu sans cadre (variante None)
   if (frameVariant === 'None') {
     return (
-      <motion.div 
+      <motion.div
         className={`relative flex-shrink-0 ${className}`}
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}
       >
         <div className={`${sizeClasses[size]} ${paddingClasses[size]} flex items-center justify-center`}>
-          <motion.span 
+          <motion.span
             className={`${textSizes[size]} font-black`}
             style={{
               background: 'linear-gradient(135deg, var(--primary-400, #22d3ee), var(--accent-400, #a78bfa))',
@@ -145,7 +145,7 @@ export default function AnimatedLogoFrame({
       <div className={`flex-shrink-0 ${getBorderWidth()} ${getBorderRadius()} bg-gradient-to-r from-cyan-400 via-violet-400 to-cyan-400 ${className}`}>
         <div className={`bg-slate-900 ${getBorderRadius()} ${paddingClasses[size]}`}>
           <div className={`${sizeClasses[size]} flex items-center justify-center`}>
-            <span 
+            <span
               className={`${textSizes[size]} font-black`}
               style={{
                 background: 'linear-gradient(135deg, var(--primary-400, #22d3ee), var(--accent-400, #a78bfa))',
@@ -165,15 +165,15 @@ export default function AnimatedLogoFrame({
   const glowPoints = getGlowPoints();
 
   return (
-    <motion.div 
-      className={`relative flex-shrink-0 ${className}`}
+    <motion.div
+      className={`relative flex-shrink-0 aspect-square ${className}`}
       whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.2 }}
     >
       {/* SVG pour les effets lumineux */}
       {glowPoints.length > 0 && (
-        <svg 
-          viewBox="0 0 60 60" 
+        <svg
+          viewBox="0 0 60 60"
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ transform: 'scale(1.15)' }}
         >
@@ -198,7 +198,7 @@ export default function AnimatedLogoFrame({
               </feMerge>
             </filter>
           </defs>
-          
+
           {/* Points lumineux positionnés selon la forme */}
           {glowPoints.map((pos, i) => (
             <motion.circle
@@ -217,7 +217,7 @@ export default function AnimatedLogoFrame({
       )}
 
       {/* Cadre principal avec gradient */}
-      <div 
+      <div
         className={`${getBorderWidth()} ${getBorderRadius()}`}
         style={{
           background: 'linear-gradient(135deg, var(--primary-400, #22d3ee), var(--accent-400, #a78bfa))',
@@ -239,9 +239,9 @@ export default function AnimatedLogoFrame({
               }}
               transition={{ duration: 3, repeat: Infinity }}
             />
-            
+
             {/* Initiales avec gradient */}
-            <motion.span 
+            <motion.span
               className={`${textSizes[size]} font-black relative z-10`}
               style={{
                 background: 'linear-gradient(135deg, var(--primary-400, #22d3ee), var(--accent-400, #a78bfa))',

@@ -29,24 +29,24 @@ export const HERO_LAYOUTS: Record<HeroLayout, {
   reverse?: boolean;
 }> = {
   'text-left': {
-    container: 'grid lg:grid-cols-2 items-center',
-    textAlign: 'text-center lg:text-left',
+    container: 'flex flex-col lg:flex-row items-center w-full',
+    textAlign: 'text-center lg:text-left w-full lg:w-1/2',
     justify: 'justify-center lg:justify-start',
   },
   'text-right': {
-    container: 'grid lg:grid-cols-2 items-center',
-    textAlign: 'text-center lg:text-right',
+    container: 'flex flex-col lg:flex-row items-center w-full',
+    textAlign: 'text-center lg:text-right w-full lg:w-1/2',
     justify: 'justify-center lg:justify-end',
     reverse: true,
   },
   'centered': {
-    container: 'flex flex-col items-center',
-    textAlign: 'text-center',
+    container: 'flex flex-col items-center w-full',
+    textAlign: 'text-center max-w-4xl mx-auto',
     justify: 'justify-center',
   },
   'split': {
-    container: 'grid lg:grid-cols-2 items-center',
-    textAlign: 'text-center lg:text-left',
+    container: 'flex flex-col lg:flex-row items-center w-full',
+    textAlign: 'text-center lg:text-left w-full lg:w-1/2',
     justify: 'justify-center lg:justify-start',
   },
 };
@@ -261,10 +261,10 @@ export function getButtonClasses(
 ): string {
   const shapeClass = BUTTON_SHAPES[shape];
   const sizeClass = BUTTON_SIZES[size];
-  const styleClass = isPrimary 
-    ? BUTTON_STYLES[style].primary 
+  const styleClass = isPrimary
+    ? BUTTON_STYLES[style].primary
     : BUTTON_STYLES[style].secondary;
-  
+
   return `inline-flex items-center justify-center gap-2 font-semibold transition-all ${shapeClass} ${sizeClass} ${styleClass}`;
 }
 
@@ -292,7 +292,7 @@ export function getOverlayStyle(
   opacity: number = 40
 ): string {
   if (opacity === 0) return '';
-  
+
   const colorMap: Record<string, string> = {
     'black': `rgba(0,0,0,${opacity / 100})`,
     'white': `rgba(255,255,255,${opacity / 100})`,
@@ -301,7 +301,7 @@ export function getOverlayStyle(
     'slate': `rgba(15,23,42,${opacity / 100})`,
     'zinc': `rgba(24,24,27,${opacity / 100})`,
   };
-  
+
   return colorMap[color] || colorMap['black'];
 }
 
@@ -315,7 +315,7 @@ export function getAnimationProps(
 ) {
   const durations = ANIMATION_DURATIONS[speed];
   const intensities = ANIMATION_INTENSITIES[intensity];
-  
+
   switch (type) {
     case 'pulse':
       return {

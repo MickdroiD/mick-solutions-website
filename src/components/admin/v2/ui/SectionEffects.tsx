@@ -28,7 +28,7 @@ export interface EffectSettings {
   buttonHoverScale?: number;
 
   // ========== LOGO/IMAGE EFFECTS ==========
-  logoAnimation?: 'none' | 'spin' | 'pulse' | 'bounce' | 'electric' | 'float';
+  logoAnimation?: 'none' | 'spin' | 'rotation' | 'pulse' | 'bounce' | 'electric' | 'lightning-circle' | 'tech_hud' | 'spin-glow' | 'vibration' | 'float';
   logoDirectEffect?: string;
   logoIndirectEffect?: string;
   logoFrameShape?: string;
@@ -133,6 +133,91 @@ const DIRECT_EFFECTS = [
   { value: 'pulse', label: 'Pulsation', emoji: '💓' },
   { value: 'bounce', label: 'Rebond', emoji: '🏀' },
   { value: 'spin', label: 'Rotation', emoji: '🌀' },
+];
+
+const LOGO_ANIMATIONS = [
+  {
+    id: 'none',
+    label: 'Aucune',
+    emoji: '⭕',
+    description: 'Logo statique',
+    icon: 'ImageIcon',
+    cssClass: ''
+  },
+  {
+    id: 'spin',
+    label: 'Spin',
+    emoji: '🔄',
+    description: 'Rotation rapide',
+    icon: 'RotateCw',
+    cssClass: 'animate-spin'
+  },
+  {
+    id: 'rotation',
+    label: 'Rotation',
+    emoji: '🔄',
+    description: 'Rotation lente continue',
+    icon: 'RotateCw',
+    cssClass: 'animate-spin-slow'
+  },
+  {
+    id: 'pulse',
+    label: 'Pulsation',
+    emoji: '💓',
+    description: 'Effet de pulsation',
+    icon: 'Heart',
+    cssClass: 'animate-pulse'
+  },
+  {
+    id: 'bounce',
+    label: 'Rebond',
+    emoji: '📳',
+    description: 'Effet de rebond',
+    icon: 'Zap',
+    cssClass: 'animate-bounce'
+  },
+  {
+    id: 'electric',
+    label: 'Electric ⚡',
+    emoji: '⚡',
+    description: 'Effet flicker électrique',
+    icon: 'Zap',
+    cssClass: 'animate-electric'
+  },
+  {
+    id: 'lightning-circle',
+    label: 'Storm ⚡🎯',
+    emoji: '🌩️',
+    description: 'Tempête électrique chaotique',
+    icon: 'Sparkles',
+    cssClass: '',
+    highlight: true
+  },
+  {
+    id: 'tech_hud',
+    label: 'Tech HUD 🎯',
+    emoji: '🔧',
+    description: 'Interface cyberpunk avec griffes',
+    icon: 'Sparkles',
+    cssClass: '',
+    highlight: true
+  },
+  {
+    id: 'spin-glow',
+    label: 'Spin + Glow ✨',
+    emoji: '💫',
+    description: 'Rotation avec halo lumineux',
+    icon: 'RotateCw',
+    cssClass: ''
+  },
+  {
+    id: 'vibration',
+    label: 'Vibration 📳',
+    emoji: '📳',
+    description: 'Secousse intense',
+    icon: 'Zap',
+    cssClass: ''
+  },
 ];
 
 const INDIRECT_EFFECTS = [
@@ -517,6 +602,63 @@ export function SectionEffects({
           {/* ========== LOGO/IMAGE EFFECTS ========== */}
           {showLogoOptions && (
             <SubSection title="Effets Logo/Image" icon={<Sparkles className="w-4 h-4" />}>
+              {/* Animation du Logo */}
+              <div>
+                <label className="text-white font-medium text-sm mb-3 block">Animation du Logo</label>
+                <p className="text-slate-400 text-xs mb-4">
+                  Choisissez l&apos;effet d&apos;animation appliqué au logo dans le header.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-6">
+                  {LOGO_ANIMATIONS.map((anim) => {
+                    const isSelected = effects.logoAnimation === anim.id;
+                    return (
+                      <button
+                        key={anim.id}
+                        type="button"
+                        onClick={() => onChange({ logoAnimation: anim.id as EffectSettings['logoAnimation'] })}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
+                          isSelected
+                            ? (anim.id === 'electric' || anim.id === 'lightning-circle')
+                              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/20'
+                              : 'bg-violet-500/20 border-violet-400 text-violet-300'
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="text-lg">{anim.emoji}</span>
+                        <span className="text-xs font-medium text-center">{anim.label}</span>
+                        <span className="text-[10px] opacity-70 text-center leading-tight">{anim.description}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Info effet Electric */}
+                {effects.logoAnimation === 'electric' && (
+                  <div className="flex items-start gap-3 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg mb-4">
+                    <span className="text-cyan-400">⚡</span>
+                    <div>
+                      <p className="text-cyan-300 font-medium text-sm">Effet Electric activé</p>
+                      <p className="text-cyan-400/70 text-xs mt-1">
+                        Cet effet ajoute un flickering électrique subtil au logo pour un style high-tech.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info effet Lightning Storm */}
+                {effects.logoAnimation === 'lightning-circle' && (
+                  <div className="flex items-start gap-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg mb-4">
+                    <span className="text-violet-400">🌩️</span>
+                    <div>
+                      <p className="text-violet-300 font-medium text-sm">Tempête Électrique activée</p>
+                      <p className="text-violet-400/70 text-xs mt-1">
+                        Votre logo est entouré d&apos;une tempête magnétique chaotique : éclairs SVG rayonnants, cercles rotatifs pulsants.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="text-white font-medium text-sm mb-3 block">Effet Direct</label>
                 <div className="grid grid-cols-3 gap-2">

@@ -158,7 +158,8 @@ function LogoContent({ config, logoUrl, heroLogoSize, effects }: LogoContentProp
           className="w-full h-full flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-bold text-gradient"
           style={indirectStyles}
         >
-          {config.initialesLogo || 'MS'}
+          {/* 🚫 Pas de fallback hardcodé - utilise les initiales ou le nom du site */}
+          {config.initialesLogo || config.nomSite?.split(' ').map(w => w[0]).join('') || ''}
         </div>
       )}
     </motion.div>
@@ -212,10 +213,12 @@ function LogoFrame({ children, effects, size }: LogoFrameProps) {
 
   return (
     <div
-      className={`relative ${frameAnimClass} ${speedClass} ${intensityClass} max-w-full`}
+      className={`relative ${frameAnimClass} ${speedClass} ${intensityClass} max-w-full overflow-hidden`}
       style={{
-        width: `${size}px`,
-        height: `${size}px`,
+        width: '100%',
+        maxWidth: `${size}px`,
+        aspectRatio: '1 / 1',
+        flexShrink: 0,
         ...frameStyles,
         ...cssVars,
       }}
@@ -513,7 +516,7 @@ export function HeroElectric({ config }: ModuleProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className={`flex ${layoutConfig.reverse ? 'justify-start' : 'justify-center lg:justify-end'} w-full`}
+              className={`flex ${layoutConfig.reverse ? 'justify-start' : 'justify-center lg:justify-end'} w-full lg:w-1/2`}
             >
               {hasGridBlocks ? (
                 // Grid blocks mode

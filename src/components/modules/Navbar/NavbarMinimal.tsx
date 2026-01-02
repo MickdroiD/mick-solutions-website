@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
 import type { NavbarModuleProps, NavItem } from '../types';
 import AnimatedLogoFrame from '../../AnimatedLogoFrame';
 
-const defaultNavItems: NavItem[] = [
-  { name: 'Avantages', href: '#avantages', id: 'avantages' },
-  { name: 'Services', href: '#services', id: 'services' },
-  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
-  { name: 'Confiance', href: '#confiance', id: 'confiance' },
-  { name: 'Contact', href: '#contact', id: 'contact' },
-];
+// Navigation items provenant de la configuration admin (headerMenuLinks)
+// Si aucun lien configuré, tableau vide par défaut
 
 /**
  * NavbarMinimal - Variante épurée mais cohérente avec le thème dark.
@@ -20,7 +15,7 @@ const defaultNavItems: NavItem[] = [
  * @description Navigation simple avec logo animé (AnimatedLogoFrame),
  * liens fins espacés, fond dark au scroll. Corrigé pour cohérence design.
  */
-export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModuleProps) {
+export function NavbarMinimal({ config, navItems: propNavItems }: NavbarModuleProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -58,15 +53,46 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
   // 🆕 Logo image URL (priorité: headerLogoUrl > logoUrl)
   const logoImageUrl = branding.headerLogoUrl || safeConfig.headerLogoUrl || safeConfig.logoUrl;
 
+  // Résoudre les liens du menu (priorité: config > props)
+  const navItems = React.useMemo(() => {
+    if (safeConfig.headerMenuLinks) {
+      try {
+        const parsed = typeof safeConfig.headerMenuLinks === 'string' 
+          ? JSON.parse(safeConfig.headerMenuLinks) 
+          : safeConfig.headerMenuLinks;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return parsed.map((link: any) => ({
+            name: link.label,
+            href: link.url,
+            id: link.id || link.label.toLowerCase().replace(/\s+/g, '-'),
+            isExternal: link.isExternal
+          }));
+        }
+      } catch (e) {
+        console.warn('[NavbarMinimal] Failed to parse headerMenuLinks', e);
+      }
+    }
+    return propNavItems || [];
+  }, [safeConfig.headerMenuLinks, propNavItems]);
+
+  // Couleur de fond du site (fallback)
+  const siteBgColor = safeConfig.couleurBackground || '#0a0a0f';
+
   // 🆕 Couleurs personnalisées du header
-  const headerBgColor = branding.headerBgColor || safeConfig.headerBgColor || 'rgba(10, 10, 15, 0.95)';
+  const headerBgColor = branding.headerBgColor || safeConfig.headerBgColor || siteBgColor;
   const headerTextColor = branding.headerTextColor || safeConfig.headerTextColor || '#ffffff';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const headerBorderColor = branding.headerBorderColor || safeConfig.headerBorderColor || ({} as any);
 
-  // CTA
-  const ctaPrincipal = branding.headerCtaText || safeConfig.ctaPrincipal || 'Contact';
+  // CTA (sans fallback hardcodé)
+  const ctaPrincipal = branding.headerCtaText || safeConfig.headerCtaText;
   const ctaLink = branding.headerCtaUrl || safeConfig.headerCtaUrl || '#contact';
+  const showCta = safeConfig.showHeaderCta !== false && ctaPrincipal;
+
+  // Bouton d'appel
+  const callButtonText = safeConfig.texteBoutonAppel;
+  const callButtonUrl = safeConfig.lienBoutonAppel;
 
   return (
     <motion.header
@@ -124,9 +150,9 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
 
           {/* CTA Button - Desktop */}
           <div className="hidden md:flex items-center gap-3">
-            {safeConfig.lienBoutonAppel && safeConfig.lienBoutonAppel !== '#contact' && (
+            {callButtonUrl && callButtonText && (
               <a
-                href={safeConfig.lienBoutonAppel}
+                href={callButtonUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-primary-200
@@ -134,20 +160,22 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
                          transition-all duration-300"
               >
                 <Phone className="w-4 h-4" />
-                Réserver un appel
+                {callButtonText}
               </a>
             )}
-            <a
-              href={ctaLink}
-              onClick={(e) => handleNavClick(e, 'contact')}
-              className="relative inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium text-white
-                       bg-gradient-to-r from-primary-500 to-accent-500
-                       hover:from-primary-400 hover:to-accent-400
-                       shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40
-                       transition-all duration-300 hover:scale-105"
-            >
-              {ctaPrincipal.split(' ').slice(-2).join(' ')}
-            </a>
+            {showCta && (
+              <a
+                href={ctaLink}
+                onClick={(e) => handleNavClick(e, 'contact')}
+                className="relative inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium text-white
+                         bg-gradient-to-r from-primary-500 to-accent-500
+                         hover:from-primary-400 hover:to-accent-400
+                         shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40
+                         transition-all duration-300 hover:scale-105"
+              >
+                {ctaPrincipal}
+              </a>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -169,7 +197,7 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="md:hidden backdrop-blur-xl border-t border-white/5"
-            style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)' }}
+            style={{ backgroundColor: headerBgColor }}
           >
             <div className="px-6 py-6 space-y-4">
               {navItems.map((item) => (
@@ -183,26 +211,28 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
                   {item.name}
                 </a>
               ))}
-              {safeConfig.lienBoutonAppel && safeConfig.lienBoutonAppel !== '#contact' && (
+              {callButtonUrl && callButtonText && (
                 <a
-                  href={safeConfig.lienBoutonAppel}
+                  href={callButtonUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 py-2 text-sm text-primary-300 hover:text-foreground transition-colors"
                 >
                   <Phone className="w-4 h-4" />
-                  Réserver un appel
+                  {callButtonText}
                 </a>
               )}
-              <a
-                href={ctaLink}
-                onClick={(e) => handleNavClick(e, 'contact')}
-                className="block w-full text-center py-3 mt-4 rounded-full text-sm font-medium text-white
-                         bg-gradient-to-r from-primary-500 to-accent-500 touch-manipulation
-                         active:opacity-80 transition-opacity"
-              >
-                {ctaPrincipal.split(' ').slice(-2).join(' ')}
-              </a>
+              {showCta && (
+                <a
+                  href={ctaLink}
+                  onClick={(e) => handleNavClick(e, 'contact')}
+                  className="block w-full text-center py-3 mt-4 rounded-full text-sm font-medium text-white
+                           bg-gradient-to-r from-primary-500 to-accent-500 touch-manipulation
+                           active:opacity-80 transition-opacity"
+                >
+                  {ctaPrincipal}
+                </a>
+              )}
             </div>
           </motion.div>
         )}

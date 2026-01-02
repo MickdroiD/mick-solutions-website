@@ -5,13 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import type { NavbarModuleProps, NavItem } from '../types';
 
-const defaultNavItems: NavItem[] = [
-  { name: 'Avantages', href: '#avantages', id: 'avantages' },
-  { name: 'Services', href: '#services', id: 'services' },
-  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
-  { name: 'Confiance', href: '#confiance', id: 'confiance' },
-  { name: 'Contact', href: '#contact', id: 'contact' },
-];
+import React from 'react';
+
+// Navigation items provenant de la configuration admin (headerMenuLinks)
+// Si aucun lien configuré, tableau vide par défaut
 
 /**
  * NavbarBold - Variante audacieuse et impactante.
@@ -20,7 +17,33 @@ const defaultNavItems: NavItem[] = [
  * typographie massive dans le menu ouvert, plein écran overlay.
  * Idéal pour agences créatives, architectes, designers.
  */
-export function NavbarBold({ config, navItems = defaultNavItems }: NavbarModuleProps) {
+export function NavbarBold({ config, navItems: propNavItems }: NavbarModuleProps) {
+  // Cast config to any to safely access potentially missing properties
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const safeConfig = config as any;
+
+  // Résoudre les liens du menu (priorité: config > props)
+  const navItems = React.useMemo(() => {
+    if (safeConfig.headerMenuLinks) {
+      try {
+        const parsed = typeof safeConfig.headerMenuLinks === 'string' 
+          ? JSON.parse(safeConfig.headerMenuLinks) 
+          : safeConfig.headerMenuLinks;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return parsed.map((link: any) => ({
+            name: link.label,
+            href: link.url,
+            id: link.id || link.label.toLowerCase().replace(/\s+/g, '-'),
+            isExternal: link.isExternal
+          }));
+        }
+      } catch (e) {
+        console.warn('[NavbarBold] Failed to parse headerMenuLinks', e);
+      }
+    }
+    return propNavItems || [];
+  }, [safeConfig.headerMenuLinks, propNavItems]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

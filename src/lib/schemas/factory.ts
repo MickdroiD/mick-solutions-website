@@ -99,13 +99,19 @@ export function safeJsonParseWithSchema<T extends z.ZodTypeAny>(
   }
 
   try {
-    // Handle double-encoded JSON
+    // Handle double-encoded JSON (when the whole string is wrapped in quotes)
     let cleaned = jsonString;
     if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-      cleaned = JSON.parse(cleaned) as string;
+      try {
+        cleaned = JSON.parse(cleaned) as string;
+      } catch {
+        // Not double-encoded, continue with original
+      }
     }
-    cleaned = cleaned.replace(/\\"/g, '"');
-
+    
+    // 🔧 FIX: Don't blindly replace \" with " - this breaks nested JSON strings!
+    // JSON.parse will handle escaped quotes correctly.
+    
     const parsed = JSON.parse(cleaned) as unknown;
     const result = schema.safeParse(parsed);
 
@@ -412,6 +418,7 @@ export const EffectSettingsSchema = z.object({
   buttonHoverScale: z.number().optional(),
 
   // ========== LOGO ANIMATIONS & EFFECTS ==========
+  logoUrl: z.string().nullable().optional(), // 🆕 Merged from Header Identity
   logoAnimation: LogoAnimationEnum.optional(),
   logoDirectEffect: z.string().optional(),
   logoIndirectEffect: z.string().optional(),
@@ -501,12 +508,12 @@ export const BrandingSchema = z.object({
   themeGlobal: VariantStyleEnum.default('Electric'),
   // === NAVBAR / HEADER CONFIG ===
   navbarVariant: VariantStyleEnum.nullable().default(null), // Override themeGlobal pour navbar
-  headerLogoSize: z.number().int().min(20).max(120).default(40),
-  headerLogoAnimation: LogoAnimationEnum.default('spin'),
   stickyHeader: z.boolean().default(true),
-  // 🆕 Logo dédié header (différent du logo principal si besoin)
+  // 🆕 Logo dédié header (peut être différent du logo principal)
   headerLogoUrl: z.string().nullable().default(null),
   headerLogoSvgCode: z.string().nullable().default(null),
+  headerLogoSize: z.number().min(20).max(500).default(40),
+  headerLogoAnimation: z.string().nullable().default('spin'),
   // 🆕 Style header personnalisé
   headerBgColor: z.string().nullable().default(null), // null = transparent ou auto
   headerTextColor: z.string().nullable().default(null), // null = inherit
@@ -515,6 +522,7 @@ export const BrandingSchema = z.object({
   headerEffects: EffectSettingsSchema.optional(),
   headerTextSettings: TextSettingsSchema.optional(),
   // 🆕 Header Content (Menu, CTA, TopBar)
+  headerSiteTitle: z.string().nullable().default(null), // Override du nom du site dans le header
   headerMenuLinks: z.string().nullable().default(null), // JSON stringified MenuLinkItem[]
   headerCtaText: z.string().nullable().default(null),
   headerCtaUrl: z.string().nullable().default(null),
@@ -537,7 +545,7 @@ export const ContactInfoSchema = z.object({
   lienWhatsapp: z.string().nullable().default(null),
   lienBoutonAppel: z.string().nullable().default(null),
   // === NAVBAR CTA CONFIG ===
-  texteBoutonAppel: z.string().default('Réserver un appel'), // Texte affiché sur le bouton appel navbar
+  texteBoutonAppel: z.string().nullable().default(null), // Texte affiché sur le bouton appel navbar - Aucun fallback
   // CRM Lite: Webhook URL pour traitement des leads
   n8nWebhookUrl: z.string().url().nullable().default(null),
 });
@@ -620,12 +628,26 @@ export const PremiumSchema = z.object({
 
 // 3.10 Footer Sub-Schema
 export const FooterConfigSchema = z.object({
-  copyrightTexte: z.string().default('© Mon Site. Tous droits réservés.'),
-  paysHebergement: z.string().default('Hébergé en Suisse'),
+  // 🚫 Pas de textes hardcodés - tout est configurable
+  copyrightTexte: z.string().nullable().default(null), // Ex: "© {YEAR} {SITE}. Tous droits réservés."
+  paysHebergement: z.string().nullable().default(null), // Ex: "Hébergé en Suisse"
   showLegalLinks: z.boolean().default(true),
   customFooterText: z.string().nullable().default(null),
-  footerCtaText: z.string().nullable().default(null),
-  footerCtaUrl: z.string().url().nullable().default(null),
+  
+  // 🆕 Titres des sections (configurables depuis l'admin)
+  footerContactTitle: z.string().nullable().default(null), // Ex: "Contact"
+  footerLegalTitle: z.string().nullable().default(null), // Ex: "Légal"
+  footerNavigationTitle: z.string().nullable().default(null), // Ex: "Navigation"
+  
+  // 🆕 CTA Footer
+  footerCtaText: z.string().nullable().default(null), // Texte du bouton CTA
+  footerCtaUrl: z.string().nullable().default(null), // URL du CTA
+  footerCtaHeading: z.string().nullable().default(null), // Titre CTA pour variante Bold (ex: "Travaillons Ensemble")
+  
+  // 🆕 Powered By (optionnel - White Label)
+  footerPoweredByText: z.string().nullable().default(null), // Ex: "Propulsé par MonEntreprise"
+  showFooterPoweredBy: z.boolean().default(false), // Masqué par défaut pour White Label
+  
   footerLogoSize: z.number().int().positive().default(40),
   footerLogoAnimation: LogoAnimationEnum.default('none'),
   footerVariant: VariantStyleEnum.default('Electric'),
@@ -1146,6 +1168,7 @@ export const DEFAULT_BRANDING = {
   headerEffects: {},
   headerTextSettings: {},
   // 🆕 Header Content (Menu, CTA, TopBar)
+  headerSiteTitle: null,
   headerMenuLinks: null,
   headerCtaText: null,
   headerCtaUrl: null,
@@ -1167,7 +1190,7 @@ export const DEFAULT_CONTACT = {
   lienWhatsapp: null,
   lienBoutonAppel: null,
   // === NAVBAR CTA CONFIG ===
-  texteBoutonAppel: 'Réserver un appel',
+  texteBoutonAppel: null,
   n8nWebhookUrl: null,
 };
 
@@ -1233,19 +1256,28 @@ export const DEFAULT_PREMIUM = {
 };
 
 export const DEFAULT_FOOTER = {
-  copyrightTexte: '© Mon Site. Tous droits réservés.',
-  paysHebergement: 'Hébergé en Suisse',
+  // 🚫 Pas de valeurs par défaut hardcodées - tout doit être configuré depuis l'admin
+  copyrightTexte: null,
+  paysHebergement: null,
   showLegalLinks: true,
   customFooterText: null,
+  // 🆕 Titres des sections (null = masqué)
+  footerContactTitle: null,
+  footerLegalTitle: null,
+  footerNavigationTitle: null,
+  // 🆕 CTA Footer
   footerCtaText: null,
   footerCtaUrl: null,
+  footerCtaHeading: null,
+  // 🆕 Powered By (masqué par défaut pour White Label)
+  footerPoweredByText: null,
+  showFooterPoweredBy: false,
+  // Logo & Style
   footerLogoSize: 40,
   footerLogoAnimation: 'none' as const,
   footerVariant: 'Electric' as const,
-  // 🆕 Logo dédié footer
   footerLogoUrl: null,
   footerLogoSvgCode: null,
-  // 🆕 Style footer personnalisé
   footerBgColor: null,
   footerTextColor: null,
   footerBorderColor: null,
@@ -1396,19 +1428,28 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     maintenanceMode: false,
   },
   footer: {
-    copyrightTexte: '© Mon Site. Tous droits réservés.',
-    paysHebergement: 'Hébergé en Suisse',
+    // 🚫 Pas de valeurs par défaut hardcodées
+    copyrightTexte: null,
+    paysHebergement: null,
     showLegalLinks: true,
     customFooterText: null,
+    // 🆕 Titres des sections
+    footerContactTitle: null,
+    footerLegalTitle: null,
+    footerNavigationTitle: null,
+    // 🆕 CTA Footer
     footerCtaText: null,
     footerCtaUrl: null,
+    footerCtaHeading: null,
+    // 🆕 Powered By
+    footerPoweredByText: null,
+    showFooterPoweredBy: false,
+    // Logo & Style
     footerLogoSize: 40,
     footerLogoAnimation: 'none',
     footerVariant: 'Electric',
-    // 🆕 Logo dédié footer
     footerLogoUrl: null,
     footerLogoSvgCode: null,
-    // 🆕 Style footer personnalisé
     footerBgColor: null,
     footerTextColor: null,
     footerBorderColor: null,

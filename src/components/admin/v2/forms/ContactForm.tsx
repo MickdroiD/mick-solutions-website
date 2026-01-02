@@ -134,14 +134,16 @@ function ContactFormComponent({ section, onUpdate }: ContactFormProps) {
         <LocalInput
           label="Texte du bouton"
           value={section.content.submitText || ''}
-          onChange={(v) => updateContent('submitText', v || 'Envoyer')}
+          onChange={(v) => updateContent('submitText', v || null)}
           placeholder="Envoyer le message"
+          hint="Texte affiché sur le bouton d'envoi du formulaire"
         />
         <LocalInput
           label="Message de succès"
           value={section.content.successMessage || ''}
-          onChange={(v) => updateContent('successMessage', v || 'Message envoyé avec succès !')}
+          onChange={(v) => updateContent('successMessage', v || null)}
           placeholder="Merci ! Votre message a été envoyé."
+          hint="Message affiché après envoi réussi"
         />
       </CollapsibleSection>
 

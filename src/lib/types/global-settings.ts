@@ -325,15 +325,24 @@ export interface GlobalSettingsComplete {
   trustStat3Label: string;
 
   // ========== H. FOOTER ==========
-  copyrightTexte: string;
-  paysHebergement: string;
+  copyrightTexte: string | null;
+  paysHebergement: string | null;
   showLegalLinks: boolean;
   customFooterText: string | null;
+  // 🆕 Titres des sections (configurables)
+  footerContactTitle: string | null;
+  footerLegalTitle: string | null;
+  footerNavigationTitle: string | null;
+  // 🆕 CTA Footer
   footerCtaText: string | null;
   footerCtaUrl: string | null;
+  footerCtaHeading: string | null;
+  // 🆕 Powered By (White Label)
+  footerPoweredByText: string | null;
+  showFooterPoweredBy: boolean;
+  // Logo
   footerLogoSize: number | null;
   footerLogoAnimation: LogoAnimation | null;
-  // 🆕 Logo dédié footer (peut être différent du logo principal)
   footerLogoUrl: string | null;
   footerLogoSvgCode: string | null;
   // 🆕 Style footer personnalisé
@@ -409,6 +418,12 @@ export interface GlobalSettingsComplete {
   headerBgColor: string | null;
   headerTextColor: string | null;
   headerBorderColor: string | null;
+  showTopBar: boolean;
+  headerSiteTitle: string | null;
+  headerMenuLinks: string | null;
+  headerCtaText: string | null;
+  headerCtaUrl: string | null;
+  showHeaderCta: boolean;
 
   // 🆕 Effects & Text settings pour le header
   headerEffects?: EffectSettings;
@@ -589,16 +604,25 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   trustStat3Value: '0',
   trustStat3Label: 'Stat 3',
 
-  // Footer
-  copyrightTexte: `© ${new Date().getFullYear()} Mon Site. Tous droits réservés.`,
-  paysHebergement: 'Hébergé en Suisse',
+  // Footer - 🚫 Pas de valeurs par défaut hardcodées
+  copyrightTexte: null,
+  paysHebergement: null,
   showLegalLinks: true,
   customFooterText: null,
+  // 🆕 Titres des sections
+  footerContactTitle: null,
+  footerLegalTitle: null,
+  footerNavigationTitle: null,
+  // 🆕 CTA Footer
   footerCtaText: null,
   footerCtaUrl: null,
+  footerCtaHeading: null,
+  // 🆕 Powered By
+  footerPoweredByText: null,
+  showFooterPoweredBy: false,
+  // Logo
   footerLogoSize: 40,
   footerLogoAnimation: 'none',
-  // 🆕 Logo dédié footer
   footerLogoUrl: null,
   footerLogoSvgCode: null,
   // 🆕 Style footer personnalisé
@@ -670,6 +694,12 @@ export const DEFAULT_SETTINGS: GlobalSettingsComplete = {
   headerBgColor: null,
   headerTextColor: null,
   headerBorderColor: null,
+  showTopBar: false,
+  headerSiteTitle: null,
+  headerMenuLinks: null,
+  headerCtaText: null,
+  headerCtaUrl: null,
+  showHeaderCta: true,
 
   // Photos
   imageStyle: 'Rounded',

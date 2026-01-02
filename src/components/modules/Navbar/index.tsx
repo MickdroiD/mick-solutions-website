@@ -10,14 +10,9 @@ import { NavbarElectric } from './NavbarElectric';
 import { NavbarBold } from './NavbarBold';
 import { NavbarCentered } from './NavbarCentered';
 
-// Items de navigation par défaut (peuvent être overridés)
-export const defaultNavItems: NavItem[] = [
-  { name: 'Avantages', href: '#avantages', id: 'avantages' },
-  { name: 'Services', href: '#services', id: 'services' },
-  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
-  { name: 'Confiance', href: '#confiance', id: 'confiance' },
-  { name: 'Contact', href: '#contact', id: 'contact' },
-];
+// Items de navigation par défaut - VIDE car tout est configurable depuis l'admin
+// Les liens proviennent de config.headerMenuLinks
+export const defaultNavItems: NavItem[] = [];
 
 // Registry des variantes disponibles
 const NavbarVariants: Record<string, React.ComponentType<NavbarModuleProps>> = {

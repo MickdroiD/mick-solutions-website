@@ -20,10 +20,10 @@ interface ContactFormProps extends SectionEffectsProps {
 }
 
 export default function ContactForm({
-  title = 'Contactez-nous',
-  subtitle = 'Une question, un projet ? Remplissez le formulaire ci-dessous.',
-  submitText = 'Envoyer le message',
-  successMessage: _successMessage = 'Merci ! Nous vous répondrons dans les plus brefs délais.',
+  title,
+  subtitle,
+  submitText,
+  successMessage: _successMessage,
   effects,
   textSettings,
 }: ContactFormProps) {

@@ -319,15 +319,16 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       >
         <LocalInput
           label="Texte de copyright"
-          value={config.footer.copyrightTexte}
-          onChange={(v) => updateFooter('copyrightTexte', v)}
-          placeholder="© 2024 Mon Site. Tous droits réservés."
+          value={config.footer.copyrightTexte || ''}
+          onChange={(v) => updateFooter('copyrightTexte', v || null)}
+          placeholder="© {YEAR} {SITE}. Tous droits réservés."
+          hint="Utilisez {YEAR} pour l'année et {SITE} pour le nom du site"
         />
 
         <LocalInput
           label="Pays d'hébergement"
-          value={config.footer.paysHebergement}
-          onChange={(v) => updateFooter('paysHebergement', v)}
+          value={config.footer.paysHebergement || ''}
+          onChange={(v) => updateFooter('paysHebergement', v || null)}
           placeholder="Hébergé en Suisse 🇨🇭"
         />
 
@@ -339,7 +340,58 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
           rows={2}
         />
 
-        <div className="flex items-center gap-3 pt-2">
+        {/* 🆕 Titres des sections */}
+        <div className="pt-4 border-t border-white/5 space-y-4">
+          <h4 className="text-white font-medium text-sm">Titres des sections</h4>
+          <p className="text-slate-500 text-xs">Laissez vide pour masquer la section correspondante</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <LocalInput
+              label="Section Contact"
+              value={config.footer.footerContactTitle || ''}
+              onChange={(v) => updateFooter('footerContactTitle', v || null)}
+              placeholder="Contact"
+            />
+            <LocalInput
+              label="Section Navigation"
+              value={config.footer.footerNavigationTitle || ''}
+              onChange={(v) => updateFooter('footerNavigationTitle', v || null)}
+              placeholder="Navigation"
+            />
+            <LocalInput
+              label="Section Légal"
+              value={config.footer.footerLegalTitle || ''}
+              onChange={(v) => updateFooter('footerLegalTitle', v || null)}
+              placeholder="Légal"
+            />
+          </div>
+        </div>
+
+        {/* 🆕 Powered By (White Label) */}
+        <div className="pt-4 border-t border-white/5 space-y-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => updateFooter('showFooterPoweredBy', !config.footer.showFooterPoweredBy)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm transition-all ${config.footer.showFooterPoweredBy
+                ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
+                : 'border-white/10 text-slate-400'
+                }`}
+            >
+              Afficher "Propulsé par"
+            </button>
+          </div>
+          {config.footer.showFooterPoweredBy && (
+            <LocalInput
+              label="Texte Propulsé par"
+              value={config.footer.footerPoweredByText || ''}
+              onChange={(v) => updateFooter('footerPoweredByText', v || null)}
+              placeholder="Propulsé par MonEntreprise"
+            />
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 pt-4 border-t border-white/5">
           <button
             type="button"
             onClick={() => updateFooter('showLegalLinks', !config.footer.showLegalLinks)}
@@ -480,6 +532,18 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
             value={config.footer.footerCtaUrl || ''}
             onChange={(v) => updateFooter('footerCtaUrl', v || null)}
             placeholder="Ex: #contact"
+          />
+        </div>
+
+        {/* 🆕 CTA Heading pour variante Bold */}
+        <div className="pt-4 border-t border-white/5">
+          <LocalTextarea
+            label="Titre CTA (variante Bold)"
+            value={config.footer.footerCtaHeading || ''}
+            onChange={(v) => updateFooter('footerCtaHeading', v || null)}
+            placeholder="Travaillons&#10;Ensemble"
+            hint="Grand titre affiché dans la variante Bold. Utilisez ↵ (entrée) pour séparer les lignes."
+            rows={2}
           />
         </div>
       </CollapsibleSection>

@@ -52,6 +52,9 @@ interface TrustSectionProps extends SectionEffectsProps {
   hoverEffect?: HoverEffect;
   title?: string;
   subtitle?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  ctaQuestion?: string;
 }
 
 // ============================================
@@ -62,8 +65,11 @@ export default function TrustSection({
   variant = 'Electric',
   cardStyle = 'Shadow',
   hoverEffect = 'Glow',
-  title = 'Pourquoi nous faire confiance ?',
-  subtitle = 'Nous sommes une entreprise suisse, pour des clients suisses.',
+  title,
+  subtitle,
+  ctaText,
+  ctaUrl,
+  ctaQuestion,
   effects,
   textSettings,
 }: TrustSectionProps) {
@@ -207,18 +213,22 @@ export default function TrustSection({
           className="mt-16 text-center"
         >
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-primary-500/5 to-accent-500/5 border border-primary-500/10">
-            <p className="text-slate-300">
-              Prêt à nous faire confiance ?
-            </p>
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium text-white
-                       bg-gradient-to-r from-primary-500 to-accent-500
-                       hover:from-primary-400 hover:to-accent-400
-                       transition-all duration-300"
-            >
-              Contactez-nous
-            </a>
+            {ctaText && (
+              <>
+                <p className="text-slate-300">
+                  {ctaQuestion || 'Prêt à nous faire confiance ?'}
+                </p>
+                <a
+                  href={ctaUrl || '#contact'}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium text-white
+                           bg-gradient-to-r from-primary-500 to-accent-500
+                           hover:from-primary-400 hover:to-accent-400
+                           transition-all duration-300"
+                >
+                  {ctaText}
+                </a>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

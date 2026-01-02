@@ -480,14 +480,14 @@ interface SectionLabels {
   modalCtaText: string;
 }
 
-// Thème "Nouveau Client" - Labels pédagogiques
+// Labels par défaut - tous optionnels, peuvent être overridés par la configuration admin
 const DEFAULT_LABELS: SectionLabels = {
-  sectionTitle: 'Nos',
-  sectionTitleHighlight: 'services',
-  sectionSubtitle: 'Décrivez ici ce que vous proposez à vos clients en une phrase.',
-  ctaQuestion: 'Une question ?',
-  ctaLink: 'Contactez-nous',
-  modalCtaText: 'En savoir plus',
+  sectionTitle: '',
+  sectionTitleHighlight: '',
+  sectionSubtitle: '',
+  ctaQuestion: '',
+  ctaLink: '',
+  modalCtaText: '',
 };
 
 // ============================================

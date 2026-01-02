@@ -45,14 +45,14 @@ interface AIAssistantProps {
 // ============================================
 
 export default function AIAssistant({
-  siteName = 'Mon Site',
+  siteName,
   industry,
   services = [],
-  welcomeMessage = 'Bonjour ! Comment puis-je vous aider ?',
-  placeholder = 'Posez votre question...',
+  welcomeMessage,
+  placeholder,
   avatarUrl,
-  primaryColor = '#06b6d4',
-  accentColor = '#a855f7',
+  primaryColor,
+  accentColor,
   position = 'bottom-right',
   provider = 'openai',
   systemPrompt,

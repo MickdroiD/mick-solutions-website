@@ -325,79 +325,97 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
             </div>
           </motion.div>
 
-          {/* Contact */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            <h4
-              className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
-              style={getFontStyle(titleFontFamily)}
+          {/* Contact - Afficher seulement si titre configuré ou email/adresse présents */}
+          {(config.footerContactTitle || config.email || config.adresse) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
             >
-              Contact
-            </h4>
-            <ul className="space-y-3">
-              <li>
-                <a
-                  href={`mailto:${config.email}`}
-                  className={`flex items-center gap-3 text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
+              {config.footerContactTitle && (
+                <h4
+                  className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
+                  style={getFontStyle(titleFontFamily)}
                 >
-                  <Mail className="w-4 h-4" />
-                  {config.email}
-                </a>
-              </li>
-              <li className={`text-primary-300/70 ${bodyFontSize}`}>
-                {config.adresse}
-              </li>
-              <li className="text-primary-500 text-xs">
-                {config.paysHebergement}
-              </li>
-            </ul>
-          </motion.div>
+                  {config.footerContactTitle}
+                </h4>
+              )}
+              <ul className="space-y-3">
+                {config.email && (
+                  <li>
+                    <a
+                      href={`mailto:${config.email}`}
+                      className={`flex items-center gap-3 text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
+                    >
+                      <Mail className="w-4 h-4" />
+                      {config.email}
+                    </a>
+                  </li>
+                )}
+                {config.adresse && (
+                  <li className={`text-primary-300/70 ${bodyFontSize}`}>
+                    {config.adresse}
+                  </li>
+                )}
+                {config.paysHebergement && (
+                  <li className="text-primary-500 text-xs">
+                    {config.paysHebergement}
+                  </li>
+                )}
+              </ul>
+            </motion.div>
+          )}
 
-          {/* Legal */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <h4
-              className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
-              style={getFontStyle(titleFontFamily)}
+          {/* Legal - Afficher seulement si titre configuré et liens légaux actifs */}
+          {config.footerLegalTitle && legalDocs.filter(d => d.isActive).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
             >
-              Légal
-            </h4>
-            <ul className="space-y-3">
-              {legalDocs.filter(d => d.isActive).map((doc) => (
-                <li key={doc.id}>
-                  <a
-                    href={`/legal/${doc.slug}`}
-                    className={`text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
-                  >
-                    {doc.titre}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
+              <h4
+                className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4"
+                style={getFontStyle(titleFontFamily)}
+              >
+                {config.footerLegalTitle}
+              </h4>
+              <ul className="space-y-3">
+                {legalDocs.filter(d => d.isActive).map((doc) => (
+                  <li key={doc.id}>
+                    <a
+                      href={`/legal/${doc.slug}`}
+                      className={`text-primary-300/70 hover:text-primary-400 transition-colors ${bodyFontSize}`}
+                    >
+                      {doc.titre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
         </div>
 
-        {/* Copyright */}
+        {/* Copyright - Configurable depuis l'admin */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
         >
-          <p className="text-xs text-primary-500">
-            © {currentYear} {config.nomSite}. Tous droits réservés.
-          </p>
-          <p className="text-xs text-primary-600/50">
-            Propulsé par White Label Factory
-          </p>
+          {/* Copyright text - configurable ou rien */}
+          {config.copyrightTexte && (
+            <p className="text-xs text-primary-500">
+              {config.copyrightTexte.replace('{YEAR}', String(currentYear)).replace('{SITE}', config.nomSite)}
+            </p>
+          )}
+          {/* Powered by - optionnel et configurable */}
+          {config.showFooterPoweredBy && config.footerPoweredByText && (
+            <p className="text-xs text-primary-600/50">
+              {config.footerPoweredByText}
+            </p>
+          )}
         </motion.div>
       </div>
     </footer>

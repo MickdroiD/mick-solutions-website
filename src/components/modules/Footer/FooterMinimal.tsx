@@ -98,13 +98,17 @@ export function FooterMinimal({ config, legalDocs = [] }: FooterModuleProps) {
   // Initiales du logo
   const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
   
+  // Couleurs personnalisées ou globales
+  const siteBgColor = config.couleurBackground || '#0a0a0f';
+  const footerBgColor = config.footerBgColor || siteBgColor;
+
   return (
     <motion.footer
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       className="py-6 px-6 border-t border-white/10"
-      style={{ backgroundColor: 'rgba(10, 10, 15, 0.5)' }}
+      style={{ backgroundColor: `${footerBgColor}80` }} // 50% opacity
     >
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Logo avec animation si URL définie, sinon initiales */}

@@ -26,11 +26,9 @@ export { CustomForm } from './CustomForm';
 // Global Config Panel Forms (P1/P2)
 export { IntegrationsForm } from './IntegrationsForm';
 export { AIConfigForm } from './AIConfigForm';
-export { AnimationsForm } from './AnimationsForm';
 export { PremiumForm } from './PremiumForm';
 
-// NEW: Advanced Effects & Text Style Forms
-export { EffectsForm } from './EffectsForm';
+// Text Style Form
 export { TextStyleForm } from './TextStyleForm';
 
 // Utility Form (JSON fallback)

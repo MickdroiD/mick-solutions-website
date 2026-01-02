@@ -6,13 +6,10 @@ import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import type { NavbarModuleProps, NavItem } from '../types';
 
-const defaultNavItems: NavItem[] = [
-  { name: 'Avantages', href: '#avantages', id: 'avantages' },
-  { name: 'Services', href: '#services', id: 'services' },
-  { name: 'Portfolio', href: '#portfolio', id: 'portfolio' },
-  { name: 'Confiance', href: '#confiance', id: 'confiance' },
-  { name: 'Contact', href: '#contact', id: 'contact' },
-];
+import React from 'react';
+
+// Navigation items provenant de la configuration admin (headerMenuLinks)
+// Si aucun lien configuré, tableau vide par défaut
 
 /**
  * NavbarCentered - Variante élégante avec logo centré.
@@ -21,7 +18,33 @@ const defaultNavItems: NavItem[] = [
  * effet de soulignement élégant. Idéal pour luxe, mode, restaurants,
  * bijouterie, hotels.
  */
-export function NavbarCentered({ config, navItems = defaultNavItems }: NavbarModuleProps) {
+export function NavbarCentered({ config, navItems: propNavItems }: NavbarModuleProps) {
+  // Cast config to any to safely access potentially missing properties
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const safeConfig = config as any;
+
+  // Résoudre les liens du menu (priorité: config > props)
+  const navItems = React.useMemo(() => {
+    if (safeConfig.headerMenuLinks) {
+      try {
+        const parsed = typeof safeConfig.headerMenuLinks === 'string' 
+          ? JSON.parse(safeConfig.headerMenuLinks) 
+          : safeConfig.headerMenuLinks;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return parsed.map((link: any) => ({
+            name: link.label,
+            href: link.url,
+            id: link.id || link.label.toLowerCase().replace(/\s+/g, '-'),
+            isExternal: link.isExternal
+          }));
+        }
+      } catch (e) {
+        console.warn('[NavbarCentered] Failed to parse headerMenuLinks', e);
+      }
+    }
+    return propNavItems || [];
+  }, [safeConfig.headerMenuLinks, propNavItems]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

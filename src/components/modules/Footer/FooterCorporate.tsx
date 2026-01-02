@@ -96,34 +96,45 @@ function FooterLogoWithAnimation({
 export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
   const currentYear = new Date().getFullYear();
 
-  // Helper to access footer config safely (handling flat vs nested structure)
+  // Helper to access footer config safely
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conf = config as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const footerConf = (conf.footer || conf) as any; // Fallback to root if footer is merged
 
-  // 🆕 Custom Colors & Styles
-  const bgColor = footerConf.footerBgColor || conf.footerBgColor || '#0a0a0f';
-  const textColor = footerConf.footerTextColor || conf.footerTextColor || '#ffffff';
-  const borderColor = footerConf.footerBorderColor || conf.footerBorderColor || 'rgba(255,255,255,0.1)';
+  // 🆕 Custom Colors & Styles - Utilise les couleurs globales du site comme fallback
+  const siteBgColor = conf.couleurBackground || '#0a0a0f';
+  const siteTextColor = conf.couleurText || '#ffffff';
+  const bgColor = conf.footerBgColor || siteBgColor;
+  const textColor = conf.footerTextColor || siteTextColor;
+  const borderColor = conf.footerBorderColor || 'rgba(255,255,255,0.1)';
 
   // 🆕 Logo Configuration
-  const logoUrl = footerConf.footerLogoUrl || conf.footerLogoUrl || conf.logoDarkUrl || conf.logoUrl;
-  const logoSize = footerConf.footerLogoSize || conf.footerLogoSize || 40;
-  const logoAnim = footerConf.footerLogoAnimation || conf.footerLogoAnimation || 'none';
+  const logoUrl = conf.footerLogoUrl || conf.logoDarkUrl || conf.logoUrl;
+  const logoSize = conf.footerLogoSize || 40;
+  const logoAnim = conf.footerLogoAnimation || 'none';
   const initiales = conf.initialesLogo || (conf.nomSite ? conf.nomSite.split(' ').map((w: string) => w[0]).join('') : 'MS');
 
   // 🆕 Effects & Text Settings
-  const footerEffects = footerConf.footerEffects || conf.branding?.footerEffects || {};
-  const footerTextSettings = footerConf.footerTextSettings || conf.branding?.footerTextSettings || {};
+  const footerEffects = conf.footerEffects || {};
+  const footerTextSettings = conf.footerTextSettings || {};
 
-  // 🆕 Navigation
-  const navLinks = [
-    conf.showAdvantages && { name: 'Avantages', href: '#avantages' },
-    conf.showServices && { name: 'Services', href: '#services' },
-    conf.showPortfolio && { name: 'Portfolio', href: '#portfolio' },
-    conf.showContact && { name: 'Contact', href: '#contact' },
-  ].filter((link): link is { name: string; href: string } => Boolean(link));
+  // 🆕 Navigation - Liens configurables depuis les headerMenuLinks ou nul
+  // On parse les liens du menu header si disponibles
+  let navLinks: { name: string; href: string }[] = [];
+  if (conf.headerMenuLinks) {
+    try {
+      const parsed = typeof conf.headerMenuLinks === 'string' 
+        ? JSON.parse(conf.headerMenuLinks) 
+        : conf.headerMenuLinks;
+      if (Array.isArray(parsed)) {
+        navLinks = parsed.map((link: { label?: string; url?: string }) => ({
+          name: link.label || '',
+          href: link.url || '#',
+        })).filter((link: { name: string }) => link.name);
+      }
+    } catch {
+      navLinks = [];
+    }
+  }
 
   // 🆕 Social Links
   const socialLinks = [
@@ -193,7 +204,7 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
               </span>
             </div>
             <p className="text-sm opacity-70 mb-6 font-medium">
-              {footerConf.customFooterText || conf.customFooterText || conf.slogan}
+              {conf.customFooterText || conf.slogan}
             </p>
             {socialLinks.length > 0 && (
               <div className="flex gap-3">
@@ -215,73 +226,81 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             )}
           </motion.div>
 
-          {/* Colonne 2 : Navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            <h4 className="font-semibold mb-4" style={titleFont}>
-              Navigation
-            </h4>
-            <ul className="space-y-3">
-              {navLinks.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
+          {/* Colonne 2 : Navigation - Afficher seulement si titre et liens configurés */}
+          {conf.footerNavigationTitle && navLinks.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <h4 className="font-semibold mb-4" style={titleFont}>
+                {conf.footerNavigationTitle}
+              </h4>
+              <ul className="space-y-3">
+                {navLinks.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="text-sm opacity-70 hover:opacity-100 hover:text-primary-400 transition-colors"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
 
-          {/* Colonne 3 : Contact */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <h4 className="font-semibold mb-4" style={titleFont}>
-              Contact
-            </h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
-                <Mail className="w-4 h-4 text-primary-500" />
-                <a href={`mailto:${conf.email}`}>
-                  {conf.email}
-                </a>
-              </li>
-              {conf.telephone && (
-                <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
-                  <Phone className="w-4 h-4 text-primary-500" />
-                  <a href={`tel:${conf.telephone}`}>
-                    {conf.telephone}
-                  </a>
-                </li>
-              )}
-              <li className="flex items-start gap-3 text-sm opacity-70">
-                <MapPin className="w-4 h-4 text-primary-500 mt-0.5" />
-                <span>{conf.adresse}</span>
-              </li>
-            </ul>
-          </motion.div>
+          {/* Colonne 3 : Contact - Afficher seulement si titre et infos configurés */}
+          {conf.footerContactTitle && (conf.email || conf.telephone || conf.adresse) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <h4 className="font-semibold mb-4" style={titleFont}>
+                {conf.footerContactTitle}
+              </h4>
+              <ul className="space-y-3">
+                {conf.email && (
+                  <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
+                    <Mail className="w-4 h-4 text-primary-500" />
+                    <a href={`mailto:${conf.email}`}>
+                      {conf.email}
+                    </a>
+                  </li>
+                )}
+                {conf.telephone && (
+                  <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
+                    <Phone className="w-4 h-4 text-primary-500" />
+                    <a href={`tel:${conf.telephone}`}>
+                      {conf.telephone}
+                    </a>
+                  </li>
+                )}
+                {conf.adresse && (
+                  <li className="flex items-start gap-3 text-sm opacity-70">
+                    <MapPin className="w-4 h-4 text-primary-500 mt-0.5" />
+                    <span>{conf.adresse}</span>
+                  </li>
+                )}
+              </ul>
+            </motion.div>
+          )}
 
-          {/* Colonne 4 : Légal */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-          >
-            <h4 className="font-semibold mb-4" style={titleFont}>
-              Légal
-            </h4>
-            {footerConf.showLegalLinks !== false && conf.showLegalLinks !== false && (
+          {/* Colonne 4 : Légal - Afficher seulement si titre configuré et liens actifs */}
+          {conf.footerLegalTitle && conf.showLegalLinks !== false && legalDocs.filter(d => d.isActive).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <h4 className="font-semibold mb-4" style={titleFont}>
+                {conf.footerLegalTitle}
+              </h4>
               <ul className="space-y-3">
                 {legalDocs.filter(d => d.isActive).map((doc) => (
                   <li key={doc.id}>
@@ -294,21 +313,25 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
                   </li>
                 ))}
               </ul>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
         </div>
 
-        {/* Barre du bas */}
+        {/* Barre du bas - Copyright configurable */}
         <div
           className="mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4"
           style={{ borderColor: borderColor, borderTopWidth: '1px' }}
         >
-          <p className="text-xs opacity-60">
-            {footerConf.copyrightTexte || conf.copyrightTexte || `© ${currentYear} ${conf.nomSite}. Tous droits réservés.`}
-          </p>
-          <p className="text-xs opacity-60">
-            {footerConf.paysHebergement || conf.paysHebergement}
-          </p>
+          {conf.copyrightTexte && (
+            <p className="text-xs opacity-60">
+              {conf.copyrightTexte.replace('{YEAR}', String(currentYear)).replace('{SITE}', conf.nomSite)}
+            </p>
+          )}
+          {conf.paysHebergement && (
+            <p className="text-xs opacity-60">
+              {conf.paysHebergement}
+            </p>
+          )}
         </div>
       </div>
     </footer>

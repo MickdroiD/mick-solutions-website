@@ -516,7 +516,7 @@ export async function updateGlobalConfig(
     return { success: false, error: 'Configuration manquante' };
   }
 
-  // First, get the current config to find the row ID
+  // First, get the current config to find the row ID AND existing data for merge
   const { data: rows } = await fetchBaserowTable<BaserowConfigRow>(
     CONFIG_GLOBAL_TABLE_ID,
     { size: 1 }
@@ -527,55 +527,74 @@ export async function updateGlobalConfig(
   }
 
   const rowId = rows[0].id;
+  const existingRow = rows[0];
 
-  // Build update payload
+  // 🔧 Helper to safely parse existing JSON and merge with new data
+  const mergeWithExisting = (fieldName: string, newData: Record<string, unknown>): string => {
+    try {
+      const existing = existingRow[fieldName as keyof BaserowConfigRow];
+      if (typeof existing === 'string' && existing.trim()) {
+        const parsed = JSON.parse(existing);
+        if (typeof parsed === 'object' && parsed !== null) {
+          // Deep merge: existing + newData
+          return JSON.stringify({ ...parsed, ...newData });
+        }
+      }
+    } catch (e) {
+      logWarn(`Failed to parse existing ${fieldName} for merge, using new data only`);
+    }
+    return JSON.stringify(newData);
+  };
+
+  // Build update payload with MERGE
   const updateData: Record<string, unknown> = {};
 
   if (partialConfig.identity) {
-    // 🔧 FIX: Sauvegarder identity complet en JSON + Nom pour compatibilité
-    updateData['Identity'] = JSON.stringify(partialConfig.identity);
+    // 🔧 FIX: MERGE with existing Identity
+    updateData['Identity'] = mergeWithExisting('Identity', partialConfig.identity as Record<string, unknown>);
     if (partialConfig.identity.nomSite) {
       updateData['Nom'] = partialConfig.identity.nomSite;
     }
   }
 
   if (partialConfig.seo) {
-    updateData['SEO_Metadata'] = JSON.stringify(partialConfig.seo);
+    updateData['SEO_Metadata'] = mergeWithExisting('SEO_Metadata', partialConfig.seo as Record<string, unknown>);
   }
 
   if (partialConfig.branding) {
-    updateData['Branding'] = JSON.stringify(partialConfig.branding);
+    // 🔧 FIX: MERGE with existing Branding - critical for headerMenuLinks etc.
+    updateData['Branding'] = mergeWithExisting('Branding', partialConfig.branding as Record<string, unknown>);
   }
 
   if (partialConfig.contact) {
-    updateData['Contact'] = JSON.stringify(partialConfig.contact);
+    updateData['Contact'] = mergeWithExisting('Contact', partialConfig.contact as Record<string, unknown>);
   }
 
   if (partialConfig.integrations) {
-    updateData['Integrations'] = JSON.stringify(partialConfig.integrations);
+    updateData['Integrations'] = mergeWithExisting('Integrations', partialConfig.integrations as Record<string, unknown>);
   }
 
   if (partialConfig.assets) {
-    updateData['Assets'] = JSON.stringify(partialConfig.assets);
+    updateData['Assets'] = mergeWithExisting('Assets', partialConfig.assets as Record<string, unknown>);
   }
 
   if (partialConfig.ai) {
-    updateData['AI_Config'] = JSON.stringify(partialConfig.ai);
+    updateData['AI_Config'] = mergeWithExisting('AI_Config', partialConfig.ai as Record<string, unknown>);
   }
 
   if (partialConfig.animations) {
-    updateData['Animations'] = JSON.stringify(partialConfig.animations);
+    updateData['Animations'] = mergeWithExisting('Animations', partialConfig.animations as Record<string, unknown>);
   }
 
   if (partialConfig.premium) {
-    updateData['Premium'] = JSON.stringify(partialConfig.premium);
+    updateData['Premium'] = mergeWithExisting('Premium', partialConfig.premium as Record<string, unknown>);
   }
 
   if (partialConfig.footer) {
-    updateData['Footer'] = JSON.stringify(partialConfig.footer);
+    updateData['Footer'] = mergeWithExisting('Footer', partialConfig.footer as Record<string, unknown>);
   }
 
-  logInfo(`Updating config row ${rowId} with ${Object.keys(updateData).length} fields`);
+  logInfo(`Updating config row ${rowId} with ${Object.keys(updateData).length} fields (merged)`);
 
   const { error } = await updateBaserowRow(CONFIG_GLOBAL_TABLE_ID, rowId, updateData);
 

@@ -37,9 +37,12 @@ export function adaptGlobalConfigToLegacy(
     id: config.id || 0,
 
     // ========== A. IDENTITÉ DU SITE ==========
-    nomSite: config.identity.nomSite,
+    // 🔧 FIX: Allow override via headerEffects (Identity control via Effects module)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    nomSite: (config.branding.headerEffects as any)?.nomSite || config.identity.nomSite,
     slogan: config.identity.slogan || '',
-    initialesLogo: config.identity.initialesLogo || 'MS',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialesLogo: (config.branding.headerEffects as any)?.initialesLogo || config.identity.initialesLogo || 'MS',
 
     // ========== B. ASSETS VISUELS ==========
     logoUrl: config.assets.logoUrl,
@@ -110,11 +113,20 @@ export function adaptGlobalConfigToLegacy(
     paysHebergement: config.footer.paysHebergement,
     showLegalLinks: config.footer.showLegalLinks,
     customFooterText: config.footer.customFooterText,
+    // 🆕 Titres des sections (configurables)
+    footerContactTitle: config.footer.footerContactTitle,
+    footerLegalTitle: config.footer.footerLegalTitle,
+    footerNavigationTitle: config.footer.footerNavigationTitle,
+    // 🆕 CTA Footer
     footerCtaText: config.footer.footerCtaText,
     footerCtaUrl: config.footer.footerCtaUrl,
+    footerCtaHeading: config.footer.footerCtaHeading,
+    // 🆕 Powered By (White Label)
+    footerPoweredByText: config.footer.footerPoweredByText,
+    showFooterPoweredBy: config.footer.showFooterPoweredBy,
+    // Logo
     footerLogoSize: config.footer.footerEffects?.logoSize ?? config.footer.footerLogoSize ?? 40,
     footerLogoAnimation: (config.footer.footerEffects?.logoAnimation || config.footer.footerLogoAnimation || 'none') as GlobalSettingsComplete['footerLogoAnimation'],
-    // 🆕 Logo dédié footer (peut être différent du logo principal) si non défini)
     footerLogoUrl: config.footer.footerLogoUrl || config.assets.logoDarkUrl || config.assets.logoUrl,
     footerLogoSvgCode: config.footer.footerLogoSvgCode || config.assets.logoSvgCode,
     // 🆕 Style footer personnalisé
@@ -181,12 +193,13 @@ export function adaptGlobalConfigToLegacy(
     logoFrameStyle: heroDesign?.logoFrameStyle as GlobalSettingsComplete['logoFrameStyle'],
     textAnimation: (heroDesign?.textAnimation || config.animations.textAnimation) as GlobalSettingsComplete['textAnimation'],
     galleryAnimation: 'Fade',
-    // 🔧 FIX: Mapper headerLogoSize et headerLogoAnimation depuis Branding ou Effects au lieu de hardcoder
-    headerLogoSize: config.branding.headerEffects?.logoSize ?? config.branding.headerLogoSize ?? 40,
-    headerLogoAnimation: (config.branding.headerEffects?.logoAnimation || config.branding.headerLogoAnimation || 'spin') as GlobalSettingsComplete['headerLogoAnimation'],
+    // 🔧 FIX: Mapper headerLogoSize et headerLogoAnimation depuis Branding directement
+    headerLogoSize: config.branding.headerLogoSize ?? 40,
+    headerLogoAnimation: (config.branding.headerLogoAnimation || 'spin') as GlobalSettingsComplete['headerLogoAnimation'],
     heroLogoAnimation: (heroDesign?.logoAnimation || 'electric') as GlobalSettingsComplete['heroLogoAnimation'],
     heroLogoSize: heroDesign?.logoSize || 280,
     // 🆕 Logo dédié header (utilise le logo principal si non défini)
+    // Priorité: branding.headerLogoUrl > assets.logoUrl
     headerLogoUrl: config.branding.headerLogoUrl || config.assets.logoUrl,
     headerLogoSvgCode: config.branding.headerLogoSvgCode || config.assets.logoSvgCode,
     // 🆕 Style header personnalisé
@@ -196,6 +209,13 @@ export function adaptGlobalConfigToLegacy(
     // 🆕 Effects & Text settings pour le header
     headerEffects: config.branding.headerEffects || undefined,
     headerTextSettings: config.branding.headerTextSettings || undefined,
+    showTopBar: config.branding.showTopBar,
+    // Fix: Map header menu and CTA
+    headerSiteTitle: config.branding.headerSiteTitle,
+    headerMenuLinks: config.branding.headerMenuLinks,
+    headerCtaText: config.branding.headerCtaText,
+    headerCtaUrl: config.branding.headerCtaUrl,
+    showHeaderCta: config.branding.showHeaderCta,
 
     // ========== M.1. HERO EFFECTS & TEXT SETTINGS ==========
     // ⭐ NOUVEAU: Mapping des effects et textSettings du Hero
