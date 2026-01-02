@@ -78,18 +78,22 @@ export default function ContactForm({
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 
-            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
-            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
-          >
-            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
-          </h2>
-          <p 
-            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-xl mx-auto`}
-            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
-          >
-            {subtitle}
-          </p>
+          {title && (
+            <h2 
+              className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+              style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+            >
+              {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
+            </h2>
+          )}
+          {subtitle && (
+            <p 
+              className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-xl mx-auto`}
+              style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+            >
+              {subtitle}
+            </p>
+          )}
         </motion.div>
 
         {/* Form card */}
@@ -237,7 +241,7 @@ export default function ContactForm({
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    {submitText}
+                    {submitText || 'Envoyer'}
                   </>
                 )}
               </motion.button>

@@ -150,18 +150,22 @@ export default function TrustSection({
             </div>
           </div>
 
-          <h2 
-            className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
-            style={getFontFamilyStyle(textSettings?.titleFontFamily)}
-          >
-            {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
-          </h2>
-          <p 
-            className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
-            style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
-          >
-            {subtitle}
-          </p>
+          {title && (
+            <h2 
+              className={`${textSettings?.titleFontSize || 'text-3xl sm:text-4xl lg:text-5xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-white'} mb-4`}
+              style={getFontFamilyStyle(textSettings?.titleFontFamily)}
+            >
+              {title.split(' ').slice(0, -1).join(' ')} <span className="text-gradient">{title.split(' ').slice(-1)}</span>
+            </h2>
+          )}
+          {subtitle && (
+            <p 
+              className={`${textSettings?.subtitleFontSize || 'text-lg'} ${textSettings?.subtitleColor || 'text-slate-400'} max-w-2xl mx-auto`}
+              style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
+            >
+              {subtitle}
+            </p>
+          )}
         </motion.div>
 
         {/* Trust points */}
