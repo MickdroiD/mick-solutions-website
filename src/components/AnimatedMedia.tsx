@@ -375,22 +375,23 @@ interface V2FrameProps {
 }
 
 function V2Frame({ children, config, size }: V2FrameProps) {
-  const shape = config.logoFrameShape || V2_DEFAULTS.logoFrameShape;
-  const animation = config.logoFrameAnimation || V2_DEFAULTS.logoFrameAnimation;
-  const color = config.logoFrameColor || config.effectPrimaryColor || V2_DEFAULTS.logoFrameColor;
-  const secondaryColor = config.effectSecondaryColor || V2_DEFAULTS.effectSecondaryColor;
-  const thickness = config.logoFrameThickness || V2_DEFAULTS.logoFrameThickness;
-  const speed = (config.animationSpeed as string) || V2_DEFAULTS.animationSpeed;
-  const intensity = (config.animationIntensity as string) || V2_DEFAULTS.animationIntensity;
+  // Use nullish coalescing to ensure null becomes a valid default (not passed to helpers)
+  const shape = config.logoFrameShape ?? V2_DEFAULTS.logoFrameShape;
+  const animation = config.logoFrameAnimation ?? V2_DEFAULTS.logoFrameAnimation;
+  const color = config.logoFrameColor ?? config.effectPrimaryColor ?? V2_DEFAULTS.logoFrameColor;
+  const secondaryColor = config.effectSecondaryColor ?? V2_DEFAULTS.effectSecondaryColor;
+  const thickness = config.logoFrameThickness ?? V2_DEFAULTS.logoFrameThickness;
+  const speed = (config.animationSpeed as string) ?? V2_DEFAULTS.animationSpeed;
+  const intensity = (config.animationIntensity as string) ?? V2_DEFAULTS.animationIntensity;
 
-  // Get frame styles from helper
-  const frameStyles = getFrameStyles(shape, color, thickness);
-  const frameAnimClass = getFrameAnimationClass(animation);
+  // Get frame styles from helper (pass undefined instead of null for type safety)
+  const frameStyles = getFrameStyles(shape ?? undefined, color ?? undefined, thickness ?? undefined);
+  const frameAnimClass = getFrameAnimationClass(animation ?? undefined);
 
   // CSS variables for animation colors
   const cssVars = {
-    '--frame-color-1': resolveColor(color, '#22d3ee'),
-    '--frame-color-2': resolveColor(secondaryColor, '#a78bfa'),
+    '--frame-color-1': resolveColor(color ?? undefined, '#22d3ee'),
+    '--frame-color-2': resolveColor(secondaryColor ?? undefined, '#a78bfa'),
   } as React.CSSProperties;
 
   // Speed and intensity classes
@@ -436,15 +437,15 @@ interface V2ElectricEffectProps {
 
 function V2ElectricEffect({ config }: V2ElectricEffectProps) {
   const primaryColor = resolveColor(
-    config.effectPrimaryColor || V2_DEFAULTS.effectPrimaryColor,
+    config.effectPrimaryColor ?? V2_DEFAULTS.effectPrimaryColor ?? undefined,
     'rgba(34, 211, 238, 0.5)'
   );
   const accentColor = resolveColor(
-    config.effectSecondaryColor || V2_DEFAULTS.effectSecondaryColor,
+    config.effectSecondaryColor ?? V2_DEFAULTS.effectSecondaryColor ?? undefined,
     'rgba(168, 139, 250, 0.5)'
   );
-  const intensity = (config.animationIntensity as string) || V2_DEFAULTS.animationIntensity;
-  const speed = (config.animationSpeed as string) || V2_DEFAULTS.animationSpeed;
+  const intensity = (config.animationIntensity as string) ?? V2_DEFAULTS.animationIntensity;
+  const speed = (config.animationSpeed as string) ?? V2_DEFAULTS.animationSpeed;
   
   const speedMult = SPEED_MULTIPLIERS[speed] || 1;
   const intensityMult = INTENSITY_MULTIPLIERS[intensity] || 1;
@@ -587,9 +588,9 @@ export default function AnimatedMedia({
   // Use direct effect if set, otherwise fall back to legacy animation
   const effectiveAnimation = directEffect !== 'none' ? directEffect : normalizedLegacy;
   
-  // Get physics
-  const speed = (config.animationSpeed as string) || V2_DEFAULTS.animationSpeed;
-  const intensity = (config.animationIntensity as string) || V2_DEFAULTS.animationIntensity;
+  // Get physics (ensure non-null for type safety)
+  const speed = (config.animationSpeed as string) ?? V2_DEFAULTS.animationSpeed ?? 'normal';
+  const intensity = (config.animationIntensity as string) ?? V2_DEFAULTS.animationIntensity ?? 'normal';
   
   // Determine if electric effect should show
   const isElectric = effectiveAnimation === 'electric' || 
@@ -619,7 +620,7 @@ export default function AnimatedMedia({
   
   // Resolve colors for effects
   const primaryColorResolved = resolveColor(
-    config.effectPrimaryColor || V2_DEFAULTS.effectPrimaryColor,
+    config.effectPrimaryColor ?? V2_DEFAULTS.effectPrimaryColor ?? undefined,
     '#22d3ee'
   );
 
