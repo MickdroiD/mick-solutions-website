@@ -15,7 +15,7 @@
 # Secrets requis dans GitHub:
 #   - VPS_HOST: IP du serveur (83.228.218.6)
 #   - VPS_USER: Utilisateur SSH (mickadmin)
-#   - VPS_SSH_KEY: Clé privée SSH (ed25519 ou rsa)
+#   - SSH_PRIVATE_KEY: Clé privée SSH (ed25519 ou rsa)
 
 name: 🚀 Deploy to Production
 
@@ -81,7 +81,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           # Timeout de connexion SSH (secondes)
           timeout: 60s
