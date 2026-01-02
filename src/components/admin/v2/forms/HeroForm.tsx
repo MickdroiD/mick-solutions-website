@@ -314,7 +314,8 @@ function HeroFormComponent({ section, onUpdate }: HeroFormProps) {
           onUpdate({
             ...(Object.keys(designUpdates).length > 0 ? { design: { ...section.design, ...designUpdates } } : {}),
             ...(Object.keys(contentUpdates).length > 0 ? { content: { ...section.content, ...contentUpdates } } : {}),
-            ...(Object.keys(effectsOnly).length > 0 ? { effects: { ...(section.effects || {}), ...effectsOnly } } : {}),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ...(Object.keys(effectsOnly).length > 0 ? { effects: { ...(section.effects || {}), ...effectsOnly } as any } : {}),
           });
         }}
         showLogoOptions={true}

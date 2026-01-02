@@ -118,27 +118,20 @@ export interface GalleryItem {
 }
 
 // ============================================
-// BASEROW CONFIG
+// BASEROW CONFIG (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from './config';
+
+// URL pour les requêtes table rows
+const BASEROW_BASE_URL = `${BASEROW_API_URL}/database/rows/table`;
 
 // ============================================
 // ANCIEN SYSTÈME DÉSACTIVÉ - Factory V2 uniquement
 // ============================================
 // Les anciennes tables sont désactivées pour éviter les interférences.
 // Toutes les données viennent maintenant de Factory V2 ou des valeurs par défaut.
-const TABLE_IDS = {
-  // SERVICES: 748,    // DÉSACTIVÉ - utilise defaultServices
-  // PORTFOLIO: 749,   // DÉSACTIVÉ
-  // REVIEWS: 750,     // DÉSACTIVÉ
-  // FAQ: 752,         // DÉSACTIVÉ
-  LEGAL_DOCS: 753,     // Gardé pour les pages légales
-  // ADVANTAGES: 757,  // DÉSACTIVÉ - utilise DEFAULT_ADVANTAGES
-  // TRUST_POINTS: 758,// DÉSACTIVÉ - utilise DEFAULT_TRUST_POINTS
-  // GALLERY: 781,     // DÉSACTIVÉ
-} as const;
+// TABLE_IDS est maintenant importé depuis ./config
 
 // ============================================
 // GENERIC FETCH

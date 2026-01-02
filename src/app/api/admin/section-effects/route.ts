@@ -33,17 +33,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing sectionId' }, { status: 400 });
     }
 
-    // 3. Récupérer la section depuis Baserow
-    const BASEROW_TOKEN = process.env.BASEROW_TOKEN!;
-    const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID!;
-    const BASEROW_URL = process.env.BASEROW_URL || 'https://baserow.mick-solutions.ch';
+    // 3. Récupérer la section depuis Baserow (via config centralisée)
+    const { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } = await import('@/lib/config');
+    const SECTIONS_TABLE_ID = TABLE_IDS.SECTIONS;
 
     // Debug: vérifier les variables
-    console.log('[Section Effects] BASEROW_URL:', BASEROW_URL);
+    console.log('[Section Effects] BASEROW_API_URL:', BASEROW_API_URL);
     console.log('[Section Effects] SECTIONS_TABLE_ID:', SECTIONS_TABLE_ID);
     console.log('[Section Effects] BASEROW_TOKEN présent:', !!BASEROW_TOKEN, 'longueur:', BASEROW_TOKEN?.length);
 
-    const getUrl = `${BASEROW_URL}/api/database/rows/table/${SECTIONS_TABLE_ID}/${sectionId}/?user_field_names=true`;
+    const getUrl = `${BASEROW_API_URL}/database/rows/table/${SECTIONS_TABLE_ID}/${sectionId}/?user_field_names=true`;
     const getResponse = await fetch(getUrl, {
       headers: {
         Authorization: `Token ${BASEROW_TOKEN}`,
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
     const newContent = JSON.stringify(contentObj);
 
     // 7. Mettre à jour la section dans Baserow
-    const updateUrl = `${BASEROW_URL}/api/database/rows/table/${SECTIONS_TABLE_ID}/${sectionId}/?user_field_names=true`;
+    const updateUrl = `${BASEROW_API_URL}/database/rows/table/${SECTIONS_TABLE_ID}/${sectionId}/?user_field_names=true`;
     const updateResponse = await fetch(updateUrl, {
       method: 'PATCH',
       headers: {

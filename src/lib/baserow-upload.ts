@@ -4,8 +4,7 @@
 // Upload de fichiers vers l'API Baserow (User Files)
 // Documentation: https://baserow.io/api-docs
 
-const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+import { BASEROW_API_URL, BASEROW_TOKEN } from './config';
 
 export interface BaserowUploadResult {
   url: string;
@@ -50,7 +49,7 @@ export async function uploadFileToBaserow(
   const blob = new Blob([uint8Array], { type: getMimeType(filename) });
   formData.append('file', blob, filename);
 
-  const response = await fetch(`${BASEROW_BASE_URL}/api/user-files/upload-file/`, {
+  const response = await fetch(`${BASEROW_API_URL}/user-files/upload-file/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${BASEROW_TOKEN}`,
@@ -87,7 +86,7 @@ export async function uploadFileToBaserowFull(
   const blob = new Blob([uint8Array], { type: getMimeType(filename) });
   formData.append('file', blob, filename);
 
-  const response = await fetch(`${BASEROW_BASE_URL}/api/user-files/upload-file/`, {
+  const response = await fetch(`${BASEROW_API_URL}/user-files/upload-file/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${BASEROW_TOKEN}`,
@@ -114,7 +113,7 @@ export async function uploadFileFromUrl(
     throw new Error('BASEROW_API_TOKEN non configuré');
   }
 
-  const response = await fetch(`${BASEROW_BASE_URL}/api/user-files/upload-via-url/`, {
+  const response = await fetch(`${BASEROW_API_URL}/user-files/upload-via-url/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${BASEROW_TOKEN}`,
@@ -144,7 +143,7 @@ export async function uploadFileFromUrlFull(
     throw new Error('BASEROW_API_TOKEN non configuré');
   }
 
-  const response = await fetch(`${BASEROW_BASE_URL}/api/user-files/upload-via-url/`, {
+  const response = await fetch(`${BASEROW_API_URL}/user-files/upload-via-url/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${BASEROW_TOKEN}`,

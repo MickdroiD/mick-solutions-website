@@ -139,8 +139,8 @@ export const GlobalSettingsSchema = z.object({
   trustStat3Label: z.string().default(DEFAULT_SETTINGS.trustStat3Label),
 
   // H. FOOTER
-  copyrightTexte: z.string().default(DEFAULT_SETTINGS.copyrightTexte),
-  paysHebergement: z.string().default(DEFAULT_SETTINGS.paysHebergement),
+  copyrightTexte: z.string().nullable().default(DEFAULT_SETTINGS.copyrightTexte),
+  paysHebergement: z.string().nullable().default(DEFAULT_SETTINGS.paysHebergement),
   showLegalLinks: z.boolean().default(DEFAULT_SETTINGS.showLegalLinks),
   customFooterText: z.string().nullable().default(null),
   footerCtaText: z.string().nullable().default(null),

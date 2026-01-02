@@ -60,7 +60,8 @@ export function NavbarElectric({ config, navItems: propNavItems }: NavbarModuleP
   const siteTitle = config.headerSiteTitle || config.nomSite;
   
   // 🆕 Typography settings from admin
-  const textSettings = config.headerTextSettings || {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const textSettings = (config.headerTextSettings || {}) as Record<string, any>;
   const titleStyle: React.CSSProperties = {
     fontFamily: textSettings.titleFontFamily || undefined,
     fontSize: textSettings.titleFontSize || undefined,

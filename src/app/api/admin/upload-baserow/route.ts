@@ -6,9 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-session';
-
-const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN || '';
+import { BASEROW_API_URL, BASEROW_TOKEN } from '@/lib/config';
 
 const ALLOWED_TYPES = [
   'image/jpeg',

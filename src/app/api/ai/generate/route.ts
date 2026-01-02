@@ -3,17 +3,17 @@
 // ============================================
 // Génération de contenu via IA multi-provider
 // Supporte: OpenAI, Anthropic, Replicate, Custom Webhook
-// + Système de crédits via Baserow (Table 756)
+// + Système de crédits via Baserow (Table USERS)
 
 import { NextRequest, NextResponse } from 'next/server';
 
 // ============================================
-// CONFIGURATION BASEROW
+// CONFIGURATION BASEROW (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
-const USERS_TABLE_ID = 756;
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
+const BASEROW_BASE_URL = `${BASEROW_API_URL}/database/rows/table`;
+const USERS_TABLE_ID = TABLE_IDS.USERS;
 
 // ============================================
 // TYPES

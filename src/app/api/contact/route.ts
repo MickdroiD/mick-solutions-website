@@ -12,12 +12,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalConfig } from '@/lib/factory-client';
 
 // ============================================
-// CONFIGURATION
+// CONFIGURATION (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
-const LEADS_TABLE_ID = process.env.BASEROW_FACTORY_LEADS_ID;
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
+const LEADS_TABLE_ID = TABLE_IDS.LEADS;
 
 // ============================================
 // TYPES

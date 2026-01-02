@@ -381,7 +381,10 @@ function TestimonialsFormComponent({ section, onUpdate }: TestimonialsFormProps)
       {/* Effects & Animations */}
       <SectionEffects
         effects={(section.effects || {}) as EffectSettings}
-        onChange={(updates) => onUpdate({ effects: { ...(section.effects || {}), ...updates } })}
+        onChange={(updates) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onUpdate({ effects: { ...(section.effects || {}), ...updates } as any });
+        }}
         showLogoOptions={false}
         showBackgroundOptions={true}
       />

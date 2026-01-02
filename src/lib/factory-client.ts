@@ -41,16 +41,19 @@ import {
 } from './schemas/factory';
 
 // ============================================
-// CONFIGURATION
+// CONFIGURATION (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_API_URL =
-  process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+import {
+  BASEROW_API_URL,
+  BASEROW_TOKEN,
+  TABLE_IDS,
+  isFactoryV2Configured as checkFactoryV2Config,
+} from './config';
 
-// Table IDs from env (set by setup script)
-const CONFIG_GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID || '';
-const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID || '';
+// Aliases pour compatibilité interne
+const CONFIG_GLOBAL_TABLE_ID = TABLE_IDS.CONFIG_GLOBAL;
+const SECTIONS_TABLE_ID = TABLE_IDS.SECTIONS;
 
 // ============================================
 // TYPES
@@ -890,13 +893,6 @@ export async function getFactoryDataForAdmin(): Promise<FactoryData & { allSecti
 // CHECK IF FACTORY V2 IS CONFIGURED
 // ============================================
 
-export function isFactoryV2Configured(): boolean {
-  return !!(
-    BASEROW_TOKEN &&
-    CONFIG_GLOBAL_TABLE_ID &&
-    SECTIONS_TABLE_ID &&
-    CONFIG_GLOBAL_TABLE_ID !== '' &&
-    SECTIONS_TABLE_ID !== ''
-  );
-}
+// Re-export depuis config.ts pour compatibilité
+export { checkFactoryV2Config as isFactoryV2Configured };
 

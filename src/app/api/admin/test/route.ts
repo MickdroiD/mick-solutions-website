@@ -4,11 +4,10 @@
 // Test de connectivité et diagnostic (Factory V2)
 
 import { NextResponse } from 'next/server';
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
 
-const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
-const CONFIG_GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID;
-const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID;
+const CONFIG_GLOBAL_TABLE_ID = TABLE_IDS.CONFIG_GLOBAL;
+const SECTIONS_TABLE_ID = TABLE_IDS.SECTIONS;
 
 export async function GET() {
   const tests: Record<string, { status: 'ok' | 'error' | 'warning'; message: string; details?: unknown }> = {};

@@ -9,11 +9,11 @@ import { NextResponse } from 'next/server';
 import { readdir, stat } from 'fs/promises';
 import path from 'path';
 import { getAdminSession } from '@/lib/admin-session';
+import { BASEROW_API_URL, BASEROW_TOKEN } from '@/lib/config';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
-const BASEROW_BASE_URL = 'https://baserow.mick-solutions.ch/api/database/rows/table';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
+const BASEROW_BASE_URL = `${BASEROW_API_URL}/database/rows/table`;
 
 // Table ID pour la galerie (où on stocke les médias)
 const GALLERY_TABLE_ID = 781;

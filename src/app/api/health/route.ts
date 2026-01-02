@@ -6,15 +6,15 @@
 
 import { NextResponse } from 'next/server';
 import { isFactoryV2Configured } from '@/lib/factory-client';
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const startTime = Date.now();
   
-  const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
-  const GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID;
-  const SECTIONS_TABLE_ID = process.env.BASEROW_FACTORY_SECTIONS_ID;
+  const GLOBAL_TABLE_ID = TABLE_IDS.CONFIG_GLOBAL;
+  const SECTIONS_TABLE_ID = TABLE_IDS.SECTIONS;
   
   const status = {
     status: 'ok' as 'ok' | 'degraded' | 'error',
@@ -36,7 +36,7 @@ export async function GET() {
   if (BASEROW_TOKEN && GLOBAL_TABLE_ID) {
     try {
       const response = await fetch(
-        `https://baserow.mick-solutions.ch/api/database/rows/table/${GLOBAL_TABLE_ID}/?user_field_names=true&size=1`,
+        `${BASEROW_API_URL}/database/rows/table/${GLOBAL_TABLE_ID}/?user_field_names=true&size=1`,
         {
           headers: {
             'Authorization': `Token ${BASEROW_TOKEN}`,

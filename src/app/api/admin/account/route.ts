@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // ============================================
-// BASEROW CONFIG
+// BASEROW CONFIG (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_TOKEN;
-const USERS_TABLE_ID = process.env.BASEROW_USERS_TABLE_ID || '756'; // Table SITEWEB Utilisateurs
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
+const USERS_TABLE_ID = TABLE_IDS.USERS;
 
 // ============================================
 // GET - Récupérer le profil utilisateur

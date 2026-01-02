@@ -10,12 +10,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-session';
 
 // ============================================
-// CONFIGURATION
+// CONFIGURATION (via lib/config.ts centralisé)
 // ============================================
 
-const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://baserow.mick-solutions.ch/api';
-const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
-const GLOBAL_TABLE_ID = process.env.BASEROW_FACTORY_GLOBAL_ID;
+import { BASEROW_API_URL, BASEROW_TOKEN, TABLE_IDS } from '@/lib/config';
+const GLOBAL_TABLE_ID = TABLE_IDS.CONFIG_GLOBAL;
 
 // ============================================
 // GET - Récupérer les paramètres actuels
