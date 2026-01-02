@@ -51,19 +51,22 @@ export default function AIAssistant({
   welcomeMessage,
   placeholder,
   avatarUrl,
-  primaryColor,
-  accentColor,
+  primaryColor = '#06b6d4',
+  accentColor = '#a855f7',
   position = 'bottom-right',
   provider = 'openai',
   systemPrompt,
 }: AIAssistantProps) {
+  // Safe defaults for rendering
+  const safeSiteName = siteName || '';
+  const safePlaceholder = placeholder || 'Posez votre question...';
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
       role: 'assistant',
-      content: welcomeMessage,
+      content: welcomeMessage || '',
       timestamp: new Date(),
     },
   ]);
@@ -114,7 +117,7 @@ export default function AIAssistant({
           provider,
           systemPrompt,
           siteContext: {
-            siteName,
+            siteName: safeSiteName,
             industry,
             services,
           },
@@ -229,7 +232,7 @@ export default function AIAssistant({
             </div>
             <div>
               <h3 className="text-white font-semibold text-sm">
-                Assistant {siteName}
+                Assistant {safeSiteName}
               </h3>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
@@ -324,7 +327,7 @@ export default function AIAssistant({
                       sendMessage();
                     }
                   }}
-                  placeholder={placeholder}
+                  placeholder={safePlaceholder}
                   disabled={isLoading}
                   className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-all text-sm"
                 />
