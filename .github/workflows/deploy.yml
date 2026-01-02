@@ -1,124 +1,44 @@
-# ============================================
-# FACTORY V2 - Auto Deploy on Main
-# ============================================
-# Déploiement automatique vers VPS Infomaniak
-#
-# Trigger:
-#   - Push sur branche 'main' (automatique)
-#   - Manuel via workflow_dispatch
-#
-# Secrets requis dans GitHub:
-#   - VPS_HOST: IP du serveur (83.228.218.6)
-#   - VPS_USER: Utilisateur SSH (mickadmin)
-#   - SSH_PRIVATE_KEY_BASE64: Clé privée SSH encodée en base64
-
+# Deploy to VPS - Simplified
 name: 🚀 Deploy to Production
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
-    inputs:
-      skip_build:
-        description: 'Skip Docker rebuild (just restart)'
-        type: boolean
-        default: false
-
-env:
-  PROJECT_PATH: /home/mickadmin/docker/website
-  DOCKER_IMAGE: factory-v2:latest
 
 jobs:
   deploy:
-    name: 🔄 Deploy to VPS
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
 
     steps:
-      - name: 📋 Display deployment info
+      - name: 📋 Info
         run: |
-          echo "🚀 Déploiement déclenché par: ${{ github.actor }}"
-          echo "🌿 Branche: ${{ github.ref_name }}"
-          echo "📝 Commit: ${{ github.sha }}"
-          echo "📅 Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-
-      - name: 🔑 Setup SSH Key
+          echo "Commit: ${{ github.sha }}"
+          echo "Checking secrets..."
+          
+      - name: 🔑 Debug secrets
+        run: |
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then echo "❌ VPS_HOST missing"; else echo "✅ VPS_HOST OK"; fi
+          if [ -z "${{ secrets.VPS_USER }}" ]; then echo "❌ VPS_USER missing"; else echo "✅ VPS_USER OK"; fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" ]; then echo "❌ SSH_PRIVATE_KEY_BASE64 missing"; else echo "✅ SSH_PRIVATE_KEY_BASE64 OK (length: ${#SSH_KEY})"; fi
         env:
-          SSH_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+
+      - name: 🔑 Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${SSH_KEY_BASE64}" | base64 -d > ~/.ssh/deploy_key
+          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "SSH key created, checking..."
+          ls -la ~/.ssh/deploy_key
+          head -1 ~/.ssh/deploy_key
 
-      - name: 🔐 Deploy via SSH
+      - name: 🔐 Test SSH Connection
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-          set -e
-          
-          echo "============================================"
-          echo "🚀 DEPLOY FACTORY V2 - NEXT.JS"
-          echo "============================================"
-          echo "📅 Date: $(date '+%Y-%m-%d %H:%M:%S')"
-          
-          cd /home/mickadmin/docker/website
-          
-          if [ ! -d ".git" ]; then
-            echo "❌ ERREUR: Ce n'est pas un dépôt Git!"
-            exit 1
-          fi
-          
-          echo "📥 Pull des dernières modifications..."
-          git fetch --all
-          git reset --hard origin/main
-          
-          echo ""
-          echo "📦 Dernier commit récupéré:"
-          git log -1 --pretty=format:"  %h - %s (%cr) <%an>"
-          echo ""
-          
-          echo ""
-          echo "🐳 Reconstruction de l'image Docker..."
-          docker build -t factory-v2:latest .
-          
-          echo ""
-          echo "♻️ Redémarrage du conteneur..."
-          docker compose down
-          docker compose up -d
-          
-          echo ""
-          echo "🧹 Nettoyage des images orphelines..."
-          docker image prune -f
-          
-          echo ""
-          echo "✅ Vérification du conteneur..."
-          sleep 5
-          docker compose ps
-          
-          echo ""
-          echo "============================================"
-          echo "✅ DEPLOY TERMINÉ AVEC SUCCÈS"
-          echo "============================================"
-          ENDSSH
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo '✅ SSH Connection OK!'"
 
-      - name: ✅ Deployment successful
-        if: success()
+      - name: 🚀 Deploy
         run: |
-          echo "🎉 Déploiement réussi!"
-          echo "🌐 Site: https://mick-solutions.ch"
-
-      - name: ❌ Deployment failed
-        if: failure()
-        run: |
-          echo "❌ Le déploiement a échoué!"
-          echo "🔧 Vérifiez les secrets GitHub: SSH_PRIVATE_KEY_BASE64, VPS_HOST, VPS_USER"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /home/mickadmin/docker/website && git fetch --all && git reset --hard origin/main && docker build -t factory-v2:latest . && docker compose down && docker compose up -d && docker image prune -f && echo '✅ Deploy done!'"
