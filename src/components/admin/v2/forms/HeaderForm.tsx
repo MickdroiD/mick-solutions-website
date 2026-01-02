@@ -1,55 +1,13 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { Menu, MousePointer, Palette, ChevronDown, LinkIcon, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
-import {
-  Menu, ChevronDown, Link as LinkIcon, Type,
-  Image as ImageIcon, MousePointer, ExternalLink, Sparkles
-} from 'lucide-react';
+import { GlobalConfig } from '@/lib/schemas/factory';
 import { LocalInput } from '@/components/admin/ui/LocalInput';
-import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
-import { ListEditor, type ListItem } from '@/components/admin/v2/ui/ListEditor';
-import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
-import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
-import type { GlobalConfig } from '@/lib/schemas/factory';
-
-// ============================================
-// TYPES
-// ============================================
-
-interface HeaderFormProps {
-  config: GlobalConfig;
-  onUpdate: (updates: Partial<GlobalConfig>) => void;
-}
-
-interface MenuLinkItem extends ListItem {
-  id: string;
-  label: string;
-  url: string;
-  isExternal?: boolean;
-}
-
-// ============================================
-// OPTIONS
-// ============================================
-
-// Note: Les variantes sont gérées dans la section Branding
-
-const LOGO_ANIMATION_OPTIONS = [
-  { value: 'none', label: 'Aucune' },
-  { value: 'pulse', label: 'Pulse' },
-  { value: 'spin', label: 'Rotation' },
-  { value: 'bounce', label: 'Rebond' },
-  { value: 'electric', label: 'Électrique' },
-  { value: 'lightning-circle', label: 'Éclair' },
-];
-
-const LOGO_SIZE_PRESETS = [
-  { value: 32, label: 'S' },
-  { value: 40, label: 'M' },
-  { value: 48, label: 'L' },
-  { value: 56, label: 'XL' },
-];
+import { ListEditor } from '@/components/admin/v2/ui/ListEditor';
+import { SectionEffects } from '@/components/admin/v2/ui/SectionEffects';
+import { SectionText } from '@/components/admin/v2/ui/SectionText';
 
 // ============================================
 // COLLAPSIBLE SECTION
@@ -70,7 +28,7 @@ function CollapsibleSection({
   children,
   defaultOpen = false,
   badge,
-  color = 'from-blue-500/20 to-indigo-500/20'
+  color = 'from-slate-500/20 to-zinc-500/20'
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -86,7 +44,7 @@ function CollapsibleSection({
         className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-blue-400`}>
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-slate-400`}>
             {icon}
           </div>
           <h3 className="text-white font-semibold text-lg">{title}</h3>
@@ -113,67 +71,83 @@ function CollapsibleSection({
   );
 }
 
-// ============================================
-// HEADER FORM COMPONENT
-// ============================================
+interface MenuLinkItem {
+  id: string;
+  label: string;
+  url: string;
+  isExternal?: boolean;
+  [key: string]: unknown;
+}
 
-function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
-  // State for menu links (stored in a dedicated place)
-  const [menuLinks, setMenuLinks] = useState<MenuLinkItem[]>(() => {
-    // Try to get from config or use defaults
-    const stored = (config as unknown as { header?: { menuLinks?: MenuLinkItem[] } })?.header?.menuLinks;
-    return stored || [
-      { id: 'nav_1', label: 'Accueil', url: '/', isExternal: false },
-      { id: 'nav_2', label: 'Services', url: '#services', isExternal: false },
-      { id: 'nav_3', label: 'Portfolio', url: '#portfolio', isExternal: false },
-      { id: 'nav_4', label: 'Contact', url: '#contact', isExternal: false },
-    ];
-  });
+function HeaderFormComponent({
+  config,
+  onUpdate
+}: {
+  config: GlobalConfig;
+  onUpdate: (updates: Partial<GlobalConfig>) => void;
+}) {
+  // Parse existing menu links or default
+  const [menuLinks, setMenuLinks] = useState<MenuLinkItem[]>([]);
 
-  // ========== HANDLERS ==========
-  const updateAssets = useCallback((key: string, value: unknown) => {
-    onUpdate({
-      assets: {
-        ...config.assets,
-        [key]: value,
-      },
-    });
-  }, [config.assets, onUpdate]);
+  // Safe Access to Branding
+  const branding = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (config.branding || {}) as Record<string, any>;
+  }, [config.branding]);
 
+  const identity = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (config.identity || {}) as Record<string, any>;
+  }, [config.identity]);
+
+  useEffect(() => {
+    if (branding.headerMenuLinks) {
+      try {
+        const parsed = JSON.parse(branding.headerMenuLinks);
+        if (Array.isArray(parsed)) {
+          setMenuLinks(parsed);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to parse menu links', e);
+      }
+    }
+    // Default fallback
+    setMenuLinks([
+      { id: '1', label: 'Avantages', url: '#avantages' },
+      { id: '2', label: 'Services', url: '#services' },
+      { id: '3', label: 'Portfolio', url: '#portfolio' },
+      { id: '4', label: 'Contact', url: '#contact' },
+    ]);
+  }, [branding.headerMenuLinks]);
+
+  // Helpers to update branding config
   const updateBranding = useCallback((key: string, value: unknown) => {
     onUpdate({
       branding: {
-        ...config.branding,
+        ...branding,
         [key]: value,
-      },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
     });
-  }, [config.branding, onUpdate]);
+  }, [branding, onUpdate]);
 
   const updateIdentity = useCallback((key: string, value: unknown) => {
     onUpdate({
       identity: {
-        ...config.identity,
+        ...identity,
         [key]: value,
-      },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
     });
-  }, [config.identity, onUpdate]);
+  }, [identity, onUpdate]);
 
-  // Note: updateAnimations can be added later if needed for header-specific animations
-  // const updateAnimations = useCallback((key: string, value: unknown) => {
-  //   onUpdate({ animations: { ...config.animations, [key]: value } });
-  // }, [config.animations, onUpdate]);
-
-  // Handle menu links change (store in a custom location)
+  // Handle menu links change
   const handleMenuLinksChange = useCallback((newLinks: MenuLinkItem[]) => {
     setMenuLinks(newLinks);
-    // Store in config.header.menuLinks (extend the config)
-    onUpdate({
-      // @ts-expect-error - extending config with header
-      header: {
-        menuLinks: newLinks,
-      },
-    });
-  }, [onUpdate]);
+    // Store as JSON string in branding config
+    updateBranding('headerMenuLinks', JSON.stringify(newLinks));
+  }, [updateBranding]);
 
   const createMenuLink = useCallback((): MenuLinkItem => ({
     id: `nav_${Date.now()}`,
@@ -244,113 +218,68 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
   }, []);
 
   // Get header logo size from branding config
-  const headerLogoSize = config.branding.headerLogoSize ?? 40;
-  const headerLogoAnimation = config.branding.headerLogoAnimation || 'none';
+  const headerLogoSize = (branding.headerLogoSize as number) || 40;
+
+  // Resolve Values from Branding (New Schema)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const legacyConfig = config as unknown as Record<string, any>;
+  const ctaText = branding.headerCtaText || branding.headerCtaText === '' ? branding.headerCtaText : ((legacyConfig.ctaPrincipal as string) || 'Contact');
+  const ctaUrl = branding.headerCtaUrl || branding.headerCtaUrl === '' ? branding.headerCtaUrl : '#contact';
+  const showCta = branding.showHeaderCta !== false;
+  const showTopBar = branding.showTopBar !== false;
 
   return (
-    <div className="space-y-6">
-      {/* ========== LOGO ========== */}
+    <div className="space-y-4">
+
+      {/* ========== LOGO & STYLE ========== */}
       <CollapsibleSection
-        title="Logo"
-        icon={<ImageIcon className="w-5 h-5" />}
-        color="from-violet-500/20 to-purple-500/20"
+        title="Logo & Identité Header"
+        icon={<Palette className="w-5 h-5" />}
+        defaultOpen={false}
       >
-        {/* 🆕 Logo dédié header (optionnel, sinon utilise le logo principal) */}
-        <LocalImageInput
-          label="Logo header (dédié)"
-          value={config.branding.headerLogoUrl || ''}
-          onChange={(v) => updateBranding('headerLogoUrl', v || null)}
-          hint="Logo spécifique au header (laissez vide pour utiliser le logo principal)"
-          category="branding"
-          fieldKey="headerLogoUrl"
-          aspectRatio="free"
-          showMagicBadge
-        />
-
-        <LocalImageInput
-          label="Logo principal (fallback)"
-          value={config.assets.logoUrl || ''}
-          onChange={(v) => updateAssets('logoUrl', v || null)}
-          hint="Logo utilisé si aucun logo header dédié n'est défini"
-          category="branding"
-          fieldKey="logoUrl"
-          aspectRatio="free"
-        />
-
-        {/* Logo Size */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm">Taille du logo</label>
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              {LOGO_SIZE_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => updateBranding('headerLogoSize', preset.value)}
-                  className={`w-10 h-10 rounded-lg border-2 text-sm font-medium transition-all ${headerLogoSize === preset.value
-                    ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
-                    : 'border-white/10 text-slate-400 hover:border-white/20'
-                    }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
+        {/* Style du Header - Top Bar Toggle */}
+        <div className="bg-white/5 rounded-xl p-4 mb-4 border border-white/10">
+          <h4 className="text-white font-medium text-sm mb-4">Structure</h4>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-white text-sm font-medium">Barre d&apos;informations (Top Bar)</span>
+              <p className="text-slate-400 text-xs">Affiche email, téléphone et adresse tout en haut</p>
             </div>
+            <button
+              onClick={() => updateBranding('showTopBar', !showTopBar)}
+              className={`w-12 h-6 rounded-full transition-colors relative ${showTopBar ? 'bg-primary-500' : 'bg-slate-700'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${showTopBar ? 'left-7' : 'left-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        <LocalInput
+          label="URL du Logo Header (Optionnel)"
+          value={(branding.headerLogoUrl as string) || ''}
+          onChange={(v) => updateBranding('headerLogoUrl', v || null)}
+          placeholder="https://..."
+          hint="Laissez vide pour utiliser le logo principal"
+        />
+
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="space-y-2">
+            <label className="text-slate-400 text-xs">Taille du logo (px)</label>
             <input
               type="number"
+              min="20"
+              max="200"
               value={headerLogoSize}
-              onChange={(e) => updateBranding('headerLogoSize', parseInt(e.target.value) || 40)}
-              className="w-20 px-3 py-2 bg-slate-900/50 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
-              min={24}
-              max={80}
+              onChange={(e) => updateBranding('headerLogoSize', parseInt(e.target.value))}
+              className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white text-sm focus:border-primary-500 focus:outline-none"
             />
-            <span className="text-slate-500 text-sm">px</span>
           </div>
         </div>
-
-        {/* Logo Animation */}
-        <div className="space-y-2 pt-4 border-t border-white/5">
-          <label className="text-white font-medium text-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-400" />
-            Animation du logo
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {LOGO_ANIMATION_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => updateBranding('headerLogoAnimation', opt.value)}
-                className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${headerLogoAnimation === opt.value
-                  ? 'border-violet-500 bg-violet-500/20 text-violet-400'
-                  : 'border-white/10 text-slate-400 hover:border-white/20'
-                  }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </CollapsibleSection>
-
-      {/* ========== TEXTES & STYLE ========== */}
-      <CollapsibleSection
-        title="Textes & Style"
-        icon={<Type className="w-5 h-5" />}
-        color="from-cyan-500/20 to-blue-500/20"
-      >
-        {/* Nom du site */}
-        <LocalInput
-          label="Nom du site"
-          value={config.identity.nomSite}
-          onChange={(v) => updateIdentity('nomSite', v)}
-          placeholder="Mon Site"
-          hint="Affiché dans le header à côté du logo"
-        />
 
         {/* Initiales du logo (pour AnimatedLogoFrame) */}
         <LocalInput
           label="Initiales du logo"
-          value={config.identity.initialesLogo || ''}
+          value={(identity.initialesLogo as string) || ''}
           onChange={(v) => updateIdentity('initialesLogo', v || null)}
           placeholder="MS"
           hint="2-3 lettres affichées dans le cadre animé (laissez vide pour auto)"
@@ -359,7 +288,7 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
         {/* Slogan (optionnel) */}
         <LocalInput
           label="Slogan (optionnel)"
-          value={config.identity.slogan || ''}
+          value={(identity.slogan as string) || ''}
           onChange={(v) => updateIdentity('slogan', v || null)}
           placeholder="Votre slogan ici..."
           hint="Peut être affiché selon la variante de header"
@@ -376,7 +305,7 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
               <div className="flex gap-2">
                 <input
                   type="color"
-                  value={config.branding.headerBgColor || '#0a0a0f'}
+                  value={(branding.headerBgColor as string) || '#0a0a0f'}
                   onChange={(e) => updateBranding('headerBgColor', e.target.value)}
                   className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
                 />
@@ -396,7 +325,7 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
               <div className="flex gap-2">
                 <input
                   type="color"
-                  value={config.branding.headerTextColor || '#ffffff'}
+                  value={(branding.headerTextColor as string) || '#ffffff'}
                   onChange={(e) => updateBranding('headerTextColor', e.target.value)}
                   className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
                 />
@@ -416,7 +345,7 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
               <div className="flex gap-2">
                 <input
                   type="color"
-                  value={config.branding.headerBorderColor || '#ffffff'}
+                  value={(branding.headerBorderColor as string) || '#ffffff'}
                   onChange={(e) => updateBranding('headerBorderColor', e.target.value)}
                   className="w-10 h-10 rounded-lg border border-white/10 cursor-pointer"
                 />
@@ -439,6 +368,7 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
         icon={<Menu className="w-5 h-5" />}
         badge={`${menuLinks.length}`}
         color="from-blue-500/20 to-cyan-500/20"
+        defaultOpen={false}
       >
         <ListEditor<MenuLinkItem>
           items={menuLinks}
@@ -459,60 +389,53 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
         title="Bouton d'action (CTA)"
         icon={<MousePointer className="w-5 h-5" />}
         color="from-emerald-500/20 to-teal-500/20"
+        defaultOpen={false}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <LocalInput
             label="Texte du bouton"
-            value={(config as unknown as { header?: { ctaText?: string } })?.header?.ctaText || 'Contact'}
-            onChange={(v) => onUpdate({
-              // @ts-expect-error - extending config
-              header: { ctaText: v },
-            })}
+            value={ctaText as string}
+            onChange={(v) => updateBranding('headerCtaText', v)}
             placeholder="Ex: Contactez-nous"
           />
 
           <LocalInput
             label="Lien du bouton"
-            value={(config as unknown as { header?: { ctaUrl?: string } })?.header?.ctaUrl || '#contact'}
-            onChange={(v) => onUpdate({
-              // @ts-expect-error - extending config
-              header: { ctaUrl: v },
-            })}
+            value={ctaUrl as string}
+            onChange={(v) => updateBranding('headerCtaUrl', v)}
             placeholder="Ex: #contact ou /contact"
           />
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => onUpdate({
-              // @ts-expect-error - extending config
-              header: {
-                showCta: !(config as unknown as { header?: { showCta?: boolean } })?.header?.showCta,
-              },
-            })}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm transition-all ${(config as unknown as { header?: { showCta?: boolean } })?.header?.showCta !== false
-              ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-              : 'border-white/10 text-slate-400'
-              }`}
-          >
-            Afficher le CTA dans le header
-          </button>
+        <div className="flex items-center gap-3 pt-4 border-t border-white/5 mt-4">
+          <div className="flex items-center justify-between w-full">
+            <span className="text-white text-sm font-medium">Afficher le bouton dans le header</span>
+            <button
+              onClick={() => updateBranding('showHeaderCta', !showCta)}
+              className={`w-12 h-6 rounded-full transition-colors relative ${showCta ? 'bg-emerald-500' : 'bg-slate-700'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${showCta ? 'left-7' : 'left-1'}`} />
+            </button>
+          </div>
         </div>
       </CollapsibleSection>
 
       {/* ========== EFFETS & ANIMATIONS ========== */}
       <SectionEffects
-        effects={(config.branding.headerEffects || {}) as EffectSettings}
-        onChange={(updates) => updateBranding('headerEffects', { ...(config.branding.headerEffects || {}), ...updates })}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        effects={(branding.headerEffects || {}) as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onChange={(updates) => updateBranding('headerEffects', { ...(branding.headerEffects || {}), ...updates } as any)}
         showLogoOptions={true}
         showBackgroundOptions={true}
       />
 
       {/* ========== TYPOGRAPHIE ========== */}
       <SectionText
-        text={(config.branding.headerTextSettings || {}) as TextSettings}
-        onChange={(updates) => updateBranding('headerTextSettings', { ...(config.branding.headerTextSettings || {}), ...updates })}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        text={(branding.headerTextSettings || {}) as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onChange={(updates) => updateBranding('headerTextSettings', { ...(branding.headerTextSettings || {}), ...updates } as any)}
         showTitleOptions={true}
         showSubtitleOptions={false}
         showBodyOptions={true}
@@ -526,4 +449,3 @@ function HeaderFormComponent({ config, onUpdate }: HeaderFormProps) {
 // ============================================
 
 export const HeaderForm = memo(HeaderFormComponent);
-

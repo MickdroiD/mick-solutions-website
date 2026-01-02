@@ -96,35 +96,45 @@ function FooterLogoWithAnimation({
 export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
   const currentYear = new Date().getFullYear();
 
+  // Helper to access footer config safely (handling flat vs nested structure)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conf = config as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const footerConf = (conf.footer || conf) as any; // Fallback to root if footer is merged
+
   // 🆕 Custom Colors & Styles
-  const bgColor = config.footerBgColor || '#0a0a0f';
-  const textColor = config.footerTextColor || '#ffffff';
-  const borderColor = config.footerBorderColor || 'rgba(255,255,255,0.1)';
+  const bgColor = footerConf.footerBgColor || conf.footerBgColor || '#0a0a0f';
+  const textColor = footerConf.footerTextColor || conf.footerTextColor || '#ffffff';
+  const borderColor = footerConf.footerBorderColor || conf.footerBorderColor || 'rgba(255,255,255,0.1)';
 
   // 🆕 Logo Configuration
-  const logoUrl = config.footerLogoUrl || config.logoDarkUrl || config.logoUrl;
-  const logoSize = config.footerLogoSize || 40;
-  const logoAnim = config.footerLogoAnimation || 'none';
-  const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
+  const logoUrl = footerConf.footerLogoUrl || conf.footerLogoUrl || conf.logoDarkUrl || conf.logoUrl;
+  const logoSize = footerConf.footerLogoSize || conf.footerLogoSize || 40;
+  const logoAnim = footerConf.footerLogoAnimation || conf.footerLogoAnimation || 'none';
+  const initiales = conf.initialesLogo || (conf.nomSite ? conf.nomSite.split(' ').map((w: string) => w[0]).join('') : 'MS');
+
+  // 🆕 Effects & Text Settings
+  const footerEffects = footerConf.footerEffects || conf.branding?.footerEffects || {};
+  const footerTextSettings = footerConf.footerTextSettings || conf.branding?.footerTextSettings || {};
 
   // 🆕 Navigation
   const navLinks = [
-    config.showAdvantages && { name: 'Avantages', href: '#avantages' },
-    config.showServices && { name: 'Services', href: '#services' },
-    config.showPortfolio && { name: 'Portfolio', href: '#portfolio' },
-    config.showContact && { name: 'Contact', href: '#contact' },
+    conf.showAdvantages && { name: 'Avantages', href: '#avantages' },
+    conf.showServices && { name: 'Services', href: '#services' },
+    conf.showPortfolio && { name: 'Portfolio', href: '#portfolio' },
+    conf.showContact && { name: 'Contact', href: '#contact' },
   ].filter((link): link is { name: string; href: string } => Boolean(link));
 
   // 🆕 Social Links
   const socialLinks = [
-    { icon: Linkedin, url: config.lienLinkedin, label: 'LinkedIn' },
-    { icon: Instagram, url: config.lienInstagram, label: 'Instagram' },
-    { icon: Twitter, url: config.lienTwitter, label: 'Twitter' },
+    { icon: Linkedin, url: conf.lienLinkedin, label: 'LinkedIn' },
+    { icon: Instagram, url: conf.lienInstagram, label: 'Instagram' },
+    { icon: Twitter, url: conf.lienTwitter, label: 'Twitter' },
   ].filter(s => s.url);
 
   // 🆕 Typography Styles
-  const titleFont = config.footerTextSettings?.titleFontFamily ? { fontFamily: config.footerTextSettings.titleFontFamily } : {};
-  const bodyFont = config.footerTextSettings?.bodyFontFamily ? { fontFamily: config.footerTextSettings.bodyFontFamily } : {};
+  const titleFont = footerTextSettings.titleFontFamily ? { fontFamily: footerTextSettings.titleFontFamily } : {};
+  const bodyFont = footerTextSettings.bodyFontFamily ? { fontFamily: footerTextSettings.bodyFontFamily } : {};
 
   return (
     <footer
@@ -137,11 +147,11 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
       }}
     >
       {/* Background Image / Overlay from Effects */}
-      {config.footerEffects?.backgroundUrl && (
+      {footerEffects.backgroundUrl && (
         <>
           <div
             className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
-            style={{ backgroundImage: `url(${config.footerEffects.backgroundUrl})` }}
+            style={{ backgroundImage: `url(${footerEffects.backgroundUrl})` }}
           />
           <div className="absolute inset-0 z-0 bg-black/60" />
         </>
@@ -155,24 +165,35 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            className="min-w-0" // Protect flex child
           >
-            <div className="flex items-center gap-3 mb-4">
-              {logoUrl ? (
-                <FooterLogoWithAnimation
-                  logoUrl={logoUrl}
-                  nomSite={config.nomSite}
-                  animation={logoAnim}
-                  size={logoSize}
-                />
-              ) : (
-                <AnimatedLogoFrame initiales={initiales} size="md" variant={config.logoFrameStyle} />
-              )}
-              <span className="font-semibold text-lg" style={titleFont}>
-                {config.nomSite}
+            <div className="flex items-center gap-3 mb-4 group">
+              {/* Unified Logo Frame approach */}
+              <div
+                className="relative flex items-center justify-center flex-shrink-0 aspect-square"
+                style={{
+                  width: logoSize,
+                  height: logoSize
+                }}
+              >
+                {logoUrl ? (
+                  <FooterLogoWithAnimation
+                    logoUrl={logoUrl}
+                    nomSite={conf.nomSite}
+                    animation={logoAnim}
+                    size={logoSize}
+                  />
+                ) : (
+                  <AnimatedLogoFrame initiales={initiales} size="md" variant={footerEffects.logoFrameShape || 'none'} />
+                )}
+              </div>
+
+              <span className="font-semibold text-lg truncate" style={titleFont}>
+                {conf.nomSite}
               </span>
             </div>
             <p className="text-sm opacity-70 mb-6 font-medium">
-              {config.customFooterText || config.slogan}
+              {footerConf.customFooterText || conf.customFooterText || conf.slogan}
             </p>
             {socialLinks.length > 0 && (
               <div className="flex gap-3">
@@ -231,21 +252,21 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
                 <Mail className="w-4 h-4 text-primary-500" />
-                <a href={`mailto:${config.email}`}>
-                  {config.email}
+                <a href={`mailto:${conf.email}`}>
+                  {conf.email}
                 </a>
               </li>
-              {config.telephone && (
+              {conf.telephone && (
                 <li className="flex items-center gap-3 text-sm opacity-70 hover:opacity-100 transition-opacity">
                   <Phone className="w-4 h-4 text-primary-500" />
-                  <a href={`tel:${config.telephone}`}>
-                    {config.telephone}
+                  <a href={`tel:${conf.telephone}`}>
+                    {conf.telephone}
                   </a>
                 </li>
               )}
               <li className="flex items-start gap-3 text-sm opacity-70">
                 <MapPin className="w-4 h-4 text-primary-500 mt-0.5" />
-                <span>{config.adresse}</span>
+                <span>{conf.adresse}</span>
               </li>
             </ul>
           </motion.div>
@@ -260,7 +281,7 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
             <h4 className="font-semibold mb-4" style={titleFont}>
               Légal
             </h4>
-            {config.showLegalLinks !== false && (
+            {footerConf.showLegalLinks !== false && conf.showLegalLinks !== false && (
               <ul className="space-y-3">
                 {legalDocs.filter(d => d.isActive).map((doc) => (
                   <li key={doc.id}>
@@ -283,14 +304,13 @@ export function FooterCorporate({ config, legalDocs = [] }: FooterModuleProps) {
           style={{ borderColor: borderColor, borderTopWidth: '1px' }}
         >
           <p className="text-xs opacity-60">
-            {config.copyrightTexte || `© ${currentYear} ${config.nomSite}. Tous droits réservés.`}
+            {footerConf.copyrightTexte || conf.copyrightTexte || `© ${currentYear} ${conf.nomSite}. Tous droits réservés.`}
           </p>
           <p className="text-xs opacity-60">
-            {config.paysHebergement}
+            {footerConf.paysHebergement || conf.paysHebergement}
           </p>
         </div>
       </div>
     </footer>
   );
 }
-

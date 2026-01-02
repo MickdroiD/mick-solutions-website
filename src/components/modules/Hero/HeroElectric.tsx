@@ -40,7 +40,7 @@ import type { TextSettings } from '@/lib/schemas/factory';
 interface ExtendedEffectSettings {
   // Index signature for compatibility with EffectSettings from factory.ts
   [key: string]: unknown;
-  
+
   // From original EffectSettings
   logoDirectEffect?: string;
   logoIndirectEffect?: string;
@@ -54,31 +54,31 @@ interface ExtendedEffectSettings {
   backgroundBlur?: number;
   height?: 'Short' | 'Medium' | 'Tall' | 'FullScreen';
   logoSize?: number;
-  
+
   // Layout options
   heroLayout?: HeroLayout;
   columnGap?: SpacingSize;
   maxWidth?: MaxWidth;
   paddingY?: SpacingSize;
-  
+
   // Button options
   buttonShape?: ButtonShape;
   buttonSize?: ButtonSize;
   buttonStyle?: ButtonStyle;
   showButtonIcon?: boolean;
-  
+
   // Animation options
   animationSpeed?: 'slow' | 'normal' | 'fast';
   animationIntensity?: 'subtle' | 'normal' | 'strong' | 'intense';
-  
+
   // Overlay options
   overlayColor?: 'black' | 'white' | 'primary' | 'accent' | 'slate';
   overlayOpacity?: number;
-  
+
   // Blob options
   showBlobs?: boolean;
   blobSize?: SpacingSize;
-  
+
   // Advanced options
   showScrollIndicator?: boolean;
   scrollIndicatorStyle?: 'mouse' | 'arrow' | 'chevron' | 'dot';
@@ -126,7 +126,7 @@ function LogoContent({ config, logoUrl, heroLogoSize, effects }: LogoContentProp
   const speed = effects?.animationSpeed || 'normal';
   const intensity = effects?.animationIntensity || 'normal';
   const animConfig = getDirectAnimationConfig(effects?.logoDirectEffect, speed, intensity);
-  
+
   // Get indirect effect styles (drop-shadow qui suit les contours du logo)
   const indirectStyles = getIndirectEffectStyles(effects || {}, intensity);
 
@@ -154,7 +154,7 @@ function LogoContent({ config, logoUrl, heroLogoSize, effects }: LogoContentProp
           unoptimized
         />
       ) : (
-        <div 
+        <div
           className="w-full h-full flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-bold text-gradient"
           style={indirectStyles}
         >
@@ -183,17 +183,17 @@ function LogoFrame({ children, effects, size }: LogoFrameProps) {
   const thickness = effects?.logoFrameThickness || 2;
   const speed = effects?.animationSpeed || 'normal';
   const intensity = effects?.animationIntensity || 'normal';
-  
+
   // Get frame styles
   const frameStyles = getFrameStyles(shape, color, thickness);
   const frameAnimClass = getFrameAnimationClass(animation);
-  
+
   // CSS variables for animation colors
   const cssVars = {
     '--frame-color-1': resolveColor(color, '#22d3ee'),
     '--frame-color-2': resolveColor(secondaryColor, '#a78bfa'),
   } as React.CSSProperties;
-  
+
   // Speed class
   const speedClass = speed !== 'normal' ? `speed-${speed}` : '';
   const intensityClass = `frame-intensity-${intensity}`;
@@ -201,7 +201,7 @@ function LogoFrame({ children, effects, size }: LogoFrameProps) {
   // If no frame, just return children in a basic container
   if (shape === 'none') {
     return (
-      <div 
+      <div
         style={{ width: `${size}px`, height: `${size}px` }}
         className="relative"
       >
@@ -212,7 +212,7 @@ function LogoFrame({ children, effects, size }: LogoFrameProps) {
 
   return (
     <div
-      className={`relative ${frameAnimClass} ${speedClass} ${intensityClass}`}
+      className={`relative ${frameAnimClass} ${speedClass} ${intensityClass} max-w-full`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -240,7 +240,7 @@ function ScrollIndicator({ style = 'mouse' }: { style?: string }) {
       </motion.div>
     );
   }
-  
+
   if (style === 'chevron') {
     return (
       <motion.div
@@ -251,7 +251,7 @@ function ScrollIndicator({ style = 'mouse' }: { style?: string }) {
       </motion.div>
     );
   }
-  
+
   if (style === 'dot') {
     return (
       <motion.div
@@ -261,7 +261,7 @@ function ScrollIndicator({ style = 'mouse' }: { style?: string }) {
       />
     );
   }
-  
+
   // Default: mouse
   return (
     <motion.div
@@ -282,14 +282,14 @@ export function HeroElectric({ config }: ModuleProps) {
   // Get effects and textSettings
   const effects = (config as { effects?: ExtendedEffectSettings }).effects || {};
   const textSettings = (config as { textSettings?: TextSettings }).textSettings;
-  
+
   // ========== LAYOUT ==========
   const heroLayout = effects.heroLayout || 'text-left';
   const layoutConfig = HERO_LAYOUTS[heroLayout];
   const columnGap = SPACING_GAP[effects.columnGap || 'lg'];
   const paddingY = SPACING_PADDING_Y[effects.paddingY || 'lg'];
   const maxWidth = MAX_WIDTHS[effects.maxWidth || 'xl'];
-  
+
   // ========== HEIGHT ==========
   const heroHeight = config.heroHeight || effects.height || 'Tall';
   const heightClass = {
@@ -298,38 +298,38 @@ export function HeroElectric({ config }: ModuleProps) {
     Tall: 'min-h-screen',
     FullScreen: 'min-h-screen h-screen',
   }[heroHeight as string] || 'min-h-screen';
-  
+
   // ========== LOGO ==========
   const logoUrl = config.logoUrl || null;
   const heroLogoSize = effects.logoSize || config.heroLogoSize || 280;
-  
+
   // ========== BACKGROUND ==========
   const heroBackgroundUrl = config.heroBackgroundUrl || null;
   const heroVideoUrl = config.heroVideoUrl || null;
   const backgroundOpacity = effects.backgroundOpacity !== undefined ? effects.backgroundOpacity / 100 : 1;
   const backgroundBlur = effects.backgroundBlur || 0;
-  
+
   // ========== OVERLAY ==========
   const overlayColor = effects.overlayColor || 'black';
   const overlayOpacity = effects.overlayOpacity !== undefined ? effects.overlayOpacity / 100 : 0.4;
-  
+
   // ========== BLOBS ==========
   const showBlobs = effects.showBlobs !== false;
   const blobConfig = BLOB_SIZES[effects.blobSize || 'lg'];
-  
+
   // ========== BUTTONS ==========
   const buttonShape = BUTTON_SHAPES[effects.buttonShape || 'pill'];
   const buttonSize = BUTTON_SIZES[effects.buttonSize || 'lg'];
   const buttonStyle = BUTTON_STYLES[effects.buttonStyle || 'gradient'];
   const showButtonIcon = effects.showButtonIcon !== false;
-  
+
   // ========== STATS ==========
   const statsLayout = STAT_LAYOUTS[effects.statsLayout as keyof typeof STAT_LAYOUTS] || STAT_LAYOUTS['horizontal'];
-  
+
   // ========== SCROLL INDICATOR ==========
   const showScrollIndicator = effects.showScrollIndicator !== false;
   const scrollIndicatorStyle = effects.scrollIndicatorStyle || 'mouse';
-  
+
   // ========== TEXT ANIMATION ==========
   const textAnimation = config.textAnimation || 'None';
   const getTextAnimationClass = () => {
@@ -339,13 +339,13 @@ export function HeroElectric({ config }: ModuleProps) {
       default: return '';
     }
   };
-  
+
   // ========== TITLE PARSING ==========
   const titreParts = config.titreHero ? config.titreHero.split('.') : [];
   const ligne1 = titreParts[0] ? titreParts[0].trim() + (titreParts[0].trim().endsWith('.') ? '' : '.') : '';
   const ligne2 = titreParts[1] ? titreParts[1].trim() + (titreParts[1].trim().endsWith('.') ? '' : '.') : '';
   const ligne3 = titreParts[2] ? titreParts[2].trim() : '';
-  
+
   // ========== HERO BLOCKS ==========
   const rawBlocks = config.heroBlocks;
   const heroBlocks: GridBlock[] = Array.isArray(rawBlocks) && rawBlocks.length > 0 ? rawBlocks : [];
@@ -368,7 +368,7 @@ export function HeroElectric({ config }: ModuleProps) {
             <source src={heroVideoUrl} type="video/mp4" />
           </video>
         )}
-        
+
         {/* Image background */}
         {heroBackgroundUrl && !heroVideoUrl && (
           <Image
@@ -383,14 +383,14 @@ export function HeroElectric({ config }: ModuleProps) {
             priority
           />
         )}
-        
+
         {/* Overlay */}
         {(heroBackgroundUrl || heroVideoUrl) && overlayOpacity > 0 && (
-          <div 
+          <div
             className="absolute inset-0"
-            style={{ 
-              backgroundColor: overlayColor === 'primary' || overlayColor === 'accent' 
-                ? `var(--${overlayColor}-900)` 
+            style={{
+              backgroundColor: overlayColor === 'primary' || overlayColor === 'accent'
+                ? `var(--${overlayColor}-900)`
                 : undefined,
               background: overlayColor !== 'primary' && overlayColor !== 'accent'
                 ? `rgba(${getOverlayColor(overlayColor)},${overlayOpacity})`
@@ -399,24 +399,24 @@ export function HeroElectric({ config }: ModuleProps) {
             }}
           />
         )}
-        
+
         {/* Decorative blobs */}
         {showBlobs && (
           <>
-            <div 
+            <div
               className="absolute top-0 left-0 rounded-full -translate-x-1/2 -translate-y-1/2 bg-primary-500/10"
-              style={{ 
-                width: blobConfig.size, 
-                height: blobConfig.size, 
-                filter: `blur(${blobConfig.blur})` 
+              style={{
+                width: blobConfig.size,
+                height: blobConfig.size,
+                filter: `blur(${blobConfig.blur})`
               }}
             />
-            <div 
+            <div
               className="absolute bottom-0 right-0 rounded-full translate-x-1/3 translate-y-1/3 bg-accent-500/10"
-              style={{ 
-                width: `calc(${blobConfig.size} * 0.75)`, 
-                height: `calc(${blobConfig.size} * 0.75)`, 
-                filter: `blur(${blobConfig.blur})` 
+              style={{
+                width: `calc(${blobConfig.size} * 0.75)`,
+                height: `calc(${blobConfig.size} * 0.75)`,
+                filter: `blur(${blobConfig.blur})`
               }}
             />
           </>
@@ -426,7 +426,7 @@ export function HeroElectric({ config }: ModuleProps) {
       {/* ===== CONTENT ===== */}
       <div className={`relative z-10 ${maxWidth} mx-auto px-4 sm:px-6 lg:px-8 ${paddingY}`}>
         <div className={`${layoutConfig.container} ${columnGap} ${layoutConfig.reverse ? 'lg:flex-row-reverse' : ''}`}>
-          
+
           {/* ===== TEXT COLUMN ===== */}
           <motion.div
             initial={{ opacity: 0, x: layoutConfig.reverse ? 50 : -50 }}
@@ -447,7 +447,7 @@ export function HeroElectric({ config }: ModuleProps) {
             )}
 
             {/* Title */}
-            <h1 
+            <h1
               className={`${textSettings?.titleFontSize || 'text-4xl sm:text-5xl lg:text-6xl'} ${textSettings?.titleFontWeight || 'font-bold'} ${textSettings?.titleColor || 'text-foreground'} ${textSettings?.titleAlign || layoutConfig.textAlign} ${textSettings?.titleTransform || ''} ${textSettings?.bodyLineHeight || 'leading-tight'} mb-6 font-heading ${textAnimation === 'Gradient' && !textSettings?.titleColor ? getTextAnimationClass() : ''}`}
               style={getFontFamilyStyle(textSettings?.titleFontFamily)}
             >
@@ -458,7 +458,7 @@ export function HeroElectric({ config }: ModuleProps) {
             </h1>
 
             {/* Subtitle */}
-            <p 
+            <p
               className={`${textSettings?.subtitleFontSize || 'text-lg sm:text-xl'} ${textSettings?.subtitleColor || 'text-muted-foreground'} ${textSettings?.bodyLineHeight || 'leading-relaxed'} mb-8 ${heroLayout === 'centered' ? '' : 'max-w-xl'} ${heroLayout === 'centered' ? 'mx-auto' : layoutConfig.textAlign.includes('right') ? 'ml-auto' : ''}`}
               style={getFontFamilyStyle(textSettings?.subtitleFontFamily)}
             >
@@ -533,8 +533,8 @@ export function HeroElectric({ config }: ModuleProps) {
                         whileHover={{ scale: 1.02, borderColor: 'var(--primary-500)' }}
                       >
                         {block.type === 'image' && block.content && (
-                          <Image 
-                            src={block.content} 
+                          <Image
+                            src={block.content}
                             alt="Hero block"
                             fill
                             className="object-cover"
@@ -553,7 +553,7 @@ export function HeroElectric({ config }: ModuleProps) {
               ) : (
                 // Logo mode with frame
                 <LogoFrame effects={effects} size={heroLogoSize}>
-                  <LogoContent 
+                  <LogoContent
                     config={config}
                     logoUrl={logoUrl}
                     heroLogoSize={heroLogoSize}

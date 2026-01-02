@@ -24,6 +24,14 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Cast config to any to safely access potentially missing properties
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const safeConfig = config as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const branding = safeConfig.branding || ({} as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const identity = safeConfig.identity || ({} as any);
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -45,15 +53,20 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
   }, []);
 
   // Initiales du logo (fallback si pas d'image)
-  const initiales = config.initialesLogo || config.nomSite.split(' ').map(w => w[0]).join('');
+  const initiales = identity.initialesLogo || safeConfig.initialesLogo || (safeConfig.nomSite ? safeConfig.nomSite.split(' ').map((w: string) => w[0]).join('') : 'MS');
 
   // 🆕 Logo image URL (priorité: headerLogoUrl > logoUrl)
-  const logoImageUrl = config.headerLogoUrl || config.logoUrl;
+  const logoImageUrl = branding.headerLogoUrl || safeConfig.headerLogoUrl || safeConfig.logoUrl;
 
   // 🆕 Couleurs personnalisées du header
-  const headerBgColor = config.headerBgColor || 'rgba(10, 10, 15, 0.95)';
-  const headerTextColor = config.headerTextColor || '#ffffff';
-  const headerBorderColor = config.headerBorderColor;
+  const headerBgColor = branding.headerBgColor || safeConfig.headerBgColor || 'rgba(10, 10, 15, 0.95)';
+  const headerTextColor = branding.headerTextColor || safeConfig.headerTextColor || '#ffffff';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const headerBorderColor = branding.headerBorderColor || safeConfig.headerBorderColor || ({} as any);
+
+  // CTA
+  const ctaPrincipal = branding.headerCtaText || safeConfig.ctaPrincipal || 'Contact';
+  const ctaLink = branding.headerCtaUrl || safeConfig.headerCtaUrl || '#contact';
 
   return (
     <motion.header
@@ -63,7 +76,7 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
       style={{
         backgroundColor: isScrolled ? headerBgColor : 'transparent',
-        borderBottom: isScrolled ? `1px solid ${headerBorderColor || 'rgba(255, 255, 255, 0.05)'}` : 'none',
+        borderBottom: isScrolled ? `1px solid ${typeof headerBorderColor === 'string' ? headerBorderColor : 'rgba(255, 255, 255, 0.05)'}` : 'none',
         backdropFilter: isScrolled ? 'blur(12px)' : 'none',
         color: headerTextColor,
       }}
@@ -80,16 +93,16 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
               // 🆕 Afficher l'image du logo si disponible
               <img
                 src={logoImageUrl}
-                alt={config.nomSite}
+                alt={identity.nomSite || safeConfig.nomSite}
                 className="h-8 md:h-10 w-auto object-contain"
-                style={{ maxHeight: config.headerLogoSize || 40 }}
+                style={{ maxHeight: branding.headerLogoSize || safeConfig.headerLogoSize || 40 }}
               />
             ) : (
               // Fallback: AnimatedLogoFrame avec initiales
-              <AnimatedLogoFrame initiales={initiales} size="md" variant={config.logoFrameStyle} />
+              <AnimatedLogoFrame initiales={initiales} size="md" variant={branding.logoFrameStyle || safeConfig.logoFrameStyle} />
             )}
             <span className="text-sm sm:text-lg font-semibold whitespace-nowrap" style={{ color: headerTextColor }}>
-              {config.nomSite.split(' ')[0]} <span className="text-gradient">{config.nomSite.split(' ').slice(1).join(' ')}</span>
+              {(identity.nomSite || safeConfig.nomSite).split(' ')[0]} <span className="text-gradient">{(identity.nomSite || safeConfig.nomSite).split(' ').slice(1).join(' ')}</span>
             </span>
           </a>
 
@@ -111,9 +124,9 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
 
           {/* CTA Button - Desktop */}
           <div className="hidden md:flex items-center gap-3">
-            {config.lienBoutonAppel && config.lienBoutonAppel !== '#contact' && (
+            {safeConfig.lienBoutonAppel && safeConfig.lienBoutonAppel !== '#contact' && (
               <a
-                href={config.lienBoutonAppel}
+                href={safeConfig.lienBoutonAppel}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-primary-200
@@ -125,7 +138,7 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
               </a>
             )}
             <a
-              href="#contact"
+              href={ctaLink}
               onClick={(e) => handleNavClick(e, 'contact')}
               className="relative inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium text-white
                        bg-gradient-to-r from-primary-500 to-accent-500
@@ -133,7 +146,7 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
                        shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40
                        transition-all duration-300 hover:scale-105"
             >
-              {config.ctaPrincipal.split(' ').slice(-2).join(' ')}
+              {ctaPrincipal.split(' ').slice(-2).join(' ')}
             </a>
           </div>
 
@@ -170,9 +183,9 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
                   {item.name}
                 </a>
               ))}
-              {config.lienBoutonAppel && config.lienBoutonAppel !== '#contact' && (
+              {safeConfig.lienBoutonAppel && safeConfig.lienBoutonAppel !== '#contact' && (
                 <a
-                  href={config.lienBoutonAppel}
+                  href={safeConfig.lienBoutonAppel}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 py-2 text-sm text-primary-300 hover:text-foreground transition-colors"
@@ -182,13 +195,13 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
                 </a>
               )}
               <a
-                href="#contact"
+                href={ctaLink}
                 onClick={(e) => handleNavClick(e, 'contact')}
                 className="block w-full text-center py-3 mt-4 rounded-full text-sm font-medium text-white
                          bg-gradient-to-r from-primary-500 to-accent-500 touch-manipulation
                          active:opacity-80 transition-opacity"
               >
-                {config.ctaPrincipal.split(' ').slice(-2).join(' ')}
+                {ctaPrincipal.split(' ').slice(-2).join(' ')}
               </a>
             </div>
           </motion.div>
@@ -197,4 +210,3 @@ export function NavbarMinimal({ config, navItems = defaultNavItems }: NavbarModu
     </motion.header>
   );
 }
-

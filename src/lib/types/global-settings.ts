@@ -489,6 +489,10 @@ export interface GlobalSettingsComplete {
   // ========== T. GRID BLOCKS ==========
   /** Structure JSON de la grille Hero : [{ id, width, type, content, animation }] */
   heroBlocks: GridBlock[] | null;
+
+  // ========== V2 BRIDGING ==========
+  branding?: Record<string, unknown>;
+  identity?: Record<string, unknown>;
 }
 
 // ============================================

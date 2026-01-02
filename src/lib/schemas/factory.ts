@@ -514,6 +514,12 @@ export const BrandingSchema = z.object({
   // 🆕 Effects & Text settings pour le header
   headerEffects: EffectSettingsSchema.optional(),
   headerTextSettings: TextSettingsSchema.optional(),
+  // 🆕 Header Content (Menu, CTA, TopBar)
+  headerMenuLinks: z.string().nullable().default(null), // JSON stringified MenuLinkItem[]
+  headerCtaText: z.string().nullable().default(null),
+  headerCtaUrl: z.string().nullable().default(null),
+  showHeaderCta: z.boolean().default(true),
+  showTopBar: z.boolean().default(true),
 });
 
 // 3.4 Contact Sub-Schema
@@ -1136,6 +1142,15 @@ export const DEFAULT_BRANDING = {
   headerBgColor: null,
   headerTextColor: null,
   headerBorderColor: null,
+  // 🆕 Effects & Text settings pour le header
+  headerEffects: {},
+  headerTextSettings: {},
+  // 🆕 Header Content (Menu, CTA, TopBar)
+  headerMenuLinks: null,
+  headerCtaText: null,
+  headerCtaUrl: null,
+  showHeaderCta: true,
+  showTopBar: true,
 };
 
 export const DEFAULT_CONTACT = {
@@ -1306,30 +1321,7 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     robotsIndex: true,
     sitemapPriority: 0.8,
   },
-  branding: {
-    couleurPrimaire: '#06b6d4',
-    couleurAccent: '#a855f7',
-    couleurBackground: '#0a0a0f',
-    couleurText: '#ffffff',
-    fontPrimary: 'Inter',
-    fontHeading: 'Inter',
-    fontCustomUrl: null,
-    borderRadius: 'Medium',
-    patternBackground: 'Grid',
-    themeGlobal: 'Electric',
-    // 🔧 Navbar/Header config
-    navbarVariant: null,
-    headerLogoSize: 40,
-    headerLogoAnimation: 'spin',
-    stickyHeader: true,
-    // 🆕 Logo dédié header
-    headerLogoUrl: null,
-    headerLogoSvgCode: null,
-    // 🆕 Style header personnalisé
-    headerBgColor: null,
-    headerTextColor: null,
-    headerBorderColor: null,
-  },
+  branding: DEFAULT_BRANDING,
   contact: {
     email: 'contact@example.com',
     telephone: null,
