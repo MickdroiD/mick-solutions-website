@@ -423,6 +423,7 @@ function GlobalFormComponent({ config, onUpdate }: GlobalFormProps) {
               <option value="Outfit">Outfit</option>
               <option value="Montserrat">Montserrat</option>
               <option value="DM-Sans">DM Sans</option>
+              <option value="Custom">Custom</option>
             </select>
           </div>
           <div className="space-y-1">
@@ -438,6 +439,7 @@ function GlobalFormComponent({ config, onUpdate }: GlobalFormProps) {
               <option value="Outfit">Outfit</option>
               <option value="Montserrat">Montserrat</option>
               <option value="DM-Sans">DM Sans</option>
+              <option value="Custom">Custom</option>
             </select>
           </div>
           <div className="space-y-1">
@@ -451,8 +453,43 @@ function GlobalFormComponent({ config, onUpdate }: GlobalFormProps) {
               <option value="Corporate">Corporate</option>
               <option value="Electric">Electric ⚡</option>
               <option value="Bold">Bold</option>
+              <option value="AI">AI 🤖</option>
               <option value="Custom">Custom</option>
             </select>
+          </div>
+        </div>
+
+        {/* Border Radius & Pattern Background */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+          <div className="space-y-1">
+            <label className="text-white font-medium text-sm">Arrondi des angles</label>
+            <select
+              value={config.branding.borderRadius || 'Medium'}
+              onChange={(e) => updateBranding('borderRadius', e.target.value)}
+              className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+            >
+              <option value="None">Carré</option>
+              <option value="Small">Discret</option>
+              <option value="Medium">Standard</option>
+              <option value="Large">Moderne</option>
+              <option value="Full">Pilule</option>
+            </select>
+            <p className="text-xs text-slate-500">Appliqué aux boutons, cartes et inputs</p>
+          </div>
+          <div className="space-y-1">
+            <label className="text-white font-medium text-sm">Motif de fond</label>
+            <select
+              value={config.branding.patternBackground || 'Grid'}
+              onChange={(e) => updateBranding('patternBackground', e.target.value)}
+              className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500"
+            >
+              <option value="None">Aucun</option>
+              <option value="Grid">Quadrillage</option>
+              <option value="Dots">Points</option>
+              <option value="Circuit">Tech (Circuit)</option>
+              <option value="Gradient">Dégradé</option>
+            </select>
+            <p className="text-xs text-slate-500">Texture subtile sur le fond du site</p>
           </div>
         </div>
       </SectionCard>
