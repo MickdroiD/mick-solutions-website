@@ -4,7 +4,7 @@
 
 services:
   website-client:
-    image: factory-v2:latest
+    image: factory-${CONTAINER_NAME:-client}:latest
     build:
       context: .
       # ### CORRECTION ICI : Ajout des variables manquantes pour le BUILD ###
