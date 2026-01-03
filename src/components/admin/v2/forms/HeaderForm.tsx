@@ -847,14 +847,6 @@ function HeaderFormComponent({
           hint="Laissez vide pour utiliser le nom du site global. Permet de personnaliser le texte affiché dans le header."
         />
 
-        {/* Slogan */}
-        <LocalInput
-          label="Slogan (optionnel)"
-          value={(identity.slogan as string) || ''}
-          onChange={(v) => updateIdentity('slogan', v || null)}
-          placeholder="Votre slogan ici..."
-          hint="Peut être affiché selon la variante de header"
-        />
       </CollapsibleSection>
 
       {/* ========== MENU LINKS ========== */}

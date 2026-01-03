@@ -351,20 +351,19 @@ function GlobalFormComponent({ config, onUpdate }: GlobalFormProps) {
             onChange={(v) => updateIdentity('nomSite', v)}
             placeholder="Mon Super Site"
           />
-          <LocalInput
-            label="Initiales Logo"
-            value={config.identity.initialesLogo}
-            onChange={(v) => updateIdentity('initialesLogo', v)}
-            placeholder="MS"
-            hint="Max 4 caractères"
-          />
+          <div>
+            <LocalInput
+              label="Initiales Logo"
+              value={config.identity.initialesLogo}
+              onChange={(v) => updateIdentity('initialesLogo', v)}
+              placeholder="MS"
+              disabled={true}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Calculé automatiquement depuis le nom du site.
+            </p>
+          </div>
         </div>
-        <LocalInput
-          label="Slogan"
-          value={config.identity.slogan}
-          onChange={(v) => updateIdentity('slogan', v)}
-          placeholder="Votre slogan accrocheur"
-        />
       </SectionCard>
 
       {/* ========== BRANDING (Couleurs) ========== */}

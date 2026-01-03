@@ -3,13 +3,12 @@
 import { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  FileText, Type, Palette, ChevronDown, Link as LinkIcon,
+  FileText, Type, Palette, ChevronDown,
   Linkedin, Instagram, Twitter, Youtube, Github,
   MessageCircle, Calendar, Mail, Phone, MapPin, Sparkles
 } from 'lucide-react';
 import { LocalInput, LocalTextarea } from '@/components/admin/ui/LocalInput';
 import { LocalImageInput } from '@/components/admin/v2/ui/LocalImageInput';
-import { ListEditor, type ListItem } from '@/components/admin/v2/ui/ListEditor';
 import { SectionEffects, type EffectSettings } from '@/components/admin/v2/ui/SectionEffects';
 import { SectionText, type TextSettings } from '@/components/admin/v2/ui/SectionText';
 import type { GlobalConfig } from '@/lib/schemas/factory';
@@ -21,13 +20,6 @@ import type { GlobalConfig } from '@/lib/schemas/factory';
 interface FooterFormProps {
   config: GlobalConfig;
   onUpdate: (updates: Partial<GlobalConfig>) => void;
-}
-
-interface FooterLinkItem extends ListItem {
-  id: string;
-  label: string;
-  url: string;
-  column?: number;
 }
 
 // ============================================
@@ -126,12 +118,6 @@ function CollapsibleSection({
 // ============================================
 
 function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
-  // State for footer links
-  const [footerLinks, setFooterLinks] = useState<FooterLinkItem[]>(() => {
-    const stored = (config as unknown as { footerData?: { links?: FooterLinkItem[] } })?.footerData?.links;
-    return stored || [];
-  });
-
   // ========== HANDLERS ==========
   const updateFooter = useCallback((key: string, value: unknown) => {
     onUpdate({
@@ -159,88 +145,6 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
       },
     });
   }, [config.assets, onUpdate]);
-
-  // Handle footer links change
-  const handleFooterLinksChange = useCallback((newLinks: FooterLinkItem[]) => {
-    setFooterLinks(newLinks);
-    onUpdate({
-      // @ts-expect-error - extending config
-      footerData: { links: newLinks },
-    });
-  }, [onUpdate]);
-
-  const createFooterLink = useCallback((): FooterLinkItem => ({
-    id: `footer_${Date.now()}`,
-    label: 'Nouveau lien',
-    url: '#',
-    column: 1,
-  }), []);
-
-  // ========== RENDER FOOTER LINK ==========
-  const renderFooterLink = useCallback((item: FooterLinkItem) => {
-    return (
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600/20 to-zinc-600/20 flex items-center justify-center text-slate-400">
-          <LinkIcon className="w-4 h-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-medium truncate">{item.label}</p>
-          <p className="text-slate-500 text-sm truncate">{item.url}</p>
-        </div>
-        {item.column && (
-          <span className="px-2 py-0.5 rounded-full bg-slate-700 text-slate-400 text-xs">
-            Col. {item.column}
-          </span>
-        )}
-      </div>
-    );
-  }, []);
-
-  // ========== RENDER FOOTER LINK FORM ==========
-  const renderFooterLinkForm = useCallback((
-    item: FooterLinkItem,
-    _index: number,
-    onChange: (item: FooterLinkItem) => void
-  ) => {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <LocalInput
-            label="Libellé"
-            value={item.label}
-            onChange={(v) => onChange({ ...item, label: v })}
-            placeholder="Ex: Mentions légales"
-          />
-
-          <LocalInput
-            label="URL"
-            value={item.url}
-            onChange={(v) => onChange({ ...item, url: v })}
-            placeholder="Ex: /legal/mentions"
-          />
-
-          <div className="space-y-1">
-            <label className="text-white font-medium text-sm">Colonne</label>
-            <div className="flex gap-2">
-              {[1, 2, 3].map((col) => (
-                <button
-                  key={col}
-                  type="button"
-                  onClick={() => onChange({ ...item, column: col })}
-                  className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm transition-all ${item.column === col
-                    ? 'border-cyan-500 bg-cyan-500/20 text-cyan-400'
-                    : 'border-white/10 text-slate-400 hover:border-white/20'
-                    }`}
-                >
-                  {col}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -489,27 +393,6 @@ function FooterFormComponent({ config, onUpdate }: FooterFormProps) {
             );
           })}
         </div>
-      </CollapsibleSection>
-
-      {/* ========== FOOTER LINKS ========== */}
-      <CollapsibleSection
-        title="Liens du footer"
-        icon={<LinkIcon className="w-5 h-5" />}
-        badge={`${footerLinks.length}`}
-        color="from-slate-600/20 to-zinc-600/20"
-        defaultOpen={false}
-      >
-        <ListEditor<FooterLinkItem>
-          items={footerLinks}
-          onChange={handleFooterLinksChange}
-          renderItem={renderFooterLink}
-          renderForm={renderFooterLinkForm}
-          createItem={createFooterLink}
-          label="Liens"
-          addItemLabel="Ajouter un lien"
-          emptyMessage="Aucun lien personnalisé"
-          emptyIcon={<LinkIcon className="w-10 h-10 mx-auto opacity-30" />}
-        />
       </CollapsibleSection>
 
       {/* ========== CTA FOOTER ========== */}
