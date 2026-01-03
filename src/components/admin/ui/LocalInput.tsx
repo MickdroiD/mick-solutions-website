@@ -14,6 +14,7 @@ interface LocalInputProps {
   hint?: string;
   type?: 'text' | 'url' | 'email' | 'number';
   className?: string;
+  disabled?: boolean;
 }
 
 interface LocalTextareaProps {
@@ -55,6 +56,7 @@ function LocalInputComponent({
   hint,
   type = 'text',
   className = '',
+  disabled = false,
 }: LocalInputProps) {
   // État local pour la valeur pendant la frappe
   const [localValue, setLocalValue] = useState(externalValue);
@@ -116,7 +118,8 @@ function LocalInputComponent({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition-all ${className}`}
+        disabled={disabled}
+        className={`w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       />
     </div>
   );
