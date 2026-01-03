@@ -18,7 +18,7 @@ services:
     # --- CORRECTION D'ALIGNEMENT ICI ---
     # "volumes" doit être au même niveau que "build" (pas dedans)
     volumes:
-      - ./public/uploads:/app/public/uploads
+      - /home/mickadmin/docker/website/public/uploads:/app/public/uploads
       
     container_name: ${CONTAINER_NAME:-factory-client}
     restart: unless-stopped
