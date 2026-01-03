@@ -8,14 +8,18 @@ services:
     build:
       context: .
       # ### CORRECTION ICI : Ajout des variables manquantes pour le BUILD ###
-      # Next.js a besoin de ces infos pour "cuisiner" le site et récupérer les données
       args:
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
         - BASEROW_API_URL=${BASEROW_API_URL:-https://baserow.mick-solutions.ch/api}
         - BASEROW_API_TOKEN=${BASEROW_API_TOKEN}
         - BASEROW_FACTORY_GLOBAL_ID=${BASEROW_FACTORY_GLOBAL_ID}
         - BASEROW_FACTORY_SECTIONS_ID=${BASEROW_FACTORY_SECTIONS_ID}
-        
+    
+    # --- CORRECTION D'ALIGNEMENT ICI ---
+    # "volumes" doit être au même niveau que "build" (pas dedans)
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      
     container_name: ${CONTAINER_NAME:-factory-client}
     restart: unless-stopped
 
@@ -53,8 +57,6 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      # ### OPTIMISATION : Utilisation de variables au lieu de texte en dur ###
-      # Cela rend le fichier réutilisable si vous changez de domaine
       - "traefik.http.routers.factory-client.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
       - "traefik.http.routers.factory-client.entrypoints=websecure"
       - "traefik.http.routers.factory-client.tls.certresolver=myresolver"
