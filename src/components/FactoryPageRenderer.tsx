@@ -24,12 +24,19 @@ import { extractSectionEffects } from '@/lib/types/section-props';
 // Props Interface
 export interface SectionProps {
     config: GlobalSettingsComplete;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     services: any[] | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     projects: any[] | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     advantages: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     trustPoints: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     galleryItems: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     faqItems: any[] | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reviews: any[] | null;
     blogPosts: BlogPost[] | null;
 }

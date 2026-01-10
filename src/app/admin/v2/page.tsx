@@ -460,8 +460,8 @@ function DashboardContent() {
               type="button"
               onClick={() => setSelectedView('pages')}
               className={`w-full mt-2 flex items-center gap-3 p-2.5 rounded-xl transition-all ${selectedView === 'pages'
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30'
-                  : 'bg-slate-700/50 hover:bg-slate-700'
+                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30'
+                : 'bg-slate-700/50 hover:bg-slate-700'
                 }`}
             >
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
@@ -858,277 +858,284 @@ function DashboardContent() {
             </header>
 
             {/* Form Content */}
-            <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
-              <AnimatePresence mode="wait">
-                {selectedView === 'global' ? (
-                  <motion.div
-                    key="global"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <GlobalForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'header' ? (
-                  <motion.div
-                    key="header"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <HeaderForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'footer' ? (
-                  <motion.div
-                    key="footer"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <FooterForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'integrations' ? (
-                  <motion.div
-                    key="integrations"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <IntegrationsForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'ai-config' ? (
-                  <motion.div
-                    key="ai-config"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <AIConfigForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedView === 'premium' ? (
-                  <motion.div
-                    key="premium"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <PremiumForm
-                      config={globalConfig}
-                      onUpdate={handleGlobalUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isHeroSection(selectedSection) ? (
-                  <motion.div
-                    key={`hero-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <HeroForm
-                      section={selectedSection as HeroSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isServicesSection(selectedSection) ? (
-                  <motion.div
-                    key={`services-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <ServicesForm
-                      section={selectedSection as ServicesSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isFAQSection(selectedSection) ? (
-                  <motion.div
-                    key={`faq-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <FAQForm
-                      section={selectedSection as FAQSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isTestimonialsSection(selectedSection) ? (
-                  <motion.div
-                    key={`testimonials-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <TestimonialsForm
-                      section={selectedSection as TestimonialsSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isContactSection(selectedSection) ? (
-                  <motion.div
-                    key={`contact-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <ContactForm
-                      section={selectedSection as ContactSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isAdvantagesSection(selectedSection) ? (
-                  <motion.div
-                    key={`advantages-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <AdvantagesForm
-                      section={selectedSection as AdvantagesSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isPortfolioSection(selectedSection) ? (
-                  <motion.div
-                    key={`portfolio-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <PortfolioForm
-                      section={selectedSection as PortfolioSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isTrustSection(selectedSection) ? (
-                  <motion.div
-                    key={`trust-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <TrustForm
-                      section={selectedSection as TrustSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isGallerySection(selectedSection) ? (
-                  <motion.div
-                    key={`gallery-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <GalleryForm
-                      section={selectedSection as GallerySection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isBlogSection(selectedSection) ? (
-                  <motion.div
-                    key={`blog-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <BlogForm
-                      section={selectedSection as BlogSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isAIAssistantSection(selectedSection) ? (
-                  <motion.div
-                    key={`ai-assistant-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <AIAssistantForm
-                      section={selectedSection as AIAssistantSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isCustomSection(selectedSection) ? (
-                  <motion.div
-                    key={`custom-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <CustomForm
-                      section={selectedSection as CustomSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection && isInfiniteZoomSection(selectedSection) ? (
-                  <motion.div
-                    key={`infinite-zoom-${selectedSection._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <InfiniteZoomForm
-                      section={selectedSection as InfiniteZoomSection & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : selectedSection ? (
-                  <motion.div
-                    key={`json-${(selectedSection as Section & { _rowId?: number })._rowId}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <JsonForm
-                      section={selectedSection as Section & { _rowId?: number }}
-                      onUpdate={handleSectionUpdate}
-                    />
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
+            <AnimatePresence mode="wait">
+              {selectedView === 'pages' ? (
+                <motion.div
+                  key="pages"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <PagesManager />
+                </motion.div>
+              ) : selectedView === 'global' ? (
+                <motion.div
+                  key="global"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <GlobalForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedView === 'header' ? (
+                <motion.div
+                  key="header"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <HeaderForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedView === 'footer' ? (
+                <motion.div
+                  key="footer"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <FooterForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedView === 'integrations' ? (
+                <motion.div
+                  key="integrations"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <IntegrationsForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedView === 'ai-config' ? (
+                <motion.div
+                  key="ai-config"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <AIConfigForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedView === 'premium' ? (
+                <motion.div
+                  key="premium"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <PremiumForm
+                    config={globalConfig}
+                    onUpdate={handleGlobalUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isHeroSection(selectedSection) ? (
+                <motion.div
+                  key={`hero-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <HeroForm
+                    section={selectedSection as HeroSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isServicesSection(selectedSection) ? (
+                <motion.div
+                  key={`services-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <ServicesForm
+                    section={selectedSection as ServicesSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isFAQSection(selectedSection) ? (
+                <motion.div
+                  key={`faq-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <FAQForm
+                    section={selectedSection as FAQSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isTestimonialsSection(selectedSection) ? (
+                <motion.div
+                  key={`testimonials-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <TestimonialsForm
+                    section={selectedSection as TestimonialsSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isContactSection(selectedSection) ? (
+                <motion.div
+                  key={`contact-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <ContactForm
+                    section={selectedSection as ContactSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isAdvantagesSection(selectedSection) ? (
+                <motion.div
+                  key={`advantages-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <AdvantagesForm
+                    section={selectedSection as AdvantagesSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isPortfolioSection(selectedSection) ? (
+                <motion.div
+                  key={`portfolio-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <PortfolioForm
+                    section={selectedSection as PortfolioSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isTrustSection(selectedSection) ? (
+                <motion.div
+                  key={`trust-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <TrustForm
+                    section={selectedSection as TrustSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isGallerySection(selectedSection) ? (
+                <motion.div
+                  key={`gallery-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <GalleryForm
+                    section={selectedSection as GallerySection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isBlogSection(selectedSection) ? (
+                <motion.div
+                  key={`blog-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <BlogForm
+                    section={selectedSection as BlogSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isAIAssistantSection(selectedSection) ? (
+                <motion.div
+                  key={`ai-assistant-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <AIAssistantForm
+                    section={selectedSection as AIAssistantSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isCustomSection(selectedSection) ? (
+                <motion.div
+                  key={`custom-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <CustomForm
+                    section={selectedSection as CustomSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection && isInfiniteZoomSection(selectedSection) ? (
+                <motion.div
+                  key={`infinite-zoom-${selectedSection._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <InfiniteZoomForm
+                    section={selectedSection as InfiniteZoomSection & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : selectedSection ? (
+                <motion.div
+                  key={`json-${(selectedSection as Section & { _rowId?: number })._rowId}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <JsonForm
+                    section={selectedSection as Section & { _rowId?: number }}
+                    onUpdate={handleSectionUpdate}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
-
-          {/* ========== PREVIEW PANEL ========== */}
-          {/* 🔧 FIXED: Forcer h-screen et sticky pour que le preview prenne toute la hauteur */}
-          <AnimatePresence>
-            {showPreview && (
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: '50%' }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="hidden lg:flex flex-col border-l border-white/10 bg-slate-950/50 h-screen sticky top-0"
-                style={{ minWidth: '400px', maxWidth: '50%' }}
-              >
-                <SitePreviewBlock
-                  lastUpdate={lastSaveTimestamp}
-                  previewUrl="/"
-                  height="100vh"
-                  className="h-[100vh] rounded-none border-0"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
-      </div >
-    </div >
+
+        {/* ========== PREVIEW PANEL ========== */}
+        {/* 🔧 FIXED: Forcer h-screen et sticky pour que le preview prenne toute la hauteur */}
+        <AnimatePresence>
+          {showPreview && (
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: '50%' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="hidden lg:flex flex-col border-l border-white/10 bg-slate-950/50 h-screen sticky top-0"
+              style={{ minWidth: '400px', maxWidth: '50%' }}
+            >
+              <SitePreviewBlock
+                lastUpdate={lastSaveTimestamp}
+                previewUrl="/"
+                height="100vh"
+                className="h-[100vh] rounded-none border-0"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 

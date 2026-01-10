@@ -20,7 +20,7 @@ export async function GET() {
     try {
         const pages = await getPages();
         return NextResponse.json(pages);
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: 'Failed to fetch pages' }, { status: 500 });
     }
 }
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
         const id = await createPage(parsed.data);
         return NextResponse.json({ id });
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: 'Failed to create page' }, { status: 500 });
     }
 }
@@ -55,7 +55,7 @@ export async function PUT(req: NextRequest) {
 
         await updatePage(id, updates);
         return NextResponse.json({ success: true });
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: 'Failed to update page' }, { status: 500 });
     }
 }
@@ -72,7 +72,7 @@ export async function DELETE(req: NextRequest) {
     try {
         await deletePage(parseInt(id, 10));
         return NextResponse.json({ success: true });
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete page' }, { status: 500 });
     }
 }
