@@ -149,10 +149,9 @@ export function FooterElectric({ config, legalDocs = [] }: FooterModuleProps) {
 
   // 🔧 FIX: Forcer l'effet électrique si le style global est 'mick-electric' ou thème 'Electric'
   const animationStyle = config.animationStyle || 'mick-electric';
-  const themeGlobal = config.themeGlobal || 'Electric';
+  // 🔧 FIX: Ne plus dépendre de themeGlobal pour l'effet électrique interne
   const forceElectricEffect = (
-    ['mick-electric', 'Mick Electric', 'Mick-Electrique'].includes(animationStyle as string) ||
-    themeGlobal === 'Electric'
+    ['mick-electric', 'Mick Electric', 'Mick-Electrique'].includes(animationStyle as string)
   );
 
   // 🆕 Couleurs personnalisées footer

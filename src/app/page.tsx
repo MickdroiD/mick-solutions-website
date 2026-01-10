@@ -16,11 +16,12 @@ import FAQSection from '@/components/FAQSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import AIAssistant from '@/components/AIAssistant';
 import BlogSection, { type BlogPost } from '@/components/BlogSection';
+import InfiniteZoomSection from '@/components/InfiniteZoomSection';
 
 // Section data fetchers
-import { 
-  getServices, 
-  getProjects, 
+import {
+  getServices,
+  getProjects,
   getAllLegalDocs,
   getAdvantages,
   getTrustPoints,
@@ -40,8 +41,8 @@ import {
 import { extractSectionEffects } from '@/lib/types/section-props';
 
 // Factory V2 imports
-import { 
-  isFactoryV2Configured, 
+import {
+  isFactoryV2Configured,
   getFactoryData,
   type FactoryData,
 } from '@/lib/factory-client';
@@ -75,20 +76,20 @@ function ConfigurationError() {
     <main className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="max-w-2xl mx-auto text-center">
         <div className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center">
-          <svg 
-            className="w-12 h-12 text-red-400" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            className="w-12 h-12 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        
+
         <h1 className="text-3xl font-bold text-white mb-4">
           Configuration Requise
         </h1>
-        
+
         <p className="text-slate-400 mb-8 text-lg">
           Factory V2 n&apos;est pas configuré. Veuillez définir les variables d&apos;environnement nécessaires.
         </p>
@@ -100,7 +101,7 @@ function ConfigurationError() {
           </h2>
           <pre className="bg-black/30 rounded-lg p-4 text-sm overflow-x-auto">
             <code className="text-emerald-400">
-{`BASEROW_API_TOKEN=your_token
+              {`BASEROW_API_TOKEN=your_token
 BASEROW_FACTORY_GLOBAL_ID=xxx
 BASEROW_FACTORY_SECTIONS_ID=xxx
 ADMIN_PASSWORD=123456`}
@@ -119,15 +120,15 @@ ADMIN_PASSWORD=123456`}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a 
-            href="https://docs.mick-solutions.ch/factory" 
+          <a
+            href="https://docs.mick-solutions.ch/factory"
             target="_blank"
             rel="noopener noreferrer"
             className="px-6 py-3 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-400 transition-colors"
           >
             Documentation
           </a>
-          <a 
+          <a
             href="/admin"
             className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors"
           >
@@ -152,13 +153,13 @@ export default async function Home() {
   }
 
   console.log('🏭 [Page] Using Factory V2 architecture');
-  
+
   try {
     // Fetch V2 data
     const factoryData = await getFactoryData('home');
-    
+
     // Also fetch section data from Baserow tables
-    const [services, projects, legalDocs, advantages, trustPoints, galleryItems, faqItems, reviews] = 
+    const [services, projects, legalDocs, advantages, trustPoints, galleryItems, faqItems, reviews] =
       await Promise.all([
         getServices(),
         getProjects(),
@@ -172,7 +173,7 @@ export default async function Home() {
 
     // Create legacy config for components that need it
     const legacyConfig = createLegacyConfigFromFactory(
-      factoryData.global, 
+      factoryData.global,
       factoryData.sections
     );
 
@@ -198,7 +199,7 @@ export default async function Home() {
     };
 
     return (
-      <FactoryPage 
+      <FactoryPage
         factoryData={factoryData}
         legacyConfig={legacyConfig}
         sectionProps={sectionProps}
@@ -235,7 +236,7 @@ interface FactoryPageProps {
 
 function FactoryPage({ factoryData, legacyConfig, sectionProps, legalDocs }: FactoryPageProps) {
   const { global, sections } = factoryData;
-  
+
   // Check if at least one section is active
   const hasAnySectionEnabled = sections.length > 0;
 
@@ -245,8 +246,8 @@ function FactoryPage({ factoryData, legacyConfig, sectionProps, legalDocs }: Fac
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-emerald-500/90 text-black text-xs py-1 px-4 flex items-center justify-between backdrop-blur-sm">
           <span className="font-mono">
-            🏭 <strong>FACTORY V2</strong> | Site: <strong>{global.identity.nomSite}</strong> | 
-            Theme: <strong>{global.branding.themeGlobal}</strong> | 
+            🏭 <strong>FACTORY V2</strong> | Site: <strong>{global.identity.nomSite}</strong> |
+            Theme: <strong>{global.branding.themeGlobal}</strong> |
             Sections: <strong>{sections.length}</strong> active
           </span>
           <span className="text-emerald-800">
@@ -277,7 +278,7 @@ function FactoryPage({ factoryData, legacyConfig, sectionProps, legalDocs }: Fac
 
       {/* ===== AI ASSISTANT ===== */}
       {global.ai.aiMode !== 'Disabled' && (
-        <AIAssistant 
+        <AIAssistant
           siteName={global.identity.nomSite}
           industry={global.ai.aiIndustry || undefined}
           primaryColor={global.branding.couleurPrimaire}
@@ -299,10 +300,10 @@ interface SectionRendererWithFallbackProps {
   legacyProps: SectionProps;
 }
 
-function SectionRendererWithFallback({ 
-  section, 
-  globalConfig, 
-  legacyProps 
+function SectionRendererWithFallback({
+  section,
+  globalConfig,
+  legacyProps
 }: SectionRendererWithFallbackProps) {
   // For Hero, use the new SectionRenderer
   if (section.type === 'hero') {
@@ -337,7 +338,7 @@ function SectionRendererWithFallback({
       const cardStyle = advSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
       const hoverEffect = advSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | 'Shake' | undefined;
       return (
-        <AdvantagesSection 
+        <AdvantagesSection
           advantages={adaptedAdvantages.length > 0 ? adaptedAdvantages : legacyProps.advantages}
           variant={variant}
           cardStyle={cardStyle}
@@ -386,9 +387,9 @@ function SectionRendererWithFallback({
       const titreParts = titre.split(' ');
       const sectionTitle = titreParts.slice(0, -1).join(' ') || 'Nos';
       const sectionTitleHighlight = titreParts.slice(-1)[0] || 'Services';
-      
+
       return (
-        <ServicesSection 
+        <ServicesSection
           services={adaptedServices.length > 0 ? adaptedServices : []}
           variant={variant}
           cardStyle={cardStyle}
@@ -439,7 +440,7 @@ function SectionRendererWithFallback({
       const hoverEffect = portSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
       const layout = portSection.design?.layout as 'Grid' | 'Masonry' | 'Carousel' | undefined;
       return (
-        <PortfolioSection 
+        <PortfolioSection
           projects={adaptedProjects}
           variant={variant}
           cardStyle={cardStyle}
@@ -479,7 +480,7 @@ function SectionRendererWithFallback({
       const cardStyle = trustSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
       const hoverEffect = trustSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
       return (
-        <TrustSection 
+        <TrustSection
           trustPoints={adaptedTrust.length > 0 ? adaptedTrust : legacyProps.trustPoints}
           variant={variant}
           cardStyle={cardStyle}
@@ -497,7 +498,7 @@ function SectionRendererWithFallback({
       const gallerySection = section as import('@/lib/schemas/factory').GallerySection;
       const { effects, textSettings } = extractSectionEffects(section);
       const v2Items = gallerySection.content.items || [];
-      
+
       // Si pas d'items V2, afficher un message vide (pas de fallback V1)
       if (v2Items.length === 0) {
         return (
@@ -508,7 +509,7 @@ function SectionRendererWithFallback({
           </section>
         );
       }
-      
+
       // Adapter les items V2 au format attendu par GallerySection
       const adaptedItems = v2Items.map(item => ({
         id: parseInt(item.id) || Math.random(),
@@ -517,9 +518,9 @@ function SectionRendererWithFallback({
         TypeAffichage: item.type as 'Slider' | 'Grille' | 'Zoom',
         Ordre: null,
       }));
-      
+
       return (
-        <GallerySection 
+        <GallerySection
           galleryItems={adaptedItems}
           variant={gallerySection.design.variant as 'Grid' | 'Slider' | 'Masonry' | 'AI' | undefined}
           columns={gallerySection.design.columns as '2' | '3' | '4' | 'Auto' | undefined}
@@ -563,8 +564,8 @@ function SectionRendererWithFallback({
       const cardStyle = testSection.design?.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined;
       const hoverEffect = testSection.design?.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined;
       return adaptedReviews.length > 0 ? (
-        <TestimonialsSection 
-          testimonials={adaptedReviews} 
+        <TestimonialsSection
+          testimonials={adaptedReviews}
           variant={testSection.design.variant as 'Minimal' | 'Carousel' | 'Cards' | 'Video' | 'AI' | undefined}
           cardStyle={cardStyle}
           hoverEffect={hoverEffect}
@@ -594,8 +595,8 @@ function SectionRendererWithFallback({
         Ordre: String(idx + 1),
       }));
       return adaptedFaq.length > 0 ? (
-        <FAQSection 
-          faqItems={adaptedFaq} 
+        <FAQSection
+          faqItems={adaptedFaq}
           variant={faqSection.design.variant as 'Minimal' | 'Accordion' | 'Tabs' | 'Search' | 'AI' | undefined}
           cardStyle={faqSection.design.cardStyle as 'Flat' | 'Shadow' | 'Border' | 'Glassmorphism' | undefined}
           hoverEffect={faqSection.design.hoverEffect as 'None' | 'Scale' | 'Glow' | 'Lift' | undefined}
@@ -611,8 +612,8 @@ function SectionRendererWithFallback({
       const blogSection = section as import('@/lib/schemas/factory').BlogSection;
       const { effects, textSettings } = extractSectionEffects(section);
       return (
-        <BlogSection 
-          posts={legacyProps.blogPosts} 
+        <BlogSection
+          posts={legacyProps.blogPosts}
           isDevMode={process.env.NODE_ENV === 'development'}
           title={blogSection.content.titre}
           subtitle={blogSection.content.sousTitre || undefined}
@@ -640,6 +641,32 @@ function SectionRendererWithFallback({
       );
     }
 
+    case 'infinite-zoom': {
+      const zoomSection = section as import('@/lib/schemas/factory').InfiniteZoomSection;
+      return (
+        <InfiniteZoomSection
+          layers={zoomSection.content.layers.map(layer => ({
+            id: layer.id,
+            imageUrl: layer.imageUrl,
+            title: layer.title || undefined,
+            description: layer.description || undefined,
+            focalPointX: layer.focalPointX,
+            focalPointY: layer.focalPointY,
+          }))}
+          // 🔧 FIX: Utiliser explicitement le titre (parfois nommé 'titre' parfois 'title' dans les données)
+          title={zoomSection.content.titre || 'Explorez'}
+          subtitle={zoomSection.content.sousTitre || undefined}
+          instructionText={zoomSection.content.instructionText}
+          variant={zoomSection.design.variant}
+          transitionDuration={zoomSection.design.transitionDuration}
+          zoomIntensity={zoomSection.design.zoomIntensity}
+          enableSound={zoomSection.design.enableSound}
+          showIndicators={zoomSection.design.showIndicators}
+          showProgress={zoomSection.design.showProgress}
+        />
+      );
+    }
+
     default:
       // For unrecognized types, use the generic SectionRenderer
       return <SectionRenderer section={section} globalConfig={globalConfig} />;
@@ -650,35 +677,34 @@ function SectionRendererWithFallback({
 // EMPTY STATE COMPONENT
 // ============================================
 function EmptyStateSection() {
+  // En production, on ne montre rien si aucune section n'est active
+  // (L'utilisateur ne veut pas voir de "Héros par défaut")
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+
   return (
-    <section className="min-h-[60vh] flex items-center justify-center px-4">
+    <section className="min-h-[40vh] flex items-center justify-center px-4 py-12 border-2 border-dashed border-slate-800 m-8 rounded-3xl bg-slate-900/50">
       <div className="text-center max-w-lg mx-auto">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center">
-          <svg 
-            className="w-10 h-10 text-primary-400" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+        <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-slate-800 flex items-center justify-center">
+          <svg
+            className="w-8 h-8 text-slate-500"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-3">
-          Site en préparation
+        <h2 className="text-xl font-bold text-white mb-2">
+          Aucune section active
         </h2>
-        <p className="text-slate-400 mb-6">
-          Ce site est actuellement en cours de configuration. 
-          Les sections seront bientôt disponibles.
-        </p>
-        {process.env.NODE_ENV === 'development' && (
-          <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-left">
-            <p className="text-amber-300 text-sm font-medium mb-2">🔧 Mode Développeur</p>
-            <p className="text-amber-200/70 text-xs">
-              Aucune section n&apos;est activée. Ajoutez des sections via /admin/v2 
-              ou directement dans Baserow (table SECTIONS).
-            </p>
-          </div>
-        )}
+        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-left inline-block">
+          <p className="text-amber-300 text-xs font-medium mb-1">🔧 Mode Développeur</p>
+          <p className="text-amber-200/70 text-[10px]">
+            Ajoutez des sections via /admin/v2
+          </p>
+        </div>
       </div>
     </section>
   );

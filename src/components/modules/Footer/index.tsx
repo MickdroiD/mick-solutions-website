@@ -34,14 +34,14 @@ interface FooterModuleSwitchProps {
  */
 export function FooterModule({ config, legalDocs = [] }: FooterModuleSwitchProps) {
   // Déterminer la variante à utiliser
-  const variantKey: VariantStyle = 
-    config.footerVariant || 
-    config.themeGlobal || 
+  /* 🔧 FIX: Suppr fallback themeGlobal */
+  const variantKey: VariantStyle =
+    config.footerVariant ||
     'Electric';
-  
+
   // Trouver le composant correspondant
   const VariantComponent = FooterVariants[variantKey] || FooterVariants.Electric;
-  
+
   return <VariantComponent config={config} variant={variantKey} legalDocs={legalDocs} />;
 }
 

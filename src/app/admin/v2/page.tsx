@@ -2,30 +2,30 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { 
-  Settings, Layers, Eye, EyeOff, Plus, Trash2, 
+import {
+  Settings, Layers, Eye, EyeOff, Plus, Trash2,
   GripVertical, Check, AlertCircle, RefreshCw,
   PanelRightClose, PanelRight, Menu, X,
-  Sparkles, ChevronRight, ExternalLink, 
+  Sparkles, ChevronRight, ExternalLink,
   LayoutGrid, Zap, MessageSquare, HelpCircle, Users, Image as ImageIcon,
-  Construction, UserCircle, Webhook, Bot, Crown, Shield, LogOut
+  Construction, UserCircle, Webhook, Bot, Crown, Shield, LogOut, ZoomIn
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminV2Provider, useAdminV2, isHeroSection } from '@/components/admin/v2/AdminContext';
-import { 
-  GlobalForm, HeroForm, JsonForm, ServicesForm, FAQForm, 
+import {
+  GlobalForm, HeroForm, JsonForm, ServicesForm, FAQForm,
   TestimonialsForm, ContactForm, AdvantagesForm, PortfolioForm,
   TrustForm, GalleryForm, HeaderForm, FooterForm,
-  BlogForm, AIAssistantForm, CustomForm,
+  BlogForm, AIAssistantForm, CustomForm, InfiniteZoomForm,
   IntegrationsForm, AIConfigForm, PremiumForm
 } from '@/components/admin/v2/forms';
 import { SitePreviewBlock } from '@/components/admin/ui';
-import type { 
-  Section, HeroSection, ServicesSection, FAQSection, 
+import type {
+  Section, HeroSection, ServicesSection, FAQSection,
   TestimonialsSection, ContactSection, AdvantagesSection,
   PortfolioSection, TrustSection, GallerySection,
-  BlogSection, AIAssistantSection, CustomSection
+  BlogSection, AIAssistantSection, CustomSection, InfiniteZoomSection
 } from '@/lib/schemas/factory';
 
 // Type guards pour les sections
@@ -73,6 +73,10 @@ function isCustomSection(section: Section): section is CustomSection {
   return section.type === 'custom';
 }
 
+function isInfiniteZoomSection(section: Section): section is InfiniteZoomSection {
+  return section.type === 'infinite-zoom';
+}
+
 // ============================================
 // SECTION TYPE CONFIG
 // ============================================
@@ -89,6 +93,7 @@ const SECTION_ICONS: Record<string, string> = {
   contact: '📧',
   blog: '📝',
   'ai-assistant': '🤖',
+  'infinite-zoom': '🔍',
   custom: '🎨',
 };
 
@@ -104,6 +109,7 @@ const SECTION_LABELS: Record<string, string> = {
   contact: 'Contact',
   blog: 'Blog',
   'ai-assistant': 'Assistant IA',
+  'infinite-zoom': 'Zoom Infini',
   custom: 'Custom',
 };
 
@@ -120,6 +126,7 @@ const AVAILABLE_SECTION_TYPES = [
   { type: 'contact', label: 'Contact', icon: MessageSquare, description: 'Formulaire de contact' },
   { type: 'blog', label: 'Blog', icon: Layers, description: 'Articles et actualités' },
   { type: 'ai-assistant', label: 'Assistant IA', icon: Sparkles, description: 'Chatbot intégré' },
+  { type: 'infinite-zoom', label: 'Zoom Infini', icon: ZoomIn, description: 'Effet zoom immersif' },
   { type: 'custom', label: 'Custom', icon: LayoutGrid, description: 'Section HTML personnalisée' },
 ] as const;
 
@@ -140,11 +147,10 @@ function SectionItem({ section, isSelected, onSelect, onToggleActive, onDelete }
     <Reorder.Item
       value={section}
       id={String(section._rowId)}
-      className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${
-        isSelected
-          ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30'
-          : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
-      }`}
+      className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all ${isSelected
+        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30'
+        : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+        }`}
     >
       {/* Drag Handle */}
       <div className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-white">
@@ -173,11 +179,10 @@ function SectionItem({ section, isSelected, onSelect, onToggleActive, onDelete }
             e.stopPropagation();
             onToggleActive(!section.isActive);
           }}
-          className={`p-1 rounded transition-colors ${
-            section.isActive
-              ? 'text-emerald-400 hover:bg-emerald-500/20'
-              : 'text-slate-500 hover:bg-slate-700'
-          }`}
+          className={`p-1 rounded transition-colors ${section.isActive
+            ? 'text-emerald-400 hover:bg-emerald-500/20'
+            : 'text-slate-500 hover:bg-slate-700'
+            }`}
           title={section.isActive ? 'Désactiver' : 'Activer'}
         >
           {section.isActive ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -300,7 +305,7 @@ function DashboardContent() {
     };
 
     const newId = await addSection(newSection as Omit<Section, 'id'>);
-    
+
     if (newId) {
       showNotification('success', `Section "${SECTION_LABELS[type] || type}" créée`);
       // Select the new section
@@ -352,9 +357,8 @@ function DashboardContent() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className={`fixed top-4 right-4 z-[9999] px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${
-              notification.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
-            }`}
+            className={`fixed top-4 right-4 z-[9999] px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${notification.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+              }`}
           >
             {notification.type === 'success' ? <Check className="w-5 h-5 text-white" /> : <AlertCircle className="w-5 h-5 text-white" />}
             <span className="text-white font-medium">{notification.message}</span>
@@ -393,11 +397,10 @@ function DashboardContent() {
             <button
               type="button"
               onClick={() => setSelectedView('global')}
-              className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
-                selectedView === 'global'
-                  ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30'
-                  : 'bg-slate-700/50 hover:bg-slate-700'
-              }`}
+              className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${selectedView === 'global'
+                ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30'
+                : 'bg-slate-700/50 hover:bg-slate-700'
+                }`}
             >
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
@@ -413,42 +416,39 @@ function DashboardContent() {
 
             {/* Advanced Config Panels */}
             <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setSelectedView('integrations')}
-                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
-                    selectedView === 'integrations'
-                      ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400'
-                      : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
+              <button
+                type="button"
+                onClick={() => setSelectedView('integrations')}
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${selectedView === 'integrations'
+                  ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400'
+                  : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
                 title="Intégrations"
-                >
-                  <Webhook className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedView('ai-config')}
-                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
-                    selectedView === 'ai-config'
-                      ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400'
-                      : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
+              >
+                <Webhook className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedView('ai-config')}
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${selectedView === 'ai-config'
+                  ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400'
+                  : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
                 title="Config IA"
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedView('premium')}
-                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${
-                    selectedView === 'premium'
-                      ? 'bg-amber-500/20 border border-amber-500/30 text-amber-400'
-                      : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
+              >
+                <Bot className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedView('premium')}
+                className={`flex items-center justify-center gap-1 p-1.5 rounded-lg transition-all ${selectedView === 'premium'
+                  ? 'bg-amber-500/20 border border-amber-500/30 text-amber-400'
+                  : 'bg-slate-700/50 hover:bg-slate-700 text-slate-500'
                   }`}
                 title="Premium"
-                >
-                  <Crown className="w-3.5 h-3.5" />
-                </button>
+              >
+                <Crown className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
@@ -459,11 +459,10 @@ function DashboardContent() {
               <button
                 type="button"
                 onClick={() => setSelectedView('header')}
-                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${
-                  selectedView === 'header'
-                    ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
-                    : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
-                }`}
+                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${selectedView === 'header'
+                  ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
+                  : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+                  }`}
               >
                 <span className="text-base">🔝</span>
                 <span className={`text-sm font-medium ${selectedView === 'header' ? 'text-blue-400' : 'text-white'}`}>
@@ -473,11 +472,10 @@ function DashboardContent() {
               <button
                 type="button"
                 onClick={() => setSelectedView('footer')}
-                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${
-                  selectedView === 'footer'
-                    ? 'bg-gradient-to-r from-slate-500/20 to-slate-400/20 border border-slate-400/30'
-                    : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
-                }`}
+                className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all ${selectedView === 'footer'
+                  ? 'bg-gradient-to-r from-slate-500/20 to-slate-400/20 border border-slate-400/30'
+                  : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+                  }`}
               >
                 <span className="text-base">📋</span>
                 <span className={`text-sm font-medium ${selectedView === 'footer' ? 'text-slate-300' : 'text-white'}`}>
@@ -530,21 +528,20 @@ function DashboardContent() {
                   <EyeOff className="w-3 h-3" />
                   Désactivées ({allSections.filter(s => !s.isActive).length})
                 </h3>
-                
+
                 <div className="space-y-1">
                   {allSections.filter(s => !s.isActive).map((section) => {
                     const sectionConfig = AVAILABLE_SECTION_TYPES.find(t => t.type === section.type);
                     const Icon = sectionConfig?.icon || Layers;
                     const label = SECTION_LABELS[section.type] || section.type;
-                    
+
                     return (
                       <div
                         key={section._rowId}
-                        className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all group ${
-                          selectedView === section._rowId
-                            ? 'bg-slate-700/50 border border-cyan-500/30'
-                            : 'bg-slate-800/30 border border-white/5 hover:border-white/10 opacity-60 hover:opacity-80'
-                        }`}
+                        className={`w-full flex items-center gap-2 p-2 rounded-lg transition-all group ${selectedView === section._rowId
+                          ? 'bg-slate-700/50 border border-cyan-500/30'
+                          : 'bg-slate-800/30 border border-white/5 hover:border-white/10 opacity-60 hover:opacity-80'
+                          }`}
                       >
                         {/* Zone cliquable pour sélectionner */}
                         <button
@@ -560,7 +557,7 @@ function DashboardContent() {
                             <span className="text-slate-600 text-[10px]">Cliquer pour modifier</span>
                           </div>
                         </button>
-                        
+
                         {/* Actions: Activer + Supprimer */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -604,15 +601,15 @@ function DashboardContent() {
                 <Plus className="w-3 h-3" />
                 Créer une section
               </h3>
-              
+
               <div className="space-y-1">
                 {AVAILABLE_SECTION_TYPES.map(({ type, label, icon: Icon }) => {
                   // Vérifie si une section de ce type existe déjà (active ou non)
                   const existingSection = allSections.find(s => s.type === type);
-                  
+
                   // Si la section existe déjà, ne pas afficher le bouton de création
                   if (existingSection) return null;
-                  
+
                   return (
                     <button
                       key={type}
@@ -681,9 +678,8 @@ function DashboardContent() {
         {/* ========== MAIN CONTENT ========== */}
         <div className="flex-1 flex flex-col lg:flex-row min-h-screen overflow-hidden">
           {/* Form Area */}
-          <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
-            showPreview ? 'lg:w-1/2 lg:max-w-[60%]' : 'lg:w-full'
-          }`}>
+          <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${showPreview ? 'lg:w-1/2 lg:max-w-[60%]' : 'lg:w-full'
+            }`}>
             {/* Header */}
             <header className="sticky top-0 z-40 bg-slate-800/95 backdrop-blur-xl border-b border-white/5 px-4 py-3 shrink-0">
               <div className="flex items-center justify-between">
@@ -697,28 +693,28 @@ function DashboardContent() {
                   </button>
                   <div className="flex items-center gap-2">
                     <span className="text-xl">
-                      {selectedView === 'global' ? '⚙️' 
+                      {selectedView === 'global' ? '⚙️'
                         : selectedView === 'header' ? '🔝'
-                        : selectedView === 'footer' ? '📋'
-                        : selectedView === 'integrations' ? '🔗'
-                        : selectedView === 'ai-config' ? '🤖'
-                        : selectedView === 'premium' ? '👑'
-                        : SECTION_ICONS[selectedSection?.type || ''] || '📦'}
+                          : selectedView === 'footer' ? '📋'
+                            : selectedView === 'integrations' ? '🔗'
+                              : selectedView === 'ai-config' ? '🤖'
+                                : selectedView === 'premium' ? '👑'
+                                  : SECTION_ICONS[selectedSection?.type || ''] || '📦'}
                     </span>
                     <h1 className="text-white font-bold">
                       {selectedView === 'global'
                         ? 'Configuration Globale'
                         : selectedView === 'header'
-                        ? 'Header & Navigation'
-                        : selectedView === 'footer'
-                        ? 'Footer & Contact'
-                        : selectedView === 'integrations'
-                        ? 'Intégrations & Webhooks'
-                        : selectedView === 'ai-config'
-                        ? 'Configuration IA'
-                        : selectedView === 'premium'
-                        ? 'Premium & Avancé'
-                        : SECTION_LABELS[selectedSection?.type || ''] || 'Section'}
+                          ? 'Header & Navigation'
+                          : selectedView === 'footer'
+                            ? 'Footer & Contact'
+                            : selectedView === 'integrations'
+                              ? 'Intégrations & Webhooks'
+                              : selectedView === 'ai-config'
+                                ? 'Configuration IA'
+                                : selectedView === 'premium'
+                                  ? 'Premium & Avancé'
+                                  : SECTION_LABELS[selectedSection?.type || ''] || 'Section'}
                     </h1>
                   </div>
                 </div>
@@ -740,11 +736,10 @@ function DashboardContent() {
                         newValue ? 'Mode Maintenance activé' : 'Mode Maintenance désactivé'
                       );
                     }}
-                    className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                      globalConfig.premium?.maintenanceMode
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-slate-700/50 text-slate-400 hover:text-white'
-                    }`}
+                    className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${globalConfig.premium?.maintenanceMode
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : 'bg-slate-700/50 text-slate-400 hover:text-white'
+                      }`}
                     title={globalConfig.premium?.maintenanceMode ? 'Désactiver le mode maintenance' : 'Activer le mode maintenance'}
                   >
                     <Construction className="w-4 h-4" />
@@ -767,11 +762,10 @@ function DashboardContent() {
                   <button
                     type="button"
                     onClick={() => setShowPreview(!showPreview)}
-                    className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                      showPreview
-                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                        : 'bg-slate-700/50 text-slate-400 hover:text-white'
-                    }`}
+                    className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${showPreview
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      : 'bg-slate-700/50 text-slate-400 hover:text-white'
+                      }`}
                     title={showPreview ? 'Masquer l\'aperçu' : 'Afficher l\'aperçu'}
                   >
                     {showPreview ? (
@@ -1029,6 +1023,18 @@ function DashboardContent() {
                   >
                     <CustomForm
                       section={selectedSection as CustomSection & { _rowId?: number }}
+                      onUpdate={handleSectionUpdate}
+                    />
+                  </motion.div>
+                ) : selectedSection && isInfiniteZoomSection(selectedSection) ? (
+                  <motion.div
+                    key={`infinite-zoom-${selectedSection._rowId}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                  >
+                    <InfiniteZoomForm
+                      section={selectedSection as InfiniteZoomSection & { _rowId?: number }}
                       onUpdate={handleSectionUpdate}
                     />
                   </motion.div>

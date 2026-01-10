@@ -22,6 +22,7 @@ export { GalleryForm } from './GalleryForm';
 export { BlogForm } from './BlogForm';
 export { AIAssistantForm } from './AIAssistantForm';
 export { CustomForm } from './CustomForm';
+export { InfiniteZoomForm } from './InfiniteZoomForm';
 
 // Global Config Panel Forms (P1/P2)
 export { IntegrationsForm } from './IntegrationsForm';

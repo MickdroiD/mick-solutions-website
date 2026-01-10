@@ -11,9 +11,9 @@ import { GlobalSettingsComplete } from '@/lib/types/global-settings';
 import { HeroModule } from './modules/Hero';
 import AIAssistant from './AIAssistant';
 import type { ModuleType, VariantStyle } from './modules/types';
-import type { 
-  GlobalConfig, 
-  Section, 
+import type {
+  GlobalConfig,
+  Section,
   HeroSection,
   ServicesSection,
   AdvantagesSection,
@@ -56,12 +56,12 @@ interface FactoryModuleRendererProps {
  * Utilisé pour la rétrocompatibilité avec l'ancienne architecture.
  */
 export function ModuleRenderer({ module, variant, config }: LegacyModuleRendererProps) {
-  const safeVariant: VariantStyle = variant || config.themeGlobal || 'Electric';
+  const safeVariant: VariantStyle = variant || 'Electric';
 
   switch (module) {
     case 'hero':
       return <HeroModule variant={safeVariant} config={config} />;
-    
+
     case 'navbar':
     case 'footer':
     case 'services':
@@ -75,7 +75,7 @@ export function ModuleRenderer({ module, variant, config }: LegacyModuleRenderer
       // Ces modules sont rendus directement dans page.tsx avec leurs composants spécifiques
       console.warn(`[ModuleRenderer] Module ${module} doit être rendu directement`);
       return null;
-    
+
     default:
       console.warn(`[ModuleRenderer] Module inconnu: ${module}`);
       return null;
@@ -104,8 +104,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
     case 'hero': {
       const heroSection = section as HeroSection;
       const legacyConfig = adaptHeroSectionToLegacy(heroSection, globalConfig);
-      const variant = heroSection.design.variant || globalConfig.branding.themeGlobal || 'Electric';
-      
+      const variant = heroSection.design.variant || 'Electric';
+
       return <HeroModule variant={variant as VariantStyle} config={legacyConfig} />;
     }
 
@@ -116,8 +116,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       // On retourne un placeholder pour l'instant - sera connecté plus tard
       console.log('[SectionRenderer] Services section:', servicesSection.content);
       return (
-        <SectionPlaceholder 
-          type="services" 
+        <SectionPlaceholder
+          type="services"
           title={servicesSection.content.titre}
           variant={servicesSection.design.variant}
         />
@@ -129,8 +129,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const advantagesSection = section as AdvantagesSection;
       console.log('[SectionRenderer] Advantages section:', advantagesSection.content);
       return (
-        <SectionPlaceholder 
-          type="advantages" 
+        <SectionPlaceholder
+          type="advantages"
           title={advantagesSection.content.titre}
           variant={advantagesSection.design.variant}
         />
@@ -142,8 +142,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const gallerySection = section as GallerySection;
       console.log('[SectionRenderer] Gallery section:', gallerySection.content);
       return (
-        <SectionPlaceholder 
-          type="gallery" 
+        <SectionPlaceholder
+          type="gallery"
           title={gallerySection.content.titre}
           variant={gallerySection.design.variant}
         />
@@ -155,8 +155,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const portfolioSection = section as PortfolioSection;
       console.log('[SectionRenderer] Portfolio section:', portfolioSection.content);
       return (
-        <SectionPlaceholder 
-          type="portfolio" 
+        <SectionPlaceholder
+          type="portfolio"
           title={portfolioSection.content.titre}
           variant={portfolioSection.design.variant}
         />
@@ -168,8 +168,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const testimonialsSection = section as TestimonialsSection;
       console.log('[SectionRenderer] Testimonials section:', testimonialsSection.content);
       return (
-        <SectionPlaceholder 
-          type="testimonials" 
+        <SectionPlaceholder
+          type="testimonials"
           title={testimonialsSection.content.titre}
           variant={testimonialsSection.design.variant}
         />
@@ -181,8 +181,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const trustSection = section as TrustSection;
       console.log('[SectionRenderer] Trust section:', trustSection.content);
       return (
-        <SectionPlaceholder 
-          type="trust" 
+        <SectionPlaceholder
+          type="trust"
           title={trustSection.content.titre}
           variant={trustSection.design.variant}
         />
@@ -194,8 +194,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const faqSection = section as FAQSection;
       console.log('[SectionRenderer] FAQ section:', faqSection.content);
       return (
-        <SectionPlaceholder 
-          type="faq" 
+        <SectionPlaceholder
+          type="faq"
           title={faqSection.content.titre}
           variant={faqSection.design.variant}
         />
@@ -207,8 +207,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const contactSection = section as ContactSection;
       console.log('[SectionRenderer] Contact section:', contactSection.content);
       return (
-        <SectionPlaceholder 
-          type="contact" 
+        <SectionPlaceholder
+          type="contact"
           title={contactSection.content.titre}
           variant={contactSection.design.variant}
         />
@@ -220,8 +220,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
       const blogSection = section as BlogSection;
       console.log('[SectionRenderer] Blog section:', blogSection.content);
       return (
-        <SectionPlaceholder 
-          type="blog" 
+        <SectionPlaceholder
+          type="blog"
           title={blogSection.content.titre}
           variant={blogSection.design.variant}
         />
@@ -231,7 +231,7 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
     // ========== AI ASSISTANT ==========
     case 'ai-assistant': {
       const aiSection = section as AIAssistantSection;
-      
+
       // Map section content/design to AIAssistant props
       return (
         <AIAssistant
@@ -253,8 +253,8 @@ export function SectionRenderer({ section, globalConfig }: FactoryModuleRenderer
     case 'custom': {
       console.log('[SectionRenderer] Custom section');
       return (
-        <SectionPlaceholder 
-          type="custom" 
+        <SectionPlaceholder
+          type="custom"
           title="Section Personnalisée"
           variant="Custom"
         />
@@ -317,7 +317,7 @@ function SectionPlaceholder({ type, title, variant }: SectionPlaceholderProps) {
 export function ModuleRendererDebug({ module, variant, config }: LegacyModuleRendererProps) {
   const safeVariant: VariantStyle = variant || config.themeGlobal || 'Electric';
   const implementedModules: ModuleType[] = ['hero'];
-  
+
   if (implementedModules.includes(module)) {
     return <ModuleRenderer module={module} variant={safeVariant} config={config} />;
   }

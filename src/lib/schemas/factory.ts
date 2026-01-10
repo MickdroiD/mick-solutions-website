@@ -108,10 +108,10 @@ export function safeJsonParseWithSchema<T extends z.ZodTypeAny>(
         // Not double-encoded, continue with original
       }
     }
-    
+
     // 🔧 FIX: Don't blindly replace \" with " - this breaks nested JSON strings!
     // JSON.parse will handle escaped quotes correctly.
-    
+
     const parsed = JSON.parse(cleaned) as unknown;
     const result = schema.safeParse(parsed);
 
@@ -366,6 +366,7 @@ export const SectionTypeEnum = z.enum([
   'contact',
   'blog',
   'ai-assistant',
+  'infinite-zoom',
   'custom',
 ]);
 
@@ -633,21 +634,21 @@ export const FooterConfigSchema = z.object({
   paysHebergement: z.string().nullable().default(null), // Ex: "Hébergé en Suisse"
   showLegalLinks: z.boolean().default(true),
   customFooterText: z.string().nullable().default(null),
-  
+
   // 🆕 Titres des sections (configurables depuis l'admin)
   footerContactTitle: z.string().nullable().default(null), // Ex: "Contact"
   footerLegalTitle: z.string().nullable().default(null), // Ex: "Légal"
   footerNavigationTitle: z.string().nullable().default(null), // Ex: "Navigation"
-  
+
   // 🆕 CTA Footer
   footerCtaText: z.string().nullable().default(null), // Texte du bouton CTA
   footerCtaUrl: z.string().nullable().default(null), // URL du CTA
   footerCtaHeading: z.string().nullable().default(null), // Titre CTA pour variante Bold (ex: "Travaillons Ensemble")
-  
+
   // 🆕 Powered By (optionnel - White Label)
   footerPoweredByText: z.string().nullable().default(null), // Ex: "Propulsé par MonEntreprise"
   showFooterPoweredBy: z.boolean().default(false), // Masqué par défaut pour White Label
-  
+
   footerLogoSize: z.number().int().positive().default(40),
   footerLogoAnimation: LogoAnimationEnum.default('none'),
   footerVariant: VariantStyleEnum.default('Electric'),
@@ -1089,6 +1090,46 @@ export const CustomSectionSchema = z.object({
   textSettings: TextSettingsSchema.optional(),
 });
 
+// 4.13 INFINITE ZOOM SECTION
+// Effet de zoom infini interactif où le visiteur navigue dans des images imbriquées
+export const InfiniteZoomLayerSchema = z.object({
+  id: z.string(),
+  imageUrl: z.string().url(),
+  title: z.string().nullable().default(null),
+  description: z.string().nullable().default(null),
+  // Position du point focal pour le zoom vers l'image suivante (en %)
+  focalPointX: z.number().min(0).max(100).default(50),
+  focalPointY: z.number().min(0).max(100).default(50),
+});
+
+export const InfiniteZoomContentSchema = z.object({
+  titre: z.string().default('Explorez'),
+  sousTitre: z.string().nullable().default(null),
+  instructionText: z.string().default('Scrollez pour explorer'),
+  layers: z.array(InfiniteZoomLayerSchema).default([]),
+});
+
+export const InfiniteZoomDesignSchema = z.object({
+  variant: z.enum(['fullscreen', 'contained', 'hero']).default('fullscreen'),
+  transitionDuration: z.number().int().min(200).max(2000).default(800),
+  zoomIntensity: z.number().min(1).max(5).default(2.5),
+  enableSound: z.boolean().default(false),
+  showIndicators: z.boolean().default(true),
+  showProgress: z.boolean().default(true),
+});
+
+export const InfiniteZoomSectionSchema = z.object({
+  type: z.literal('infinite-zoom'),
+  isActive: z.boolean().default(false),
+  order: z.number().int().default(11),
+  page: z.string().default('home'),
+  content: InfiniteZoomContentSchema,
+  design: InfiniteZoomDesignSchema,
+  effects: EffectSettingsSchema.optional(),
+  textSettings: TextSettingsSchema.optional(),
+});
+
+
 // ============================================
 // 5. MASTER SECTION SCHEMA (Discriminated Union)
 // ============================================
@@ -1105,6 +1146,7 @@ export const SectionSchema = z.discriminatedUnion('type', [
   ContactSectionSchema,
   BlogSectionSchema,
   AIAssistantSectionSchema,
+  InfiniteZoomSectionSchema,
   CustomSectionSchema,
 ]);
 
@@ -1120,6 +1162,7 @@ export type FAQSection = z.infer<typeof FAQSectionSchema>;
 export type ContactSection = z.infer<typeof ContactSectionSchema>;
 export type BlogSection = z.infer<typeof BlogSectionSchema>;
 export type AIAssistantSection = z.infer<typeof AIAssistantSectionSchema>;
+export type InfiniteZoomSection = z.infer<typeof InfiniteZoomSectionSchema>;
 export type CustomSection = z.infer<typeof CustomSectionSchema>;
 
 // ============================================
@@ -1458,7 +1501,8 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
 
 export const DEFAULT_HERO_SECTION: HeroSection = {
   type: 'hero',
-  isActive: true,
+  // 🔧 FIX: Disable default section to avoid "Ghost Hero" on config error
+  isActive: false,
   order: 0,
   page: 'home',
   content: {

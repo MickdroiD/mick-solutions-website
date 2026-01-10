@@ -140,7 +140,7 @@ class BaserowClient {
 
   async authenticate(): Promise<boolean> {
     log.step(`Authentification avec ${this.email}...`);
-
+    
     try {
       const response = await fetch(`${this.baseUrl}/api/user/token-auth/`, {
         method: 'POST',
@@ -196,43 +196,6 @@ class BaserowClient {
     return this.request<BaserowWorkspace[]>('GET', '/api/workspaces/');
   }
 
-  /**
-   * Crée un nouveau workspace pour isoler les données du client
-   */
-  async createWorkspace(name: string): Promise<BaserowWorkspace> {
-    log.step(`Création du workspace "${name}"...`);
-    return this.request<BaserowWorkspace>('POST', '/api/workspaces/', { name });
-  }
-
-  /**
-   * Crée un token de database pour un workspace spécifique
-   * Ce token permet l'accès en lecture seule aux tables du workspace
-   */
-  async createDatabaseToken(name: string, workspaceId: number): Promise<{ id: number; name: string; key: string }> {
-    log.step(`Création du token API "${name}"...`);
-    return this.request('POST', '/api/database/tokens/', {
-      name,
-      workspace: workspaceId,
-    });
-  }
-
-  /**
-   * Configure les permissions d'un token (lecture seule par défaut)
-   */
-  async setTokenPermissions(
-    tokenId: number,
-    databaseId: number,
-    permissions: { create: boolean; read: boolean; update: boolean; delete: boolean } = { create: false, read: true, update: false, delete: false }
-  ): Promise<void> {
-    await this.request('PUT', `/api/database/tokens/${tokenId}/`, {
-      permissions: [{
-        type: 'database',
-        database_id: databaseId,
-        ...permissions
-      }]
-    });
-  }
-
   // ========== DATABASE ==========
 
   async listDatabases(workspaceId: number): Promise<BaserowDatabase[]> {
@@ -275,7 +238,7 @@ class BaserowClient {
 
     // Lancer la duplication asynchrone
     const dupResponse = await this.duplicateDatabase(databaseId, newName);
-
+    
     // Si la réponse contient déjà la DB dupliquée (API sync)
     if (dupResponse.duplicated_application) {
       return dupResponse.duplicated_application;
@@ -292,10 +255,10 @@ class BaserowClient {
 
     while (Date.now() - startTime < maxWaitMs) {
       await sleep(1000);
-
+      
       try {
         const job = await this.getDuplicateJob(jobId);
-
+        
         if (job.progress_percentage !== lastProgress) {
           process.stdout.write(`\r   ⏳ Progression: ${job.progress_percentage}%`);
           lastProgress = job.progress_percentage;
@@ -489,7 +452,7 @@ ${Colors.RESET}`);
   } else {
     // Rechercher par nom
     log.step(`Recherche de la database "${TEMPLATE_DATABASE_NAME}"...`);
-
+    
     for (const ws of workspaces) {
       try {
         const databases = await client.listDatabases(ws.id);
@@ -533,37 +496,27 @@ ${Colors.RESET}`);
     process.exit(1);
   }
 
-  // ========== 4. CRÉATION WORKSPACE CLIENT ==========
-  log.category('4. CRÉATION WORKSPACE DÉDIÉ');
+  // ========== 4. CHECK IF CLIENT EXISTS ==========
+  log.category('4. VÉRIFICATION');
 
-  const clientWorkspaceName = `CLIENT - ${clientName}`;
-  let clientWorkspace: BaserowWorkspace;
+  log.step('Vérification si le client existe déjà...');
+  
+  const existingDatabases = await client.listDatabases(workspaceId!);
+  const existingClient = existingDatabases.find(db => db.name === databaseName);
 
-  // Vérifier si un workspace existe déjà
-  log.step('Vérification si le workspace client existe déjà...');
-  const existingWorkspace = workspaces.find(ws => ws.name === clientWorkspaceName);
-
-  if (existingWorkspace) {
-    log.warning(`Un workspace "${clientWorkspaceName}" existe déjà (ID: ${existingWorkspace.id})`);
-    const proceed = await confirm('Voulez-vous l\'utiliser et y ajouter une nouvelle database?');
+  if (existingClient) {
+    log.warning(`Un client avec ce nom existe déjà (ID: ${existingClient.id})`);
+    const proceed = await confirm('Voulez-vous continuer et créer un doublon?');
     if (!proceed) {
       log.info('Opération annulée.');
       process.exit(0);
     }
-    clientWorkspace = existingWorkspace;
   } else {
-    // Créer le nouveau workspace
-    try {
-      clientWorkspace = await client.createWorkspace(clientWorkspaceName);
-      log.success(`Workspace créé: "${clientWorkspaceName}" (ID: ${clientWorkspace.id})`);
-    } catch (err) {
-      log.error(`Erreur création workspace: ${err}`);
-      process.exit(1);
-    }
+    log.success('Aucun client existant avec ce nom.');
   }
 
-  // ========== 5. DUPLICATION DATABASE ==========
-  log.category('5. DUPLICATION DATABASE');
+  // ========== 5. DUPLICATE DATABASE ==========
+  log.category('5. DUPLICATION');
 
   let newDatabase: BaserowDatabase;
   try {
@@ -574,38 +527,6 @@ ${Colors.RESET}`);
     log.error(`Erreur lors de la duplication: ${err}`);
     process.exit(1);
   }
-
-  // ========== 5b. CRÉATION TOKEN API CLIENT ==========
-  log.category('5b. CRÉATION TOKEN API');
-
-  let clientToken: string = process.env.BASEROW_API_TOKEN || '';
-  let tokenCreated = false;
-
-  try {
-    const tokenName = `${clientSlug}-api`;
-    const tokenResponse = await client.createDatabaseToken(tokenName, clientWorkspace.id);
-    clientToken = tokenResponse.key;
-    tokenCreated = true;
-    log.success(`Token créé: "${tokenName}"`);
-    log.dim(`Token ID: ${tokenResponse.id}`);
-
-    // Attendre que le token soit actif
-    await sleep(1000);
-
-    // Configurer les permissions en lecture seule
-    log.step('Configuration des permissions (lecture seule)...');
-    await client.setTokenPermissions(tokenResponse.id, newDatabase.id, {
-      create: false,
-      read: true,
-      update: false,
-      delete: false
-    });
-    log.success('Permissions configurées: lecture seule');
-  } catch (err) {
-    log.warning(`Création token automatique impossible: ${err}`);
-    log.info('Le token principal sera utilisé.');
-  }
-
 
   // ========== 6. EXTRACT TABLE IDs ==========
   log.category('6. EXTRACTION DES IDs');
@@ -646,13 +567,13 @@ ${Colors.RESET}`);
     const rows = await client.listRows(configGlobalTable.id);
     if (rows.results.length > 0) {
       const firstRow = rows.results[0];
-
+      
       // Mettre à jour le nom du site (champ "Nom", pas "Name")
       await client.updateRow(configGlobalTable.id, firstRow.id, {
         Nom: clientName,
       });
       log.dim('→ Nom du site mis à jour');
-
+      
       // Mettre à jour le SEO avec le nom du client
       if (firstRow.SEO_Metadata) {
         try {
@@ -668,7 +589,7 @@ ${Colors.RESET}`);
           // Ignorer les erreurs de parsing JSON
         }
       }
-
+      
       // Mettre à jour le Contact
       const clientEmail = `contact@${clientSlug}.ch`;
       if (firstRow.Contact) {
@@ -683,7 +604,7 @@ ${Colors.RESET}`);
           // Ignorer les erreurs de parsing JSON
         }
       }
-
+      
       // Mettre à jour le Footer (copyright avec le nom du client)
       if (firstRow.Footer) {
         try {
@@ -697,7 +618,7 @@ ${Colors.RESET}`);
           // Ignorer les erreurs de parsing JSON
         }
       }
-
+      
       log.success('CONFIG_GLOBAL personnalisée');
     }
   } catch (err) {
@@ -711,7 +632,7 @@ ${Colors.RESET}`);
     const contactSection = sectionsRows.results.find(
       (row) => (row.Nom as string)?.toUpperCase() === 'CONTACT' || (row.Type as number) === 3421
     );
-
+    
     if (contactSection) {
       const contentStr = contactSection.Content as string;
       if (contentStr) {
@@ -735,31 +656,28 @@ ${Colors.RESET}`);
   // ========== 8. OUTPUT CONFIGURATION ==========
   log.category('8. CONFIGURATION FINALE');
 
+  const token = process.env.BASEROW_API_TOKEN || 'VOTRE_TOKEN_BASEROW';
   const adminPin = generateRandomPin();
 
   const leadsIdStr = leadsTable ? String(leadsTable.id) : 'N/A';
-  const tokenDisplay = tokenCreated ? '✅ Dédié' : '⚠️ Principal';
 
   console.log(`
 ${Colors.GREEN}${Colors.BOLD}
 ┌────────────────────────────────────────────────────────────┐
 │  ✅ CLIENT "${clientName}" CRÉÉ AVEC SUCCÈS!              
 ├────────────────────────────────────────────────────────────┤
-│  Workspace ID: ${String(clientWorkspace.id).padEnd(42)}│
 │  Database ID: ${String(newDatabase.id).padEnd(43)}│
 │  CONFIG_GLOBAL ID: ${String(configGlobalTable.id).padEnd(39)}│
 │  SECTIONS ID: ${String(sectionsTable.id).padEnd(44)}│
 │  LEADS ID: ${leadsIdStr.padEnd(47)}│
 │  ADMIN PIN: ${String(adminPin).padEnd(46)}│
-│  Token: ${tokenDisplay.padEnd(50)}│
 └────────────────────────────────────────────────────────────┘
 ${Colors.RESET}`);
-
 
   console.log(`
 ${Colors.CYAN}🚀 CONFIGURATION POUR DOCKER:${Colors.RESET}
 ${Colors.DIM}───────────────────────────────────────${Colors.RESET}
-${Colors.YELLOW}BASEROW_API_TOKEN=${clientToken}${tokenCreated ? ' # ✅ Token dédié' : ' # ⚠️ Token principal'}
+${Colors.YELLOW}BASEROW_API_TOKEN=${token}
 BASEROW_FACTORY_DATABASE_ID=${newDatabase.id}
 BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
 BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}${leadsTable ? `
@@ -770,19 +688,17 @@ ${Colors.DIM}──────────────────────�
 
   // Proposer de sauvegarder dans un fichier
   const saveToFile = await confirm('💾 Sauvegarder la config dans un fichier .env.client?');
-
+  
   if (saveToFile) {
     const envContent = `# ============================================
 # Configuration pour: ${clientName}
 # ============================================
 # Créé le: ${new Date().toISOString()}
-# Workspace ID: ${clientWorkspace.id}
 # Database ID: ${newDatabase.id}
 # Slug: ${clientSlug}
-# Token dédié: ${tokenCreated ? 'Oui' : 'Non (token principal)'}
 
 # === FACTORY V2 - BASEROW CONFIG ===
-BASEROW_API_TOKEN=${clientToken}
+BASEROW_API_TOKEN=${token}
 BASEROW_FACTORY_DATABASE_ID=${newDatabase.id}
 BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
 BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}
@@ -808,12 +724,11 @@ NEXT_PUBLIC_SITE_URL=https://${clientSlug}.ch
     log.success(`Configuration sauvegardée dans ${filename}`);
   }
 
-
   // ========== 9. DOCKER DEPLOYMENT FILES ==========
   log.category('9. FICHIERS DOCKER (Optionnel)');
 
   const createDockerFiles = await confirm('🐳 Voulez-vous générer les fichiers Docker pour ce client?');
-
+  
   if (createDockerFiles) {
     // Demander le type de domaine
     console.log(`
@@ -822,23 +737,23 @@ ${Colors.CYAN}Type de domaine:${Colors.RESET}
   2) Domaine externe du client (ex: ${clientSlug}.ch)
 `);
     const domainType = await prompt('Choix (1 ou 2): ');
-
+    
     let domain: string;
     const routerName = clientSlug.replace(/-/g, '');
-
+    
     if (domainType === '2') {
       domain = await prompt(`Domaine du client (ex: ${clientSlug}.ch): `);
       if (!domain) domain = `${clientSlug}.ch`;
     } else {
       domain = `${clientSlug}.mick-solutions.ch`;
     }
-
+    
     // Créer le dossier client
     const clientDir = `/home/mickadmin/docker/clients/${clientSlug}`;
-
+    
     try {
       let shouldGenerate = true;
-
+      
       // Vérifier si le dossier existe déjà
       if (fs.existsSync(clientDir)) {
         const overwrite = await confirm(`⚠️ Le dossier ${clientDir} existe déjà. Écraser?`);
@@ -849,21 +764,19 @@ ${Colors.CYAN}Type de domaine:${Colors.RESET}
       } else {
         fs.mkdirSync(clientDir, { recursive: true });
       }
-
+      
       if (shouldGenerate) {
         // Fichier .env
         const envContent = `# ============================================
 # Configuration pour: ${clientName}
 # ============================================
 # Créé le: ${new Date().toISOString()}
-# Workspace ID: ${clientWorkspace.id}
 # Database ID: ${newDatabase.id}
 # Slug: ${clientSlug}
-# Token dédié: ${tokenCreated ? 'Oui' : 'Non'}
 
 # === BASEROW CONFIG ===
 BASEROW_API_URL=https://baserow.mick-solutions.ch/api
-BASEROW_API_TOKEN=${clientToken}
+BASEROW_API_TOKEN=${token}
 BASEROW_FACTORY_GLOBAL_ID=${configGlobalTable.id}
 BASEROW_FACTORY_SECTIONS_ID=${sectionsTable.id}
 ${leadsTable ? `BASEROW_FACTORY_LEADS_ID=${leadsTable.id}` : '# BASEROW_FACTORY_LEADS_ID= # Table LEADS non présente'}
@@ -877,9 +790,8 @@ SITE_NAME=${clientName}
 NEXT_PUBLIC_SITE_URL=https://${domain}
 `;
 
-
         // docker-compose.yml
-        const dockerComposeContent = domainType === '2'
+        const dockerComposeContent = domainType === '2' 
           ? `# Docker Compose pour: ${clientName}
 # Domaine externe: ${domain}
 services:
@@ -941,7 +853,7 @@ networks:
         // Écrire les fichiers
         fs.writeFileSync(path.join(clientDir, '.env'), envContent);
         fs.writeFileSync(path.join(clientDir, 'docker-compose.yml'), dockerComposeContent);
-
+        
         log.success(`Fichiers Docker créés dans ${clientDir}`);
         log.dim(`→ .env`);
         log.dim(`→ docker-compose.yml`);

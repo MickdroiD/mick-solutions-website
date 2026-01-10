@@ -261,17 +261,17 @@ const SECTION_TYPE_IDS = {
 
 // HERO
 const SEED_HERO_CONTENT = {
-  titreHero: 'Je suis votre Titre Principal.',
-  sousTitreHero: "Et moi, je suis le sous-titre. C'est ici que vous expliquez votre proposition de valeur en une phrase simple et percutante.",
-  badgeHero: '👋 Commencez ici !',
-  ctaPrincipal: 'Votre Appel à l\'Action',
+  titreHero: 'Hey ! Bienvenue chez Vous 🚀',
+  sousTitreHero: "Ceci est bien plus qu'un template. C'est votre nouvelle vitrine magique. Modifiez-moi pour raconter votre histoire.",
+  badgeHero: '👋 Votre aventure commence ici',
+  ctaPrincipal: 'Démarrer le projet',
   ctaPrincipalUrl: '#contact',
-  ctaSecondaire: 'En savoir plus',
+  ctaSecondaire: 'Découvrir mes services',
   ctaSecondaireUrl: '#services',
   trustStat1Value: '100%',
-  trustStat1Label: 'Modifiable',
+  trustStat1Label: 'Satisfaction',
   trustStat2Value: '24/7',
-  trustStat2Label: 'Votre Site',
+  trustStat2Label: 'Support Client',
 };
 
 const SEED_HERO_DESIGN = {
@@ -281,41 +281,41 @@ const SEED_HERO_DESIGN = {
 
 // SERVICES
 const SEED_SERVICES_CONTENT = {
-  titreSection: 'Présentez vos points forts',
-  sousTitreSection: 'Utilisez cette section pour lister vos services ou vos avantages concurrentiels.',
+  titreSection: 'Ce que je déchire 🎸',
+  sousTitreSection: 'Voici mes super-pouvoirs. À vous de définir les vôtres !',
   services: [
     {
-      titre: 'Service Principal',
-      description: 'Décrivez ici votre activité cœur de métier. Soyez précis et concis pour convaincre.',
+      titre: 'Expertise Technique',
+      description: 'Je transforme le café en code propre et performant. (Texte à remplacer par votre vraie expertise !)',
       icon: 'Zap',
     },
     {
-      titre: 'Votre Atout Majeur',
-      description: 'Pourquoi vous choisir vous ? Qualité, rapidité, prix ? Dites-le ici.',
-      icon: 'ShieldCheck',
+      titre: 'Design Immersif',
+      description: 'Vos utilisateurs vont adorer scroller sur votre site. L\'expérience avant tout.',
+      icon: 'Palette',
     },
     {
-      titre: 'Option ou Bonus',
-      description: 'Un petit plus qui fait la différence. La livraison gratuite ? Le support dédié ?',
-      icon: 'Gift',
+      titre: 'Support Réactif',
+      description: 'Un problème ? Je suis là plus vite que votre ombre. La tranquillité d\'esprit incluse.',
+      icon: 'LifeBuoy',
     },
   ],
 };
 
 // TESTIMONIALS
 const SEED_TESTIMONIALS_CONTENT = {
-  titreSection: 'Ils vous font confiance',
+  titreSection: 'Ils m\'adorent ❤️',
   temoignages: [
     {
-      nom: 'Jean Exemple',
-      poste: 'PDG de Start-Up',
-      avis: "C'est ici que vos clients disent du bien de vous. Un témoignage rassure vos futurs prospects et valide votre expertise.",
+      nom: 'Elon M.',
+      poste: 'CEO de l\'Espace',
+      avis: "Incroyable ! Ce site est parti sur Mars avant mes fusées. Un travail d'orfèvre.",
       note: 5,
     },
     {
-      nom: 'Sophie Martin',
-      poste: 'Cliente satisfaite',
-      avis: "Même court, un avis positif est puissant. N'oubliez pas de demander l'autorisation à vos clients avant de les afficher !",
+      nom: 'Sophie T.',
+      poste: 'Entrepreneuse Heureuse',
+      avis: "Depuis que j'ai ce site, mon téléphone ne s'arrête plus de sonner. Merci pour tout !",
       note: 5,
     },
   ],
@@ -323,29 +323,29 @@ const SEED_TESTIMONIALS_CONTENT = {
 
 // FAQ
 const SEED_FAQ_CONTENT = {
-  titreSection: 'Questions Fréquentes',
+  titreSection: 'Questions ? Réponses ! 💡',
   questions: [
     {
-      question: 'Puis-je modifier ces textes moi-même ?',
-      reponse: "Absolument ! Connectez-vous à votre panneau d'administration, cliquez sur la section FAQ et modifiez ce texte en temps réel.",
+      question: 'Puis-je modifier ces textes facilement ?',
+      reponse: "Oui ! C'est aussi simple que d'envoyer un SMS. Tout se passe dans votre espace admin.",
     },
     {
-      question: 'Est-ce que cette section est obligatoire ?',
-      reponse: "Non. Chaque section peut être désactivée d'un simple clic sur le bouton 'Œil' dans votre interface d'administration.",
+      question: 'Est-ce que le site est rapide ?',
+      reponse: "Plus rapide que l'éclair ⚡️. Google va adorer, et vos visiteurs aussi.",
     },
     {
-      question: 'Comment ajouter une nouvelle question ?',
-      reponse: "Dans l'admin, cliquez simplement sur le bouton '+' en bas de la liste des questions.",
+      question: 'Et si je veux ajouter des photos ?',
+      reponse: "Glissez, déposez, c'est en ligne. On a pensé à tout pour vous simplifier la vie.",
     },
   ],
 };
 
 // CONTACT
 const SEED_CONTACT_CONTENT = {
-  titreSection: 'Parlons de votre projet',
-  sousTitreSection: 'Ce formulaire est directement relié à votre adresse email. Faites un test !',
-  emailContact: 'contact@votre-domaine.com',
-  telephoneContact: '+41 00 000 00 00',
+  titreSection: 'On lance le projet ? ☕️',
+  sousTitreSection: 'Remplissez ce formulaire et je reçois tout illico sur mon email pro.',
+  emailContact: 'hello@votre-domaine.com',
+  telephoneContact: '+41 79 123 45 67',
   adresseContact: 'Genève, Suisse',
 };
 
@@ -456,11 +456,56 @@ ${Colors.RESET}`);
         content: SEED_CONTACT_CONTENT,
         design: {},
       },
+      {
+        name: 'ZOOM',
+        type: 3482, // ID récupéré dynamiquement: 3482
+        order: 6,
+        content: {
+          titre: 'Exploration Infinie',
+          sousTitre: 'Plongez dans les détails comme jamais auparavant.',
+          instructionText: 'Scrollez pour zoomer',
+          layers: [
+            {
+              id: 'layer_1',
+              imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop', // Space
+              title: 'Cosmos',
+              description: 'Le début du voyage',
+              focalPointX: 50,
+              focalPointY: 50
+            },
+            {
+              id: 'layer_2',
+              imageUrl: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2072&auto=format&fit=crop', // Earth
+              title: 'Orbite',
+              description: 'Notre point bleu pâle',
+              focalPointX: 30,
+              focalPointY: 40
+            },
+            {
+              id: 'layer_3',
+              imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2068&auto=format&fit=crop', // Canyon
+              title: 'Terre',
+              description: 'Retour à la nature',
+              focalPointX: 50,
+              focalPointY: 50
+            }
+          ],
+          design: {
+            variant: 'contained',
+            transitionDuration: 800,
+            zoomIntensity: 2.5,
+            showIndicators: true,
+            showProgress: true,
+            enableSound: false
+          }
+        },
+        design: {},
+      },
     ];
 
     for (const section of sections) {
       log.step(`Création de la section ${section.name}...`);
-      
+
       const sectionData = {
         Nom: section.name,
         Type: section.type,

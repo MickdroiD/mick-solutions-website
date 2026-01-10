@@ -350,8 +350,9 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
   );
 
   if (error || !rows) {
-    logWarn('No sections found, using defaults', error);
-    return [DEFAULT_HERO_SECTION];
+    // 🔧 FIX: Returning empty array allows showing "Empty State" instead of forced Hero
+    logWarn('No sections found or fetch error', error);
+    return [];
   }
 
   logInfo(`Fetched ${rows.length} section rows`);
@@ -397,10 +398,29 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
     };
 
     // Build section object
-    // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
+    // 🔧 FIX: Robust isActive parsing (Secure by default)
+    // Baserow can return "false" (string), null, undefined, or boolean.
+    let isActive = false; // Default to false
+    const rawActif = row.Actif as unknown;
+    const rawIsActive = row.Is_Active as unknown;
+
+    if (typeof rawActif === 'boolean') isActive = rawActif;
+    else if (typeof rawActif === 'string') isActive = rawActif.toLowerCase() === 'true';
+    else if (typeof rawIsActive === 'boolean') isActive = rawIsActive;
+    else if (typeof rawIsActive === 'string') isActive = rawIsActive.toLowerCase() === 'true';
+    else {
+      // Fallback: Si aucune valeur n'est présente, on désactive par sécurité
+      // Sauf pour le cas legacy où on veut peut-être être permissif (mais ici on debug)
+      isActive = false;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      // console.log(`[Factory] Section ${row.id} (${sectionType}): Actif=${rawActif}, Is_Active=${rawIsActive} -> isActive=${isActive}`);
+    }
+
     const sectionData = {
       type: sectionType,
-      isActive: row.Actif ?? row.Is_Active ?? true,
+      isActive,
       order: typeof row.Order === 'string' ? parseInt(row.Order, 10) : (row.Order ?? 0),
       page: row.Page || 'home',
       content,
@@ -413,13 +433,13 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
     const validation = SectionSchema.safeParse(sectionData);
 
     if (validation.success) {
-      sections.push(validation.data);
+      sections.push({ ...validation.data, _rowId: row.id } as Section & { _rowId: number });
       logInfo(`✅ Section "${sectionType}" (ID: ${row.id}) loaded`);
     } else {
       logWarn(`Section ${row.id} (${sectionType}) validation failed`, validation.error.issues);
       // Try to include with raw data anyway (graceful degradation)
       try {
-        sections.push(sectionData as Section);
+        sections.push({ ...sectionData, _rowId: row.id } as unknown as Section & { _rowId: number });
       } catch {
         logError(`Could not include section ${row.id}`);
       }
@@ -481,11 +501,20 @@ export async function getAllSections(): Promise<Section[]> {
     };
 
 
-    // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > true (default)
+    // 🔧 FIX: Priorité Actif (DB) > Is_Active (legacy) > false (secure default)
+    let isActive = false; // Secure default
+    const rawActif = row.Actif as unknown;
+    const rawIsActive = row.Is_Active as unknown;
+
+    if (typeof rawActif === 'boolean') isActive = rawActif;
+    else if (typeof rawActif === 'string') isActive = rawActif.toLowerCase() === 'true';
+    else if (typeof rawIsActive === 'boolean') isActive = rawIsActive;
+    else if (typeof rawIsActive === 'string') isActive = rawIsActive.toLowerCase() === 'true';
+
     const sectionData = {
       id: row.id, // Include row ID for updates
       type: sectionType,
-      isActive: row.Actif ?? row.Is_Active ?? true,
+      isActive,
       order: typeof row.Order === 'string' ? parseInt(row.Order, 10) : (row.Order ?? 0),
       page: row.Page || 'home',
       content,
@@ -501,6 +530,12 @@ export async function getAllSections(): Promise<Section[]> {
     } else {
       // Log validation errors
       logWarn(`Section ${row.id} (${sectionType}) validation failed`, validation.error.issues);
+      // 🔧 FIX: Graceful degradation for getAllSections too (so we can fix them in Admin)
+      try {
+        sections.push({ ...sectionData, _rowId: row.id } as unknown as Section & { _rowId: number });
+      } catch {
+        logError(`Could not include section ${row.id}`);
+      }
     }
   }
 
@@ -688,6 +723,7 @@ const FALLBACK_SECTION_TYPE_IDS: Record<string, number> = {
   'blog': 3422,
   'ai-assistant': 3423,
   'custom': 3424,
+  'infinite-zoom': 3494,
 };
 
 // 🔧 FIX: Cache pour les IDs dynamiques (évite appels répétés)
@@ -848,6 +884,11 @@ export async function deleteSection(
     );
 
     if (!response.ok) {
+      // 🔧 FIX: Si la section n'existe pas (404), on considère la suppression comme réussie (Zombie section)
+      if (response.status === 404) {
+        logWarn(`Section ${rowId} introuvable (404), suppression considérée comme réussie`);
+        return { success: true };
+      }
       const errorText = await response.text();
       logError('Delete section failed', errorText);
       return { success: false, error: errorText };

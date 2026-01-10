@@ -165,9 +165,9 @@ export function adaptGlobalConfigToLegacy(
 
     // ========== K. MODULES - VARIANTES ==========
     themeGlobal: config.branding.themeGlobal as GlobalSettingsComplete['themeGlobal'],
-    heroVariant: (heroDesign?.variant || config.branding.themeGlobal || 'Electric') as GlobalSettingsComplete['heroVariant'],
-    // 🔧 FIX: Utilise navbarVariant dédié avec fallback sur themeGlobal
-    navbarVariant: (config.branding.navbarVariant || config.branding.themeGlobal || 'Electric') as GlobalSettingsComplete['navbarVariant'],
+    heroVariant: (heroDesign?.variant || 'Electric') as GlobalSettingsComplete['heroVariant'],
+    // 🔧 FIX: Navbar ne doit PAS fallback sur themeGlobal pour éviter les interférences
+    navbarVariant: (config.branding.navbarVariant || 'Electric') as GlobalSettingsComplete['navbarVariant'],
     servicesVariant: 'Cards',
     galleryVariant: 'Grid',
     testimonialsVariant: 'Cards',
