@@ -52,7 +52,7 @@ export function PagesManager() {
 
     const startEdit = (page: FactoryPage) => {
         setFormData(page);
-        setEditingId(page.id);
+        setEditingId(page.id || null);
         setIsCreating(false);
     };
 
@@ -207,8 +207,8 @@ export function PagesManager() {
                         layout
                         key={page.id}
                         className={`group flex items-center justify-between p-4 rounded-xl border transition-all ${selectedPage === page.slug
-                                ? 'bg-cyan-500/10 border-cyan-500/30'
-                                : 'bg-slate-800/30 border-white/5 hover:border-white/10'
+                            ? 'bg-cyan-500/10 border-cyan-500/30'
+                            : 'bg-slate-800/30 border-white/5 hover:border-white/10'
                             }`}
                     >
                         <div className="flex items-center gap-4">
@@ -238,8 +238,8 @@ export function PagesManager() {
                             <button
                                 onClick={() => setSelectedPage(page.slug)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${selectedPage === page.slug
-                                        ? 'bg-cyan-500 text-white border-cyan-500'
-                                        : 'bg-slate-700/50 text-slate-400 border-transparent hover:bg-slate-700 hover:text-white'
+                                    ? 'bg-cyan-500 text-white border-cyan-500'
+                                    : 'bg-slate-700/50 text-slate-400 border-transparent hover:bg-slate-700 hover:text-white'
                                     }`}
                             >
                                 {selectedPage === page.slug ? 'Sélectionnée' : 'Sélectionner'}

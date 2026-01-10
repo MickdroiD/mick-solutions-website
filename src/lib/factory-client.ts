@@ -432,7 +432,7 @@ export async function getSections(pageSlug: string = 'home'): Promise<Section[]>
   const targetSlug = pageSlug === '/' ? 'home' : pageSlug;
   const targetPage = pages.find(p => p.slug === targetSlug);
 
-  if (targetPage && targetPage.id !== -1) {
+  if (targetPage && targetPage.id !== undefined && targetPage.id !== -1) {
     pageIdFilter = targetPage.id;
   } else {
     logWarn(`Page not found for slug: ${pageSlug}. Fallback to fetching all and filtering?`);
@@ -555,13 +555,13 @@ export async function getSections(pageSlug: string = 'home'): Promise<Section[]>
     const validation = SectionSchema.safeParse(sectionData);
 
     if (validation.success) {
-      sections.push({ ...validation.data, _rowId: row.id } as Section & { _rowId: number });
+      sections.push({ ...validation.data, id: row.id } as Section);
       logInfo(`✅ Section "${sectionType}" (ID: ${row.id}) loaded`);
     } else {
       logWarn(`Section ${row.id} (${sectionType}) validation failed`, validation.error.issues);
       // Try to include with raw data anyway (graceful degradation)
       try {
-        sections.push({ ...sectionData, _rowId: row.id } as unknown as Section & { _rowId: number });
+        sections.push({ ...sectionData, id: row.id } as unknown as Section);
       } catch {
         logError(`Could not include section ${row.id}`);
       }
@@ -1024,7 +1024,7 @@ export async function createSection(
     const pages = await getPages();
     const pageSlug = section.page || 'home';
     const pageObj = pages.find(p => p.slug === pageSlug);
-    if (pageObj) {
+    if (pageObj && pageObj.id) {
       pageIds = [pageObj.id];
     }
   } catch (e) { logError('Create Section: Failed to resolve Page ID', e); }

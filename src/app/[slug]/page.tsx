@@ -27,12 +27,10 @@ export async function generateMetadata({ params }: PageProps) {
         };
     }
 
-    const pageSeo = page.seo;
-    const globalSeo = globalConfig.seo;
-
+    // FactoryPage has flat SEO properties
     return {
-        title: pageSeo?.metaTitre || globalSeo?.metaTitre || 'Default Title',
-        description: pageSeo?.metaDescription || globalSeo?.metaDescription || 'Default Description',
+        title: page.seoTitle || globalConfig.seo?.metaTitre || 'Default Title',
+        description: page.seoDescription || globalConfig.seo?.metaDescription || 'Default Description',
     };
 }
 

@@ -14,6 +14,8 @@ import FAQSection from '@/components/FAQSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import BlogSection, { type BlogPost } from '@/components/BlogSection';
 import InfiniteZoomSection from '@/components/InfiniteZoomSection';
+import { NavbarModule, FooterModule } from '@/components/modules';
+import type { FactoryPage } from '@/lib/schemas/factory';
 
 // Types
 import { type FactoryData } from '@/lib/factory-client';
@@ -41,17 +43,17 @@ export interface SectionProps {
     blogPosts: BlogPost[] | null;
 }
 
-interface FactoryPageRendererProps {
+interface FactorySectionProps {
     section: Section;
     globalConfig: FactoryData['global'];
     legacyProps: SectionProps;
 }
 
-export function FactoryPageRenderer({
+function FactorySection({
     section,
     globalConfig,
     legacyProps
-}: FactoryPageRendererProps) {
+}: FactorySectionProps) {
     // For Hero, use the new SectionRenderer
     if (section.type === 'hero') {
         return <SectionRenderer section={section} globalConfig={globalConfig} />;
@@ -418,4 +420,42 @@ export function FactoryPageRenderer({
             // For unrecognized types, use the generic SectionRenderer
             return <SectionRenderer section={section} globalConfig={globalConfig} />;
     }
+}
+
+interface FactoryPageRendererProps {
+    globalConfig: FactoryData['global'];
+    page: FactoryPage;
+    sections: Section[];
+    legacyProps: SectionProps;
+}
+
+export function FactoryPageRenderer({
+    globalConfig,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    page,
+    sections,
+    legacyProps
+}: FactoryPageRendererProps) {
+    return (
+        <main className="relative min-h-screen bg-background">
+            <NavbarModule config={legacyProps.config} />
+
+            {sections.length > 0 ? (
+                sections.map((section, index) => (
+                    <FactorySection
+                        key={section.id || `section-${index}`}
+                        section={section}
+                        globalConfig={globalConfig}
+                        legacyProps={legacyProps}
+                    />
+                ))
+            ) : (
+                <div className="min-h-[50vh] flex items-center justify-center">
+                    <p className="text-slate-500">Cette page est vide.</p>
+                </div>
+            )}
+
+            <FooterModule config={legacyProps.config} legalDocs={[]} />
+        </main>
+    );
 }

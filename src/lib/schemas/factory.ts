@@ -1150,7 +1150,7 @@ export const SectionSchema = z.discriminatedUnion('type', [
   CustomSectionSchema,
 ]);
 
-export type Section = z.infer<typeof SectionSchema>;
+export type Section = z.infer<typeof SectionSchema> & { id?: number };
 export type HeroSection = z.infer<typeof HeroSectionSchema>;
 export type ServicesSection = z.infer<typeof ServicesSectionSchema>;
 export type AdvantagesSection = z.infer<typeof AdvantagesSectionSchema>;
