@@ -303,7 +303,7 @@ function DashboardContent() {
       type: type as Section['type'],
       isActive: true,
       order: allSections.length,
-      page: 'home',
+      page: selectedPage || 'home',
       content: defaultContent,
       design: defaultDesign,
     };

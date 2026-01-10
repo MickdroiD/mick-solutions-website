@@ -1023,7 +1023,8 @@ export async function createSection(
   try {
     const pages = await getPages();
     const pageSlug = section.page || 'home';
-    const pageObj = pages.find(p => p.slug === pageSlug);
+    const targetSlug = pageSlug === 'home' ? '/' : pageSlug;
+    const pageObj = pages.find(p => p.slug === targetSlug || p.slug === pageSlug);
     if (pageObj && pageObj.id) {
       pageIds = [pageObj.id];
     }
