@@ -1607,3 +1607,16 @@ export function serializeSectionForBaserow(section: Section): {
   };
 }
 
+// ============================================
+// 5. PAGE SCHEMA
+// ============================================
+
+export const PageSchema = z.object({
+  id: z.number().int().positive().optional(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
+});
+
+export type FactoryPage = z.infer<typeof PageSchema>;

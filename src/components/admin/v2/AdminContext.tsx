@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { GlobalConfig, Section, HeroSection } from '@/lib/schemas/factory';
+import type { GlobalConfig, Section, HeroSection, FactoryPage } from '@/lib/schemas/factory';
 
 // ============================================
 // TYPES
@@ -13,6 +13,7 @@ interface FactoryV2Data {
   global: GlobalConfig;
   sections: Section[];
   allSections: (Section & { _rowId?: number })[];
+  pages: FactoryPage[]; // 🆕 Pages Data
 }
 
 interface AdminV2ContextValue {
@@ -27,8 +28,15 @@ interface AdminV2ContextValue {
   lastError: string | null;
   clearError: () => void;
 
-  // Actions - Global
   updateGlobal: (updates: Partial<GlobalConfig>) => Promise<void>;
+
+  // Actions - Pages 🆕
+  pages: FactoryPage[];
+  selectedPage: string; // Slug
+  setSelectedPage: (slug: string) => void;
+  addPage: (page: Omit<FactoryPage, 'id'>) => Promise<number | null>;
+  updatePage: (id: number, updates: Partial<FactoryPage>) => Promise<void>;
+  deletePage: (id: number) => Promise<void>;
 
   // Actions - Sections
   updateSection: (rowId: number, updates: Partial<Section>) => Promise<void>;
@@ -67,6 +75,11 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
   const [globalConfig, setGlobalConfig] = useState<GlobalConfig | null>(null);
   const [sections, setSections] = useState<(Section & { _rowId?: number })[]>([]);
   const [allSections, setAllSections] = useState<(Section & { _rowId?: number })[]>([]);
+
+  // 🆕 Pages State
+  const [pages, setPages] = useState<FactoryPage[]>([]);
+  const [selectedPage, setSelectedPage] = useState<string>('home'); // Default to home
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -110,8 +123,20 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
       }
 
       setGlobalConfig(data.global);
-      setSections(data.sections);
+
+      // 🆕 Handle Pages
+      setPages(data.pages || []); // data.pages needs to be added to API response
+
+      // 🆕 Store ALL sections, but filtering happens in UI or derived state usually.
+      // However, current implementation holds `sections` and `allSections` separately?
+      // `sections` seems to be the "active views" or something?
+      // Actually `data.sections` comes from API.
+
+      // We will override `sections` state to only return sections for SELECTED PAGE.
+      // But we can't do it inside fetchData because it depends on state.
+      // So we store RAW data in `allSections`.
       setAllSections(data.allSections || data.sections);
+      // We don't set `sections` here directly anymore, or we set it to filtered default.
 
     } catch (err) {
       console.error('[AdminV2Context] Fetch error:', err);
@@ -124,6 +149,39 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // 🆕 Filter Sections when Selected Page Changes
+  useEffect(() => {
+    if (!allSections.length) return;
+
+    // Filter sections for current page
+    // Logic: 
+    // 1. If section has `page` (string/slug) matching selectedPage
+    // 2. Or is Relational (link row) -> Check if Link Array contains Page ID matching selectedPage slug
+
+    const pageObj = pages.find(p => p.slug === selectedPage);
+    const pageId = pageObj ? pageObj.id : -1;
+
+    const filtered = allSections.filter(section => {
+      // Compatibility with Legacy 'home' assumption if no page field
+      if (!section.page && selectedPage === 'home') return true;
+
+      // String match (legacy or simple)
+      if (typeof section.page === 'string' && section.page === selectedPage) return true;
+
+      // Relational match (New)
+      // Checks if section has a Page link_row matching the selected page ID
+      const s = section as typeof section & { Page?: { id: number; value: string }[] | null };
+      if (Array.isArray(s.Page) && pageId !== -1) {
+        return s.Page.some((link: { id: number }) => link.id === pageId);
+      }
+
+      // If none matches
+      return false;
+    });
+
+    setSections(filtered);
+  }, [selectedPage, allSections, pages]);
 
   // ============================================
   // UPDATE GLOBAL CONFIG (Optimistic + API)
@@ -232,6 +290,54 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
       console.error('[AdminV2Context] Update section error:', err);
     }
   }, []);
+
+  // ============================================
+  // PAGES CRUD 🆕
+  // ============================================
+
+  const addPage = useCallback(async (page: Omit<FactoryPage, 'id'>) => {
+    try {
+      const res = await fetch('/api/admin/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(page),
+      });
+      if (!res.ok) throw new Error('Failed to create page');
+      await fetchData(); // Refresh everything
+      return (await res.json()).id;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }, [fetchData]);
+
+  const updatePage = useCallback(async (id: number, updates: Partial<FactoryPage>) => {
+    // Optimistic
+    setPages(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    try {
+      await fetch('/api/admin/pages', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+    } catch (e) {
+      console.error(e);
+      await fetchData(); // Revert
+    }
+  }, [fetchData]);
+
+  const deletePage = useCallback(async (id: number) => {
+    if (confirm('Are you sure? This will orphan sections.')) {
+      // Optimistic
+      setPages(prev => prev.filter(p => p.id !== id));
+      try {
+        await fetch(`/api/admin/pages?id=${id}`, { method: 'DELETE' });
+        if (selectedPage === pages.find(p => p.id === id)?.slug) {
+          setSelectedPage('home');
+        }
+      } catch (e) { console.error(e); await fetchData(); }
+    }
+  }, [fetchData, selectedPage, pages]);
 
   // ============================================
   // ADD SECTION
@@ -410,6 +516,12 @@ export function AdminV2Provider({ children }: AdminV2ProviderProps) {
     globalConfig,
     sections,
     allSections,
+    pages, // 🆕
+    selectedPage, // 🆕
+    setSelectedPage, // 🆕
+    addPage, // 🆕
+    updatePage, // 🆕
+    deletePage, // 🆕
     isLoading,
     error,
     lastError,

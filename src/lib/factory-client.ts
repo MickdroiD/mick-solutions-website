@@ -38,7 +38,11 @@ import {
   type GlobalConfig,
   type Section,
   type SectionType,
+  type FactoryPage, // 🆕 Import Shared Type
 } from './schemas/factory';
+
+// Re-export for convenience if needed, but better to use direct import
+export type { FactoryPage };
 
 // ============================================
 // CONFIGURATION (via lib/config.ts centralisé)
@@ -95,7 +99,16 @@ interface BaserowSectionRow {
   Order?: number | string;
   Content?: string;
   Design?: string;
-  Page?: string;
+  Page?: { id: number; value: string }[] | null; // 🔧 Update: Link row format
+  Page_Text?: string; // Legacy backup
+}
+
+interface BaserowPageRow {
+  id: number;
+  Name: string;
+  Slug: string;
+  SeoTitle?: string;
+  SeoDescription?: string;
 }
 
 interface FetchResult<T> {
@@ -335,13 +348,108 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
 }
 
 // ============================================
+// GET PAGES (Auto-Discovery)
+// ============================================
+
+// Cache for Pages Table ID (discovered dynamically)
+let cachedPagesTableId: string | null = null;
+
+async function getPagesTableId(): Promise<string | null> {
+  if (cachedPagesTableId) return cachedPagesTableId;
+
+  if (!BASEROW_TOKEN || !SECTIONS_TABLE_ID) return null;
+
+  try {
+    const response = await fetch(
+      `${BASEROW_API_URL}/database/fields/table/${SECTIONS_TABLE_ID}/`,
+      { headers: { Authorization: `Token ${BASEROW_TOKEN}` } }
+    );
+
+    if (!response.ok) return null;
+
+    const fields = await response.json();
+    // Find the 'Page' field which is a link_row
+    const pageField = fields.find((f: { name: string; type: string; link_row_table_id?: number }) => f.name === 'Page' && f.type === 'link_row');
+
+    if (pageField && pageField.link_row_table_id) {
+      cachedPagesTableId = String(pageField.link_row_table_id);
+      logInfo(`✅ Discovered PAGES Table ID: ${cachedPagesTableId}`);
+      return cachedPagesTableId;
+    }
+  } catch (e) {
+    logError('Failed to discover PAGES table ID', e);
+  }
+  return null;
+}
+
+export async function getPages(): Promise<FactoryPage[]> {
+  const tableId = await getPagesTableId();
+  if (!tableId) {
+    logWarn('PAGES Table ID not found. Migration needs to be run?');
+    // Fallback: Return "Accueil" as default if we can't fetch real pages
+    return [{ id: -1, name: 'Accueil', slug: 'home', seoTitle: 'Accueil', seoDescription: '' }];
+  }
+
+  const { data: rows, error } = await fetchBaserowTable<BaserowPageRow>(tableId);
+
+  if (error || !rows) {
+    logError('Failed to fetch pages', error);
+    return [];
+  }
+
+  return rows.map(row => ({
+    id: row.id,
+    name: row.Name,
+    slug: row.Slug,
+    seoTitle: row.SeoTitle || row.Name,
+    seoDescription: row.SeoDescription || '',
+  }));
+}
+
+export async function getPageBySlug(slug: string): Promise<FactoryPage | null> {
+  const pages = await getPages();
+  // Handle "home" alias for root "/"
+  const targetSlug = slug === '/' ? 'home' : slug;
+  return pages.find(p => p.slug === targetSlug) || null;
+}
+
+// ============================================
 // GET SECTIONS
 // ============================================
 
-export async function getSections(page: string = 'home'): Promise<Section[]> {
+export async function getSections(pageSlug: string = 'home'): Promise<Section[]> {
   if (!validateConfig()) {
     logWarn('Using default sections due to missing env vars');
     return [DEFAULT_HERO_SECTION];
+  }
+
+  // 1. Resolve Page ID
+  let pageIdFilter: number | null = null;
+
+  // Only try to filter if we are not asking for all (legacy mode)
+  // Actually, we always want to filter by page now.
+  const pages = await getPages();
+  const targetSlug = pageSlug === '/' ? 'home' : pageSlug;
+  const targetPage = pages.find(p => p.slug === targetSlug);
+
+  if (targetPage && targetPage.id !== -1) {
+    pageIdFilter = targetPage.id;
+  } else {
+    logWarn(`Page not found for slug: ${pageSlug}. Fallback to fetching all and filtering?`);
+  }
+
+  // 2. Fetch Sections (with Filter if possible)
+  // let filters = ''; // Removed unused variable
+  if (pageIdFilter) {
+    // API Filter: Page (link_row) contains pageId
+    // BASEROW FILTER SYNTAX: filter__field_<ID>__link_row_has=<ID>
+    // But we need the FIELD ID for 'Page'. 
+    // fetchBaserowTable wrapper uses `filters` param which expects JSON for "Advanced Filtering" 
+    // OR plain params for user_field_names?
+    // Baserow API with `user_field_names=true` supports `filters={"filter_type":"AND", "filters": ...}`
+
+    // Simplest: Fetch all and filter in memory for safety/speed of implementation right now.
+    // Optimization (TODO): Implement proper server-side filtering.
   }
 
   const { data: rows, error } = await fetchBaserowTable<BaserowSectionRow>(
@@ -355,15 +463,29 @@ export async function getSections(page: string = 'home'): Promise<Section[]> {
     return [];
   }
 
-  logInfo(`Fetched ${rows.length} section rows`);
+  logInfo(`Fetched ${rows.length} section rows. Filtering for page: ${pageSlug} (ID: ${pageIdFilter})`);
 
   const sections: Section[] = [];
 
   for (const row of rows) {
-    // Filter by page if needed
-    if (page && row.Page && row.Page !== page) {
-      continue;
+    // 🔧 FILTERING LOGIC
+    let match = false;
+
+    // A. Relational check (Priority)
+    if (row.Page && Array.isArray(row.Page) && pageIdFilter) {
+      match = row.Page.some(link => link.id === pageIdFilter);
     }
+    // B. Legacy check (Fallback or if filtering for 'home')
+    else if (!row.Page || (Array.isArray(row.Page) && row.Page.length === 0)) {
+      // Orphan section => assign to Home
+      if (targetSlug === 'home') match = true;
+    }
+    // C. Explicit "home" string (should not happen after migration but safe to check)
+    else if (typeof row.Page === 'string' && row.Page === targetSlug) {
+      match = true;
+    }
+
+    if (!match) continue;
 
     // Extract type from select or string
     let typeValue: string;
@@ -645,6 +767,63 @@ export async function updateGlobalConfig(
 }
 
 // ============================================
+// PAGE CRUD OPERATIONS 🆕
+// ============================================
+
+export async function createPage(page: Omit<FactoryPage, 'id'>): Promise<number> {
+  const tableId = await getPagesTableId();
+  if (!tableId) throw new Error('PAGES Table ID not found');
+
+  const { data, error } = await fetch(`${BASEROW_API_URL}/database/rows/table/${tableId}/?user_field_names=true`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${BASEROW_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      Name: page.name,
+      Slug: page.slug,
+      SeoTitle: page.seoTitle,
+      SeoDescription: page.seoDescription,
+    }),
+  })
+    .then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return { data: await res.json(), error: null };
+    })
+    .catch(e => ({ data: null, error: e.message }));
+
+  if (error || !data) throw new Error(error || 'Failed to create page');
+  return data.id;
+}
+
+export async function updatePage(id: number, updates: Partial<FactoryPage>): Promise<void> {
+  const tableId = await getPagesTableId();
+  if (!tableId) throw new Error('PAGES Table ID not found');
+
+  const updateData: Record<string, unknown> = {};
+  if (updates.name) updateData.Name = updates.name;
+  if (updates.slug) updateData.Slug = updates.slug;
+  if (updates.seoTitle) updateData.SeoTitle = updates.seoTitle;
+  if (updates.seoDescription) updateData.SeoDescription = updates.seoDescription;
+
+  const { error } = await updateBaserowRow(tableId, id, updateData);
+  if (error) throw new Error(error);
+}
+
+export async function deletePage(id: number): Promise<void> {
+  const tableId = await getPagesTableId();
+  if (!tableId) throw new Error('PAGES Table ID not found');
+
+  const res = await fetch(`${BASEROW_API_URL}/database/rows/table/${tableId}/${id}/`, {
+    method: 'DELETE',
+    headers: { Authorization: `Token ${BASEROW_TOKEN}` },
+  });
+
+  if (!res.ok) throw new Error(await res.text());
+}
+
+// ============================================
 // UPDATE SECTION
 // ============================================
 
@@ -684,7 +863,25 @@ export async function updateSection(
   }
 
   if (updates.page) {
-    updateData['Page'] = updates.page;
+    // We need to resolve the Page ID from the slug (updates.page is a slug string)
+    // This requires fetching pages. Ideally we cache pages.
+    // Since this is an update, one extra fetch is fine.
+    try {
+      const pages = await getPages();
+      const pageObj = pages.find(p => p.slug === updates.page);
+      if (pageObj) {
+        updateData['Page'] = [pageObj.id]; // Link Row expects array of IDs
+      } else if (updates.page === 'home') {
+        // If explicit 'home' but no page found, maybe it's ID 1 or something?
+        // Just leave it blank if not found, or handle default.
+        // Or maybe we still support Legacy String 'Page_Text' if needed?
+        // No, we committed to Relation.
+
+        // Fallback: If 'Page' field is not set, we might assume home logic elsewhere.
+      }
+    } catch (e) {
+      logError('Failed to resolve page slug to ID', e);
+    }
   }
 
   // Log détaillé pour debug
@@ -821,13 +1018,25 @@ export async function createSection(
     return { success: false, error: `Type de section inconnu: ${section.type}` };
   }
 
+  // Resolve Page Relation ID
+  let pageIds: number[] = [];
+  try {
+    const pages = await getPages();
+    const pageSlug = section.page || 'home';
+    const pageObj = pages.find(p => p.slug === pageSlug);
+    if (pageObj) {
+      pageIds = [pageObj.id];
+    }
+  } catch (e) { logError('Create Section: Failed to resolve Page ID', e); }
+
   const createData: Record<string, unknown> = {
     Type: typeId, // ID dynamique récupéré depuis Baserow
-    Actif: section.isActive,
-    Order: String(section.order),
+    Actif: section.isActive !== undefined ? section.isActive : true,
+    Is_Active: section.isActive !== undefined ? section.isActive : true,
+    Order: String(section.order ?? 99),
     Content: JSON.stringify(section.content),
-    Design: JSON.stringify(section.design),
-    Page: section.page || 'home',
+    Design: JSON.stringify(section.design || {}),
+    Page: pageIds, // 🆕 Set Page Relation
     Nom: section.type.toUpperCase(),
   };
 

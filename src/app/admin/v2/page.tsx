@@ -8,7 +8,7 @@ import {
   PanelRightClose, PanelRight, Menu, X,
   Sparkles, ChevronRight, ExternalLink,
   LayoutGrid, Zap, MessageSquare, HelpCircle, Users, Image as ImageIcon,
-  Construction, UserCircle, Webhook, Bot, Crown, Shield, LogOut, ZoomIn
+  Construction, UserCircle, Webhook, Bot, Crown, Shield, LogOut, ZoomIn, FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,6 +20,7 @@ import {
   BlogForm, AIAssistantForm, CustomForm, InfiniteZoomForm,
   IntegrationsForm, AIConfigForm, PremiumForm
 } from '@/components/admin/v2/forms';
+import { PagesManager } from '@/components/admin/v2/PagesManager'; // 🆕 Import PagesManager
 import { SitePreviewBlock } from '@/components/admin/ui';
 import type {
   Section, HeroSection, ServicesSection, FAQSection,
@@ -230,10 +231,13 @@ function DashboardContent() {
     toggleSectionActive,
     refresh,
     hasUnsavedChanges,
+    pages, // 🆕
+    selectedPage, // 🆕
+    setSelectedPage, // 🆕
   } = useAdminV2();
 
   // UI State - extended with new config panels
-  const [selectedView, setSelectedView] = useState<'global' | 'header' | 'footer' | 'integrations' | 'ai-config' | 'premium' | number>('global');
+  const [selectedView, setSelectedView] = useState<'global' | 'header' | 'footer' | 'integrations' | 'ai-config' | 'premium' | 'pages' | number>('global');
   const [showPreview, setShowPreview] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastSaveTimestamp, setLastSaveTimestamp] = useState(0);
@@ -450,6 +454,28 @@ function DashboardContent() {
                 <Crown className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* 🆕 Button Gestion Pages */}
+            <button
+              type="button"
+              onClick={() => setSelectedView('pages')}
+              className={`w-full mt-2 flex items-center gap-3 p-2.5 rounded-xl transition-all ${selectedView === 'pages'
+                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30'
+                  : 'bg-slate-700/50 hover:bg-slate-700'
+                }`}
+            >
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-left flex-1">
+                <span className={`block font-medium text-sm ${selectedView === 'pages' ? 'text-cyan-400' : 'text-white'}`}>
+                  Mes Pages
+                </span>
+                <span className="text-xs text-slate-500">{pages.length} pages créées</span>
+              </div>
+              <ChevronRight className={`w-4 h-4 ${selectedView === 'pages' ? 'text-cyan-400' : 'text-slate-500'}`} />
+            </button>
+
           </div>
 
           {/* Sections List */}
@@ -668,12 +694,14 @@ function DashboardContent() {
         </aside>
 
         {/* Mobile Overlay */}
-        {sidebarOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/60 z-40"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+        {
+          sidebarOpen && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black/60 z-40"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )
+        }
 
         {/* ========== MAIN CONTENT ========== */}
         <div className="flex-1 flex flex-col lg:flex-row min-h-screen overflow-hidden">
@@ -699,7 +727,8 @@ function DashboardContent() {
                             : selectedView === 'integrations' ? '🔗'
                               : selectedView === 'ai-config' ? '🤖'
                                 : selectedView === 'premium' ? '👑'
-                                  : SECTION_ICONS[selectedSection?.type || ''] || '📦'}
+                                  : selectedView === 'pages' ? '📄' // 🆕 Icon for Pages
+                                    : SECTION_ICONS[selectedSection?.type || ''] || '📦'}
                     </span>
                     <h1 className="text-white font-bold">
                       {selectedView === 'global'
@@ -714,10 +743,31 @@ function DashboardContent() {
                                 ? 'Configuration IA'
                                 : selectedView === 'premium'
                                   ? 'Premium & Avancé'
-                                  : SECTION_LABELS[selectedSection?.type || ''] || 'Section'}
+                                  : selectedView === 'pages'
+                                    ? 'Gestion des Pages' // 🆕 Title for Pages
+                                    : SECTION_LABELS[selectedSection?.type || ''] || 'Section'}
+
                     </h1>
                   </div>
                 </div>
+
+                {/* 🆕 PAGE SELECTOR - Only show if NOT in Pages Manager */}
+                {selectedView !== 'pages' && (
+                  <div className="hidden md:flex items-center gap-2 mx-4 bg-slate-700/50 p-1 rounded-lg border border-white/5">
+                    <FileText className="w-4 h-4 text-slate-400 ml-2" />
+                    <select
+                      value={selectedPage}
+                      onChange={(e) => setSelectedPage(e.target.value)}
+                      className="bg-transparent text-sm font-medium text-white outline-none cursor-pointer py-1 pr-4"
+                    >
+                      {pages.map(p => (
+                        <option key={p.slug} value={p.slug} className="bg-slate-800 text-white">
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   {/* Maintenance Mode Toggle */}
@@ -1077,8 +1127,8 @@ function DashboardContent() {
             )}
           </AnimatePresence>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 
