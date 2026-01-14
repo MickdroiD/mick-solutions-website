@@ -1,0 +1,33 @@
+// ============================================
+// MIDDLEWARE - Factory V5
+// Protection routes /admin
+// ============================================
+
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+
+export default withAuth(
+    function middleware(req) {
+        // Route protégée accessible
+        return NextResponse.next();
+    },
+    {
+        callbacks: {
+            authorized: ({ token, req }) => {
+                // Autoriser /admin/login sans authentification
+                if (req.nextUrl.pathname === '/admin/login') {
+                    return true;
+                }
+                // Toutes autres routes /admin nécessitent authentification
+                return !!token;
+            }
+        },
+        pages: {
+            signIn: '/admin/login',
+        }
+    }
+);
+
+export const config = {
+    matcher: [] // ['/admin/:path*'] - Disabled for Visual Transplant (Custom Auth Gate in page.tsx)
+};

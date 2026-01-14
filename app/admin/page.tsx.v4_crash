@@ -1,0 +1,992 @@
+// ============================================
+// ADMIN PAGE - Factory V5 - Unified Interface
+// Sidebar pages + Sections drag-drop + Lateral editor
+// ============================================
+
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { GripVertical, Plus, Trash2, Eye, EyeOff, Edit3, Settings, BarChart3, LogOut, FileText, Layers, Home, Link as LinkIcon } from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { SectionResponse } from '../../features/admin/api/types';
+import SectionEditor from '@/features/admin/components/SectionEditor';
+import { verifySession } from '@/features/admin/server/actions';
+
+import type { UniversalSectionConfig } from '@/features/sections/types-universal';
+
+interface Page {
+    id: string;
+    name: string;
+    slug: string;
+    _count?: { sections: number };
+}
+
+// Helper for Session Check (Simulated for Client Side, relying on HttpOnly cookie presence for real calls)
+// Ideally, the Layout should handle this, but for the Transplant, we gate it here.
+function useAdminAuth() {
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        console.log('[Client] useAdminAuth: Checking session...');
+        const checkAuth = async () => {
+            console.log('[Client] useAdminAuth: Calling verifySession...');
+            try {
+                const isValid = await verifySession();
+                console.log('[Client] useAdminAuth: Result:', isValid);
+                setIsAuthenticated(isValid);
+                if (!isValid) {
+                    console.log('[Client] useAdminAuth: Invalid session. Redirecting...');
+                    // router.push('/admin/login'); // Handled by useEffect below if needed
+                }
+            } catch (e) {
+                console.error('[Client] useAdminAuth: Error calling verifySession:', e);
+                setIsAuthenticated(false);
+            }
+        };
+        checkAuth();
+    }, []);
+
+    return isAuthenticated;
+}
+
+export default function AdminPage() {
+    const router = useRouter();
+    // Replaced useSession with our own simple check for the Pin Code V4 style
+    const isAuthenticated = useAdminAuth();
+
+    // Data states
+    const [pages, setPages] = useState<Page[]>([]);
+    const [sections, setSections] = useState<SectionResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Selection states
+    const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+    const [editingSection, setEditingSection] = useState<SectionResponse | null>(null);
+
+    // UI states
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [newSectionName, setNewSectionName] = useState('');
+    const [newSectionType, setNewSectionType] = useState<'CUSTOM' | 'HEADER' | 'FOOTER'>('CUSTOM');
+    const [viewMode, setViewMode] = useState<'sections' | 'preview'>('sections');
+    const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+    const [iframeKey, setIframeKey] = useState(0);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    // Auto-switch to preview when editing starts
+    useEffect(() => {
+        if (editingSection) {
+            setViewMode('preview');
+        }
+    }, [editingSection]);
+
+    // Drag & Drop sensors - TEMPORARILY DISABLED
+    const sensors = undefined; /* useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    ); */
+
+    // ===== DATA FETCHING =====
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchPages();
+        }
+    }, [isAuthenticated]); // Only fetch if auth
+
+    useEffect(() => {
+        if (selectedPageId) {
+            fetchSections(selectedPageId);
+        }
+    }, [selectedPageId]);
+
+    const fetchPages = async () => {
+        try {
+            // Hardcoded tenant for V5 Demo
+            const tenantId = 'demo-tenant';
+            const res = await fetch(`/api/pages?tenantId=${tenantId}`);
+            if (res.status === 401) {
+                // Double check auth failure
+                window.location.reload();
+                return;
+            }
+            const data = await res.json();
+            const pagesArray = Array.isArray(data) ? data : [];
+            setPages(pagesArray);
+            // Auto-select first page
+            if (pagesArray.length > 0 && !selectedPageId) {
+                const home = pagesArray.find((p: Page) => p.slug === 'home' || p.slug === '/');
+                setSelectedPageId(home?.id || pagesArray[0].id);
+            }
+        } catch (error) {
+            console.error('Failed to fetch pages:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchSections = async (pageId: string) => {
+        try {
+            const tenantId = 'demo-tenant';
+            const res = await fetch(`/api/sections?tenantId=${tenantId}&pageId=${pageId}`);
+            const data = await res.json();
+            setSections(Array.isArray(data) ? data.sort((a: SectionResponse, b: SectionResponse) => a.order - b.order) : []);
+        } catch (error) {
+            console.error('Failed to fetch sections:', error);
+            setSections([]);
+        }
+    };
+
+    // If NOT Authenticated, Redirect to Login
+    useEffect(() => {
+        if (isAuthenticated === false) {
+            router.push('/admin/login');
+        }
+    }, [isAuthenticated, router]);
+
+    // If Auth status is unknown or false, show spinner
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-cyan-500 rounded-full border-t-transparent"></div>
+            </div>
+        );
+    }
+
+    // ===== SECTION ACTIONS =====
+    const createSection = async () => {
+        const tenantId = 'demo-tenant';
+        // Global sections (HEADER/FOOTER) don't need a pageId
+        const isGlobalSection = newSectionType === 'HEADER' || newSectionType === 'FOOTER';
+
+        if (!isGlobalSection && !selectedPageId) return;
+        if (!newSectionName.trim() && !isGlobalSection) return;
+
+        try {
+            await fetch('/api/sections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    pageId: isGlobalSection ? null : selectedPageId, // Global sections have no pageId
+                    type: newSectionType,
+                    name: newSectionName || (newSectionType === 'HEADER' ? 'Header' : newSectionType === 'FOOTER' ? 'Footer' : 'Nouvelle Section'),
+                    order: newSectionType === 'HEADER' ? -1000 : newSectionType === 'FOOTER' ? 1000 : sections.length,
+                    isActive: true,
+                    content: {
+                        layout: { type: isGlobalSection ? 'flex-horizontal' : 'single-column', alignment: isGlobalSection ? 'space-between' : 'center', gap: isGlobalSection ? 'md' : 'lg' },
+                        sizing: { height: 'auto', paddingX: 'lg', paddingY: isGlobalSection ? 'sm' : 'lg', maxWidth: 'full' },
+                        blocks: isGlobalSection ? getDefaultGlobalBlocks(newSectionType) : [],
+                        design: { background: { type: 'solid', color: newSectionType === 'HEADER' ? 'rgba(0,0,0,0.9)' : newSectionType === 'FOOTER' ? '#0a0a0f' : '#0a0a0f' } }
+                    },
+                }),
+            });
+            setNewSectionName('');
+            setShowCreateForm(false);
+            if (selectedPageId) fetchSections(selectedPageId);
+            fetchPages();
+        } catch (error) {
+            console.error('Failed to create section:', error);
+        }
+    };
+
+    // Helper function to get default blocks for global sections
+    const getDefaultGlobalBlocks = (type: 'HEADER' | 'FOOTER') => {
+        if (type === 'HEADER') {
+            return [
+                // Texte du nom du site au lieu d'un logo hardcodé (configurable ensuite)
+                { id: 'title-' + Date.now(), order: 0, type: 'heading', content: { text: 'Mon Site', level: 'h3' }, style: { color: '#22d3ee', fontWeight: 'bold' } },
+                { id: 'nav-' + Date.now(), order: 1, type: 'button', content: { text: 'Accueil', url: '/' }, style: { variant: 'ghost' } },
+            ];
+        }
+        return [
+            { id: 'copy-' + Date.now(), order: 0, type: 'text', content: { text: `© ${new Date().getFullYear()} Mon Site. Tous droits réservés.` }, style: { color: '#9ca3af', fontSize: '0.875rem' } },
+        ];
+    };
+
+    const toggleActive = async (section: SectionResponse) => {
+        try {
+            await fetch(`/api/sections/${section.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isActive: !section.isActive }),
+            });
+            if (selectedPageId) fetchSections(selectedPageId);
+        } catch (error) {
+            console.error('Failed to toggle section:', error);
+        }
+    };
+
+    const deleteSection = async (sectionId: string) => {
+        if (!confirm('Supprimer cette section ?')) return;
+        try {
+            await fetch(`/api/sections/${sectionId}`, { method: 'DELETE' });
+            if (selectedPageId) {
+                fetchSections(selectedPageId);
+                fetchPages();
+            }
+        } catch (error) {
+            console.error('Failed to delete section:', error);
+        }
+    };
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        // Use functional update to avoid stale closure
+        setSections((currentSections) => {
+            const oldIndex = currentSections.findIndex(s => s.id === active.id);
+            const newIndex = currentSections.findIndex(s => s.id === over.id);
+
+            if (oldIndex === -1 || newIndex === -1) return currentSections;
+
+            const reordered = arrayMove(currentSections, oldIndex, newIndex);
+
+            // Save new order to API (fire and forget for responsiveness)
+            reordered.forEach((section, idx) => {
+                fetch(`/api/sections/${section.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order: idx }),
+                }).catch(err => console.error('Failed to update order:', err));
+            });
+
+            return reordered;
+        });
+    }, []);
+
+    const handleSaveSection = async (config: UniversalSectionConfig) => {
+        if (!editingSection) return;
+
+        try {
+            await fetch(`/api/sections/${editingSection.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: config }),
+            });
+            // Stay at the same position - don't close editor
+            // Refresh the section data and preview iframe
+            if (selectedPageId) {
+                fetchSections(selectedPageId);
+                setIframeKey(prev => prev + 1); // Refresh iframe preview
+            }
+            // Update the editing section with new content
+            setEditingSection({ ...editingSection, content: config as any });
+        } catch (error) {
+            console.error('Failed to save section:', error);
+        }
+    };
+
+    const handleEditorChange = (config: UniversalSectionConfig) => {
+        if (!iframeRef.current?.contentWindow || !editingSection) return;
+        iframeRef.current.contentWindow.postMessage({
+            type: 'PREVIEW_UPDATE',
+            sectionId: editingSection.id,
+            content: config
+        }, '*');
+    };
+
+    const handleLogout = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' }); // Hypothetical logout
+        window.location.reload();
+    };
+
+    // ===== UI HELPERS =====
+    const selectedPage = pages.find(p => p.id === selectedPageId);
+
+    if (loading) {
+        return (
+            <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22d3ee' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚡</div>
+                    Chargement...
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{
+            display: 'grid',
+            gridTemplateColumns: editingSection ? '220px 1fr 500px' : '220px 1fr',
+            minHeight: '100vh',
+            background: '#0a0a0f',
+            transition: 'grid-template-columns 0.3s ease',
+        }}>
+            {/* ===== LEFT SIDEBAR - PAGES ===== */}
+            <div style={{
+                background: '#111118',
+                borderRight: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+            }}>
+                {/* Logo/Header */}
+                <div style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    background: 'linear-gradient(135deg, rgba(34,211,238,0.1), rgba(168,85,247,0.1))',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <img
+                            src="/admin-logo.svg"
+                            alt="Admin"
+                            style={{ width: '36px', height: '36px' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <h1 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
+                                Admin Dashboard
+                            </h1>
+                            <span style={{ fontSize: '0.6rem', color: '#22d3ee', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                                Powered by Mick-Solutions
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Pages List */}
+                <div style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.75rem',
+                    }}>
+                        <span style={{ color: '#9ca3af', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Pages
+                        </span>
+                        <button
+                            onClick={() => router.push('/admin/pages')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#22d3ee',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                            }}
+                        >
+                            Gérer +
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {pages.map(page => (
+                            <button
+                                key={page.id}
+                                onClick={() => {
+                                    setSelectedPageId(page.id);
+                                    setEditingSection(null);
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.75rem',
+                                    background: selectedPageId === page.id ? 'rgba(34,211,238,0.15)' : 'transparent',
+                                    border: 'none',
+                                    borderRadius: '0.5rem',
+                                    color: selectedPageId === page.id ? '#22d3ee' : '#d1d5db',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    width: '100%',
+                                    transition: 'all 0.2s',
+                                }}
+                            >
+                                {page.slug === 'home' || page.slug === '/' ? (
+                                    <Home size={16} style={{ color: selectedPageId === page.id ? '#22d3ee' : '#9ca3af' }} />
+                                ) : (
+                                    <LinkIcon size={16} style={{ color: selectedPageId === page.id ? '#a855f7' : '#6b7280' }} />
+                                )}
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: selectedPageId === page.id ? 600 : 400 }}>
+                                        {page.name}
+                                    </div>
+                                    <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>
+                                        /{page.slug}
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Active Sections List in Sidebar */}
+                    <div style={{ marginTop: '1.5rem' }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '0.75rem',
+                        }}>
+                            <span style={{ color: '#a855f7', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>
+                                Sections ({sections.filter(s => s.isActive).length})
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            {sections.filter(s => s.isActive).map((section, idx) => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => setEditingSection(editingSection?.id === section.id ? null : section)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.625rem 0.75rem',
+                                        background: editingSection?.id === section.id ? 'rgba(168,85,247,0.15)' : 'transparent',
+                                        border: 'none',
+                                        borderRadius: '0.5rem',
+                                        color: editingSection?.id === section.id ? '#a855f7' : '#9ca3af',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '0.8125rem',
+                                        width: '100%',
+                                        transition: 'all 0.2s',
+                                    }}
+                                >
+                                    <Layers size={14} style={{ color: editingSection?.id === section.id ? '#a855f7' : '#6b7280' }} />
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: editingSection?.id === section.id ? 600 : 400, fontSize: '0.75rem' }}>
+                                            {section.name || section.type}
+                                        </div>
+                                        <div style={{ fontSize: '0.6rem', color: '#6b7280' }}>
+                                            {(section.content as any)?.blocks?.length || 0} blocs
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                            {sections.filter(s => s.isActive).length === 0 && (
+                                <div style={{ color: '#6b7280', fontSize: '0.75rem', padding: '0.5rem 0.75rem' }}>
+                                    Aucune section active
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Navigation */}
+                <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <NavButton icon={<BarChart3 size={16} />} label="Leads" onClick={() => router.push('/admin/leads')} />
+                        <NavButton icon={<Settings size={16} />} label="Paramètres" onClick={() => router.push('/admin/settings')} />
+                        <NavButton icon={<LogOut size={16} />} label="Déconnexion" onClick={handleLogout} danger />
+                    </div>
+                </div>
+            </div>
+
+            {/* ===== CENTER - SECTIONS LIST ===== */}
+            <div style={{ display: 'flex', flexDirection: 'column', background: '#0a0a0f' }}>
+                {/* Page Header */}
+                <div style={{
+                    padding: '1.25rem 1.5rem',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}>
+                    <div>
+                        <h2 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: 600 }}>
+                            {selectedPage?.name || 'Sélectionner une page'}
+                        </h2>
+                        <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                            {sections.length} section{sections.length !== 1 ? 's' : ''} • Glisser pour réordonner
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            onClick={() => window.open(`/${selectedPage?.slug === 'home' ? '' : selectedPage?.slug}`, '_blank')}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                background: 'transparent',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '0.5rem',
+                                color: '#9ca3af',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                            }}
+                        >
+                            <Eye size={16} /> Voir le site
+                        </button>
+                        <button
+                            onClick={() => setShowCreateForm(!showCreateForm)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                background: 'linear-gradient(135deg, #22d3ee, #a855f7)',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                color: '#fff',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                            }}
+                        >
+                            <Plus size={16} /> Nouvelle section
+                        </button>
+                    </div>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    background: 'rgba(0,0,0,0.3)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                }}>
+                    <button
+                        onClick={() => setViewMode('sections')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: viewMode === 'sections' ? 'rgba(34,211,238,0.2)' : 'transparent',
+                            border: viewMode === 'sections' ? '1px solid #22d3ee' : '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '0.375rem',
+                            color: viewMode === 'sections' ? '#22d3ee' : '#9ca3af',
+                            cursor: 'pointer',
+                            fontSize: '0.8125rem',
+                            fontWeight: 500,
+                        }}
+                    >
+                        <Layers size={14} style={{ marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                        Sections
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('preview'); setIframeKey(k => k + 1); }}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            background: viewMode === 'preview' ? 'rgba(34,211,238,0.2)' : 'transparent',
+                            border: viewMode === 'preview' ? '1px solid #22d3ee' : '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '0.375rem',
+                            color: viewMode === 'preview' ? '#22d3ee' : '#9ca3af',
+                            cursor: 'pointer',
+                            fontSize: '0.8125rem',
+                            fontWeight: 500,
+                        }}
+                    >
+                        <Eye size={14} style={{ marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                        Aperçu
+                    </button>
+                    {viewMode === 'preview' && (
+                        <>
+                            <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }} />
+                            {(['mobile', 'tablet', 'desktop'] as const).map(size => (
+                                <button
+                                    key={size}
+                                    onClick={() => setPreviewViewport(size)}
+                                    style={{
+                                        padding: '0.375rem 0.625rem',
+                                        background: previewViewport === size ? 'rgba(168,85,247,0.2)' : 'transparent',
+                                        border: previewViewport === size ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '0.25rem',
+                                        color: previewViewport === size ? '#a855f7' : '#6b7280',
+                                        cursor: 'pointer',
+                                        fontSize: '0.6875rem',
+                                    }}
+                                >
+                                    {size === 'mobile' && '📱'}
+                                    {size === 'tablet' && '📱'}
+                                    {size === 'desktop' && '🖥️'}
+                                </button>
+                            ))}
+                        </>
+                    )}
+                </div>
+
+                {/* Create Form */}
+                {showCreateForm && (
+                    <div style={{
+                        padding: '1rem 1.5rem',
+                        background: 'rgba(34,211,238,0.05)',
+                        borderBottom: '1px solid rgba(34,211,238,0.2)',
+                        display: 'flex',
+                        gap: '0.75rem',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                    }}>
+                        <select
+                            value={newSectionType}
+                            onChange={e => setNewSectionType(e.target.value as 'CUSTOM' | 'HEADER' | 'FOOTER')}
+                            style={{
+                                padding: '0.75rem',
+                                background: 'rgba(0,0,0,0.3)',
+                                border: '1px solid rgba(34,211,238,0.3)',
+                                borderRadius: '0.5rem',
+                                color: newSectionType === 'HEADER' ? '#f59e0b' : newSectionType === 'FOOTER' ? '#8b5cf6' : '#22d3ee',
+                                fontSize: '0.875rem',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <option value="CUSTOM">📄 Section</option>
+                            <option value="HEADER">🏛️ Header</option>
+                            <option value="FOOTER">📎 Footer</option>
+                        </select>
+                        <input
+                            type="text"
+                            placeholder={newSectionType === 'HEADER' ? 'Header du site...' : newSectionType === 'FOOTER' ? 'Footer du site...' : 'Nom de la section...'}
+                            value={newSectionName}
+                            onChange={e => setNewSectionName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && createSection()}
+                            style={{
+                                flex: 1,
+                                minWidth: '150px',
+                                padding: '0.75rem 1rem',
+                                background: 'rgba(0,0,0,0.3)',
+                                border: '1px solid rgba(34,211,238,0.3)',
+                                borderRadius: '0.5rem',
+                                color: '#fff',
+                                fontSize: '0.875rem',
+                            }}
+                            autoFocus
+                        />
+                        <button
+                            onClick={createSection}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                background: '#22d3ee',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                color: '#000',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Créer
+                        </button>
+                        <button
+                            onClick={() => { setShowCreateForm(false); setNewSectionType('CUSTOM'); }}
+                            style={{
+                                padding: '0.75rem',
+                                background: 'transparent',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '0.5rem',
+                                color: '#6b7280',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
+                {/* Sections List with Drag & Drop (viewMode === 'sections') */}
+                {viewMode === 'sections' && (
+                    <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto' }}>
+                        {sections.length === 0 ? (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '4rem',
+                                color: '#6b7280',
+                                background: 'rgba(255,255,255,0.02)',
+                                borderRadius: '0.75rem',
+                                border: '2px dashed rgba(255,255,255,0.1)',
+                            }}>
+                                <Layers size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                                <div style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>Aucune section</div>
+                                <div style={{ fontSize: '0.875rem' }}>Créez votre première section pour cette page</div>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {sections.map((section, idx) => (
+                                    <div
+                                        key={section.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '1rem',
+                                            padding: '1rem',
+                                            background: editingSection?.id === section.id ? 'rgba(34,211,238,0.1)' : 'rgba(255,255,255,0.03)',
+                                            border: `1px solid ${editingSection?.id === section.id ? '#22d3ee' : section.isActive ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                                            borderRadius: '0.75rem',
+                                            transition: 'all 0.2s',
+                                        }}
+                                    >
+                                        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setEditingSection(section)}>
+                                            <div style={{
+                                                fontWeight: 600,
+                                                color: editingSection?.id === section.id ? '#22d3ee' : '#fff',
+                                                marginBottom: '0.25rem'
+                                            }}>
+                                                {section.name || section.type}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                                {(section.content as any)?.blocks?.length || 0} blocs
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button onClick={() => setEditingSection(section)} title="Éditer" style={{ background: 'none', border: 'none', color: '#22d3ee', cursor: 'pointer' }}><Edit3 size={16} /></button>
+                                            <button onClick={() => toggleActive(section)} title="Toggle" style={{ background: 'none', border: 'none', color: section.isActive ? '#22c55e' : '#6b7280', cursor: 'pointer' }}>{section.isActive ? <Eye size={16} /> : <EyeOff size={16} />}</button>
+                                            <button onClick={() => deleteSection(section.id)} title="Supprimer" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Iframe Preview - Full Width (viewMode === 'preview') */}
+                {viewMode === 'preview' && (
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '1.5rem',
+                        background: '#1a1a2e',
+                        overflow: 'hidden',
+                    }}>
+                        <div style={{
+                            width: previewViewport === 'mobile' ? '375px' : previewViewport === 'tablet' ? '768px' : '100%',
+                            maxWidth: '100%',
+                            flex: 1,
+                            background: '#0a0a0f',
+                            borderRadius: previewViewport !== 'desktop' ? '1.5rem' : '0.5rem',
+                            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                            overflow: 'hidden',
+                            transition: 'width 0.3s ease',
+                        }}>
+                            {/* IFRAME DISABLED FOR DEBUG
+                            <iframe
+                                ref={iframeRef}
+                                key={iframeKey}
+                                src={`/${selectedPage?.slug === 'home' ? '' : selectedPage?.slug || ''}`}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: 'none',
+                                }}
+                                title="Aperçu du site"
+                            /> */}
+                            <div style={{ color: 'white', padding: '20px' }}>Iframe Disabled</div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ===== RIGHT PANEL - SECTION EDITOR ===== */}
+            {editingSection && (
+                <div style={{
+                    background: '#111118',
+                    borderLeft: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100vh',
+                    overflow: 'hidden',
+                }}>
+                    <div style={{
+                        padding: '1rem 1.25rem',
+                        borderBottom: '1px solid rgba(255,255,255,0.1)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}>
+                        <div>
+                            <h3 style={{ margin: 0, color: '#22d3ee', fontSize: '1rem' }}>
+                                Édition: {editingSection.name || 'Section'}
+                            </h3>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                Type: {editingSection.type}
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setEditingSection(null)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#6b7280',
+                                cursor: 'pointer',
+                                fontSize: '1.25rem',
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <SectionEditor
+                            initialConfig={editingSection.content as UniversalSectionConfig}
+                            onSave={handleSaveSection}
+                            onCancel={() => setEditingSection(null)}
+                            onChange={handleEditorChange}
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ===== SORTABLE SECTION ITEM =====
+interface SortableSectionItemProps {
+    section: SectionResponse;
+    index: number;
+    isEditing: boolean;
+    onEdit: () => void;
+    onToggle: () => void;
+    onDelete: () => void;
+}
+
+function SortableSectionItem({ section, index, isEditing, onEdit, onToggle, onDelete }: SortableSectionItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: section.id });
+
+    const style: React.CSSProperties = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.6 : 1,
+        zIndex: isDragging ? 1000 : 'auto',
+    };
+
+    // Extract block info from section content
+    const content = section.content as any || {};
+    const blocks = content.blocks || [];
+    const blockCount = blocks.length;
+
+    // Get summary of block types
+    const blockTypeCounts: Record<string, number> = {};
+    blocks.forEach((b: any) => {
+        const type = b.type || 'unknown';
+        blockTypeCounts[type] = (blockTypeCounts[type] || 0) + 1;
+    });
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+                background: isEditing ? 'rgba(34,211,238,0.1)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${isEditing ? '#22d3ee' : section.isActive ? 'rgba(34,211,238,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                borderRadius: '0.75rem',
+                transition: 'all 0.2s',
+            }}>
+                {/* Drag Handle */}
+                <button
+                    {...attributes}
+                    {...listeners}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#6b7280',
+                        cursor: 'grab',
+                        padding: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}
+                >
+                    <GripVertical size={16} />
+                </button>
+
+                {/* Section Info */}
+                <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
+                    <div style={{
+                        fontWeight: 600,
+                        color: isEditing ? '#22d3ee' : '#fff',
+                        marginBottom: '0.25rem'
+                    }}>
+                        {section.name || section.type}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        {blockCount} blocs
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={onEdit}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: isEditing ? '#22d3ee' : '#6b7280',
+                            cursor: 'pointer',
+                            padding: '0.5rem',
+                        }}
+                        title="Éditer"
+                    >
+                        <Edit3 size={16} />
+                    </button>
+                    <button
+                        onClick={onToggle}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: section.isActive ? '#22c55e' : '#6b7280',
+                            cursor: 'pointer',
+                            padding: '0.5rem',
+                        }}
+                        title={section.isActive ? 'Masquer' : 'Afficher'}
+                    >
+                        {section.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            padding: '0.5rem',
+                        }}
+                        title="Supprimer"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Helper component for nav buttons in sidebar
+function NavButton({ icon, label, onClick, danger }: any) {
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: danger ? '#ef4444' : '#9ca3af',
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = danger ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >
+            {icon}
+            <span>{label}</span>
+        </button>
+    );
+}

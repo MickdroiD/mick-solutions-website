@@ -1,0 +1,38 @@
+# ============================================
+# DOCKER COMPOSE - Factory V5
+# ============================================
+version: '3.8'
+
+services:
+  factory-v5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: factory-v5
+    restart: unless-stopped
+    ports:
+      - "3002:3000" # Port 3002 pour Factory V5
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./public/uploads:/app/.next/standalone/public/uploads
+    environment:
+      # TODO: Move secrets to .env file for better security
+      - DATABASE_URL=postgresql://factory:factory_v4_dev@factory-v4-db:5432/factory_v4
+      - NODE_ENV=production
+      - NEXTAUTH_SECRET=factory-v5-super-secret-key-2026
+      - NEXTAUTH_URL=https://mick-solutions.ch
+    networks:
+      - website_factory-internal # Réseau où factory-v4-db existe
+      - proxy # Réseau pour Traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.factory-v5.rule=Host(`mick-solutions.ch`) || Host(`www.mick-solutions.ch`)"
+      - "traefik.http.routers.factory-v5.entrypoints=websecure"
+      - "traefik.http.routers.factory-v5.tls.certresolver=myresolver"
+      - "traefik.http.services.factory-v5.loadbalancer.server.port=3000"
+
+networks:
+  website_factory-internal:
+    external: true
+  proxy:
+    external: true

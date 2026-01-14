@@ -1,0 +1,8 @@
+# Factory V5 - Docker
+/.next/
+/node_modules/
+*.log
+.env
+.env.local
+dev.db
+dev.db-journal

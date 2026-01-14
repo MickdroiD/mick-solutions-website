@@ -1,0 +1,39 @@
+# ============================================
+# DOCKER COMPOSE - Factory V5
+# ============================================
+version: '3.8'
+
+services:
+  factory-v5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: factory-v5
+    restart: unless-stopped
+    ports:
+      - "3002:3000" # Port 3002 pour Factory V5
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./public/uploads:/app/.next/standalone/public/uploads
+      - /var/run/docker.sock:/var/run/docker.sock # Allow managing sibling containers (n8n)
+    environment:
+      # Secrets loaded from .env file
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=${NODE_ENV}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+    networks:
+      - website_factory-internal # Réseau où factory-v4-db existe
+      - proxy # Réseau pour Traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.factory-v5.rule=Host(`mick-solutions.ch`) || Host(`www.mick-solutions.ch`) || HostRegexp(`{subdomain:[a-z0-9-]+}.mick-solutions.ch`)"
+      - "traefik.http.routers.factory-v5.entrypoints=websecure"
+      - "traefik.http.routers.factory-v5.tls.certresolver=myresolver"
+      - "traefik.http.services.factory-v5.loadbalancer.server.port=3000"
+
+networks:
+  website_factory-internal:
+    external: true
+  proxy:
+    external: true

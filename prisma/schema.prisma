@@ -1,0 +1,621 @@
+// ============================================
+// FACTORY V5 - PRISMA SCHEMA
+// ============================================
+// Architecture multi-tenant pour plateforme SaaS No-Code
+// Refonte complète depuis Janvier 2026
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MULTI-TENANT CORE
+// ============================================
+
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String       // "Salon Coiffure Marie"
+  slug        String       @unique // "salon-marie"
+  domain      String?      @unique // "salon-marie.ch" (null = subdomain)
+  plan        Plan         @default(STARTER)
+  status      TenantStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  config   SiteConfig?
+  pages    Page[]
+  sections Section[]
+  leads    Lead[]
+  assets   Asset[]
+  users    TenantUser[]
+}
+
+enum Plan {
+  STARTER    // 1 page, 5 sections
+  PRO        // 5 pages, unlimited sections
+  ENTERPRISE // Multi-site, API access
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+model TenantUser {
+  id        String    @id @default(cuid())
+  tenantId  String
+  email     String
+  pinHash   String    // Hash du PIN 6 chiffres
+  role      UserRole  @default(ADMIN)
+  lastLogin DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  EDITOR
+}
+
+// ============================================
+// SITE CONFIGURATION (ex-CONFIG_GLOBAL)
+// ============================================
+
+model SiteConfig {
+  id       String @id @default(cuid())
+  tenantId String @unique
+
+  // === IDENTITY ===
+  nomSite         String  @default("Mon Site")
+  slogan          String?
+  initialesLogo   String? @default("MS")
+
+  // === BRANDING ===
+  theme           ThemeVariant @default(ELECTRIC)
+  couleurPrimaire String       @default("#06b6d4")
+  couleurAccent   String       @default("#a855f7")
+  couleurBackground String     @default("#0a0a0f")
+  couleurText     String       @default("#ffffff")
+  fontPrimary     FontFamily   @default(INTER)
+  fontHeading     FontFamily   @default(INTER)
+  fontCustomUrl   String?
+  borderRadius    BorderRadius @default(MEDIUM)
+  patternBackground PatternBackground @default(GRID)
+
+  // === SEO ===
+  metaTitre       String?
+  metaDescription String?
+  siteUrl         String?
+  motsCles        String?
+  langue          String  @default("fr")
+  locale          String  @default("fr_CH")
+  robotsIndex     Boolean @default(true)
+  sitemapPriority Float   @default(0.8)
+
+  // === CONTACT ===
+  email           String?
+  telephone       String?
+  adresse         String?
+  adresseCourte   String?
+  lienLinkedin    String?
+  lienInstagram   String?
+  lienTwitter     String?
+  lienYoutube     String?
+  lienGithub      String?
+  lienCalendly    String?
+  lienWhatsapp    String?
+  lienBoutonAppel String?
+  texteBoutonAppel String?
+
+  // === ASSETS ===
+  logoUrl         String?
+  logoDarkUrl     String?
+  logoSvgCode     String?
+  faviconUrl      String?
+  ogImageUrl      String?
+
+  // === HEADER / NAVBAR ===
+  navbarVariant       ThemeVariant?
+  stickyHeader        Boolean @default(true)
+  headerLogoUrl       String?
+  headerLogoSvgCode   String?
+  headerLogoSize      Int     @default(40)
+  headerLogoAnimation LogoAnimation @default(SPIN)
+  headerBgColor       String?
+  headerTextColor     String?
+  headerBorderColor   String?
+  headerSiteTitle     String?
+  headerMenuLinks     Json?   // MenuLinkItem[]
+  headerCtaText       String?
+  headerCtaUrl        String?
+  showHeaderCta       Boolean @default(true)
+  showTopBar          Boolean @default(true)
+
+  // === FOOTER ===
+  footerVariant       ThemeVariant @default(ELECTRIC)
+  copyrightTexte      String?
+  paysHebergement     String?
+  showLegalLinks      Boolean @default(true)
+  customFooterText    String?
+  footerContactTitle  String?
+  footerLegalTitle    String?
+  footerNavigationTitle String?
+  footerCtaText       String?
+  footerCtaUrl        String?
+  footerCtaHeading    String?
+  footerPoweredByText String?
+  showFooterPoweredBy Boolean @default(false)
+  footerLogoSize      Int     @default(40)
+  footerLogoAnimation LogoAnimation @default(NONE)
+  footerLogoUrl       String?
+  footerLogoSvgCode   String?
+  footerBgColor       String?
+  footerTextColor     String?
+  footerBorderColor   String?
+
+  // === ANIMATIONS CONFIG ===
+  enableAnimations Boolean        @default(true)
+  animationStyle   AnimationStyle @default(MICK_ELECTRIC)
+  animationSpeed   AnimationSpeed @default(NORMAL)
+  scrollEffect     ScrollEffect   @default(FADE)
+  hoverEffect      HoverEffect    @default(SCALE)
+  loadingStyle     LoadingStyle   @default(SKELETON)
+  textAnimation    TextAnimation  @default(GRADIENT)
+
+  // === AI CONFIG ===
+  aiMode           AIMode     @default(DISABLED)
+  aiProvider       AIProvider @default(OPENAI)
+  aiApiKey         String?    // Clé client (optionnel)
+  aiModel          String     @default("gpt-4o")
+  aiSystemPrompt   String?
+  aiWebhookUrl     String?
+  aiImageWebhook   String?
+  aiMaxTokens      Int        @default(1000)
+  aiTemperature    Float      @default(0.7)
+  aiTone           AITone     @default(PROFESSIONAL)
+  aiIndustry       AIIndustry @default(SERVICES)
+  aiTargetAudience String?
+  aiKeywords       String?
+
+  // === INTEGRATIONS ===
+  n8nWebhookUrl       String?
+  n8nWebhookContact   String?
+  n8nWebhookNewsletter String?
+  umamiSiteId         String?
+  umamiScriptUrl      String?
+  gaMeasurementId     String?
+  gtmContainerId      String?
+  hotjarSiteId        String?
+  facebookPixelId     String?
+  stripePublicKey     String?
+  mailchimpListId     String?
+  sendgridApiKey      String?
+  notionDatabaseId    String?
+  airtableBaseId      String?
+
+  // === PREMIUM ===
+  isPremium       Boolean  @default(false)
+  premiumUntil    DateTime?
+  customDomain    String?
+  customCss       String?
+  customJs        String?
+  featureFlags    String[] @default([])
+  rateLimitApi    Int      @default(1000)
+  maintenanceMode Boolean  @default(false)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// ENUMS - VARIANTS & STYLES
+// ============================================
+
+enum ThemeVariant {
+  MINIMAL
+  CORPORATE
+  ELECTRIC
+  BOLD
+  AI
+  CUSTOM
+}
+
+enum AnimationStyle {
+  MICK_ELECTRIC
+  ELEGANT_FADE
+  DYNAMIC_SLIDE
+  MINIMAL
+  NONE
+}
+
+enum AnimationSpeed {
+  SLOW
+  NORMAL
+  FAST
+  INSTANT
+}
+
+enum ScrollEffect {
+  NONE
+  FADE
+  SLIDE
+  ZOOM
+  PARALLAX
+}
+
+enum HoverEffect {
+  NONE
+  SCALE
+  GLOW
+  LIFT
+  SHAKE
+}
+
+enum LoadingStyle {
+  NONE
+  SKELETON
+  SPINNER
+  PROGRESS
+}
+
+enum ImageStyle {
+  SQUARE
+  ROUNDED
+  CIRCLE
+  CUSTOM
+}
+
+enum ImageFilter {
+  NONE
+  GRAYSCALE
+  SEPIA
+  CONTRAST
+  BLUR
+}
+
+enum AspectRatio {
+  RATIO_1_1
+  RATIO_4_3
+  RATIO_16_9
+  RATIO_3_4
+  AUTO
+}
+
+enum CardStyle {
+  FLAT
+  SHADOW
+  BORDER
+  GLASSMORPHISM
+}
+
+enum Layout {
+  GRID
+  MASONRY
+  CAROUSEL
+}
+
+enum BorderRadius {
+  NONE
+  SMALL
+  MEDIUM
+  LARGE
+  FULL
+}
+
+enum FontFamily {
+  INTER
+  POPPINS
+  SPACE_GROTESK
+  OUTFIT
+  MONTSERRAT
+  DM_SANS
+  CUSTOM
+}
+
+enum PatternBackground {
+  NONE
+  GRID
+  DOTS
+  CIRCUIT
+  GRADIENT
+  CUSTOM
+}
+
+// ============================================
+// ENUMS - LOGO & TEXT ANIMATIONS
+// ============================================
+
+enum LogoAnimation {
+  NONE
+  SPIN
+  PULSE
+  BOUNCE
+  ELECTRIC
+  LIGHTNING_CIRCLE
+  ROTATE
+  SPIN_GLOW
+  FLOAT
+  SWING
+  FLIP_3D
+  STRETCH
+  MORPH
+}
+
+enum LogoFrameStyle {
+  SQUARE
+  CIRCLE
+  THICK_CIRCLE
+  NONE
+}
+
+enum TextAnimation {
+  GRADIENT
+  TYPING
+  FADE
+  NONE
+}
+
+enum GalleryAnimation {
+  FADE
+  SLIDE
+  ZOOM
+  FLIP
+  NONE
+}
+
+// ============================================
+// ENUMS - SECTION VARIANTS
+// ============================================
+
+enum HeroHeight {
+  SHORT
+  MEDIUM
+  TALL
+  FULLSCREEN
+}
+
+enum HeroLayout {
+  TEXT_LEFT
+  TEXT_RIGHT
+  CENTERED
+  SPLIT
+}
+
+enum SectionSpacing {
+  COMPACT
+  NORMAL
+  SPACIOUS
+  ULTRA
+}
+
+enum ServicesVariant {
+  GRID
+  ACCORDION
+  CARDS
+  SHOWCASE
+}
+
+enum GalleryVariant {
+  GRID
+  SLIDER
+  MASONRY
+  AI
+}
+
+enum TestimonialsVariant {
+  MINIMAL
+  CAROUSEL
+  CARDS
+  VIDEO
+}
+
+enum FAQVariant {
+  MINIMAL
+  ACCORDION
+  TABS
+  SEARCH
+}
+
+enum ContactVariant {
+  MINIMAL
+  FORM
+  CALENDAR
+  CHAT
+}
+
+enum AIAssistantStyle {
+  CHAT
+  VOICE
+  BANNER
+  HIDDEN
+}
+
+enum InfiniteZoomVariant {
+  FULLSCREEN
+  CONTAINED
+  HERO
+}
+
+// ============================================
+// ENUMS - AI CONFIG
+// ============================================
+
+enum AIMode {
+  DISABLED
+  PLACEHOLDER
+  LIVE
+}
+
+enum AIProvider {
+  OPENAI
+  GEMINI
+  ANTHROPIC
+  N8N
+  OLLAMA
+  CUSTOM
+}
+
+enum AITone {
+  PROFESSIONAL
+  FRIENDLY
+  CASUAL
+  FORMAL
+}
+
+enum AIIndustry {
+  TECH
+  FINANCE
+  HEALTH
+  RETAIL
+  SERVICES
+  OTHER
+}
+
+enum VoiceLanguage {
+  FR_FR
+  EN_US
+  DE_DE
+  IT_IT
+}
+
+// ============================================
+// PAGES & SECTIONS
+// ============================================
+
+model Page {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name           String  // "Accueil"
+  slug           String  // "home"
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean @default(true)
+  order          Int     @default(0)
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sections Section[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model Section {
+  id       String  @id @default(cuid())
+  tenantId String
+  pageId   String?
+
+  // Core
+  type     SectionType
+  name     String? // Nom interne optionnel
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  // Smart Data (JSON flexible) - TOUS les paramètres V3
+  content  Json // Texte, images, CTAs, items
+  design   Json // Variant, couleurs, animations
+  effects  Json? // EffectSettings (40+ options)
+  textSettings Json? // TextSettings (typography)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  page   Page?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([pageId])
+  @@index([type])
+  @@index([tenantId, pageId, order])
+}
+
+enum SectionType {
+  // Global sections (no pageId required)
+  HEADER
+  FOOTER
+  // Page sections
+  HERO
+  SERVICES
+  ADVANTAGES
+  GALLERY
+  PORTFOLIO
+  TESTIMONIALS
+  TRUST
+  FAQ
+  CONTACT
+  BLOG
+  AI_ASSISTANT
+  INFINITE_ZOOM
+  CUSTOM
+}
+
+// ============================================
+// LEADS & ANALYTICS
+// ============================================
+
+model Lead {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Contact
+  name    String?
+  email   String
+  phone   String?
+  message String?
+  source  String? // "contact-form", "ai-chat", "booking"
+
+  // Status
+  status LeadStatus @default(NEW)
+  notes  String?
+
+  // Tracking
+  createdAt   DateTime  @default(now())
+  convertedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt(sort: Desc)])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+// ============================================
+// ASSETS (Images, Documents)
+// ============================================
+
+model Asset {
+  id       String @id @default(cuid())
+  tenantId String
+
+  filename String
+  url      String
+  mimeType String
+  size     Int    // bytes
+  altText  String?
+
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
