@@ -833,6 +833,11 @@ export const SPACING_MAP = {
 
 export const HEIGHT_MAP = {
     auto: 'auto',
+    compact: '60px',
+    'header-sm': '80px',
+    'header-md': '100px',
+    'header-lg': '150px',
+    small: '40vh',
     short: '40vh',
     medium: '60vh',
     tall: '80vh',

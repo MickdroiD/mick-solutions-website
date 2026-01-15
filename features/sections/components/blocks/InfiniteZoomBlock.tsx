@@ -160,8 +160,19 @@ export default function InfiniteZoomBlock({ content, style }: InfiniteZoomBlockP
 
     if (layers.length === 0) {
         return (
-            <div style={{ color: '#white', padding: '2rem', textAlign: 'center' }}>
-                Infinite Zoom: {layers.length} images (Visible ?)
+            <div style={{
+                color: '#22d3ee',
+                padding: '2rem',
+                textAlign: 'center',
+                minHeight: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(34,211,238,0.1)',
+                borderRadius: '0.5rem',
+                border: '2px dashed rgba(34,211,238,0.3)',
+            }}>
+                🔍 Infinite Zoom - Ajoutez des images
             </div>
         );
     }

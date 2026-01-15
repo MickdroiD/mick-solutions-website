@@ -1,15 +1,16 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { redirect } from 'next/navigation';
+import bcrypt from 'bcryptjs';
+import prisma from '@/shared/lib/db';
 
 // ============================================
 // ADMIN AUTHENTICATION - SERVER ACTIONS
 // ============================================
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'factory-v5-secret-dev';
-const ADMIN_PIN = process.env.ADMIN_PIN || '123456'; // Default Fallback, should be in .env
 
 export interface AuthState {
     error?: string;
@@ -23,17 +24,62 @@ export async function loginWithPin(prevState: AuthState, formData: FormData): Pr
     await new Promise(resolve => setTimeout(resolve, 800));
 
     console.log('[Auth] Login Attempt. PIN Length:', pin.length);
-    console.log('[Auth] Expected PIN Length:', ADMIN_PIN.length);
 
-    if (pin !== ADMIN_PIN) {
-        console.log('[Auth] PIN Mismatch.');
+    // Resolve tenant from host header
+    const headersList = await headers();
+    const host = headersList.get('host') || '';
+    console.log('[Auth] Resolving tenant from host:', host);
+
+    // Find tenant by domain or subdomain slug
+    const tenant = await prisma.tenant.findFirst({
+        where: {
+            OR: [
+                { domain: host },
+                { slug: host.split('.')[0] },
+            ],
+        },
+        select: { id: true, name: true }
+    });
+
+    if (!tenant) {
+        console.log('[Auth] No tenant found for host:', host);
+        return { error: 'Client non trouvé' };
+    }
+
+    console.log('[Auth] Found tenant:', tenant.id, tenant.name);
+
+    // Find any TenantUser for this tenant
+    const user = await prisma.tenantUser.findFirst({
+        where: { tenantId: tenant.id }
+    });
+
+    if (!user || !user.pinHash) {
+        console.log('[Auth] No user or pinHash found for tenant:', tenant.id);
+        return { error: 'Aucun utilisateur configuré pour ce site' };
+    }
+
+    // Compare PIN with bcrypt hash
+    const validPin = await bcrypt.compare(pin, user.pinHash);
+    if (!validPin) {
+        console.log('[Auth] PIN Mismatch for user:', user.id);
         return { error: 'Code PIN incorrect' };
     }
-    console.log('[Auth] PIN Matched!');
 
-    // Create Session
+    console.log('[Auth] PIN Matched for user:', user.id);
+
+    // Update last login
+    await prisma.tenantUser.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() }
+    });
+
+    // Create Session with tenant info
     const secret = new TextEncoder().encode(JWT_SECRET);
-    const token = await new SignJWT({ role: 'admin' })
+    const token = await new SignJWT({
+        role: 'admin',
+        tenantId: tenant.id,
+        userId: user.id
+    })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime('24h')
@@ -46,7 +92,7 @@ export async function loginWithPin(prevState: AuthState, formData: FormData): Pr
 
     cookieStore.set('admin_session', token, {
         httpOnly: true,
-        secure: false, // process.env.NODE_ENV === 'production', // DEBUG: Disable secure temporarily to rule out proxy issues
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24, // 24 hours
         path: '/',
         sameSite: 'lax',

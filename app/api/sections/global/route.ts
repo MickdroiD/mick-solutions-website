@@ -7,9 +7,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/shared/lib/db';
 import { SectionType } from '@prisma/client';
 
+import { getTenantId } from '@/shared/lib/tenant';
+
 export async function GET(request: NextRequest) {
     try {
-        const tenantId = request.nextUrl.searchParams.get('tenantId') || 'demo-tenant';
+        const tenantId = request.nextUrl.searchParams.get('tenantId') || await getTenantId();
 
         // Find all HEADER and FOOTER sections for this tenant (active only)
         const sections = await prisma.section.findMany({

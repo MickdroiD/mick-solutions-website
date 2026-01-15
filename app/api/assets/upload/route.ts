@@ -20,20 +20,21 @@ const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'factory-v5-secret-dev';
 
-// Helper to get tenant from session (Custom V5 Auth)
-async function getTenantId(): Promise<string | null> {
+import { getTenantId as resolveTenantId } from '@/shared/lib/tenant';
+
+// Helper to verify auth (Custom V5 Auth)
+async function verifyAuth(): Promise<boolean> {
     const cookieStore = await cookies();
     const token = cookieStore.get('admin_session')?.value;
 
-    if (!token) return null;
+    if (!token) return false;
 
     try {
         const secret = new TextEncoder().encode(JWT_SECRET);
         await jwtVerify(token, secret);
-        // For V5 Demo/Single Tenant, we default to 'demo-tenant' if auth is valid
-        return 'demo-tenant';
+        return true;
     } catch (e) {
-        return null;
+        return false;
     }
 }
 
@@ -48,16 +49,22 @@ function generateFileName(originalName: string): string {
     return `${baseName}-${timestamp}-${random}${ext}`;
 }
 
+// ...
+
 export async function POST(request: NextRequest) {
     try {
         // SECURITY: Validate session first
-        const tenantId = await getTenantId();
-        if (!tenantId) {
+        const isAuth = await verifyAuth();
+        if (!isAuth) {
             return NextResponse.json(
                 { error: 'Non authentifié' },
                 { status: 401 }
             );
         }
+
+        // Resolve tenant dynamically
+        const tenantId = await resolveTenantId();
+
 
         // Parse FormData
         const formData = await request.formData();
@@ -66,7 +73,7 @@ export async function POST(request: NextRequest) {
         // Validation
         if (!file) {
             return NextResponse.json(
-                { error: 'Aucun fichier fourni' },
+                { error: 'Aucun fichier' },
                 { status: 400 }
             );
         }
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
         // Vérifier le type de fichier
         if (!ALLOWED_TYPES.includes(file.type)) {
             return NextResponse.json(
-                { error: `Type de fichier non autorisé: ${file.type}. Types autorisés: images (JPEG, PNG, WebP, SVG, GIF) et vidéos (MP4, WebM)` },
+                { error: 'Type interdit' },
                 { status: 400 }
             );
         }
@@ -82,7 +89,7 @@ export async function POST(request: NextRequest) {
         // Vérifier la taille
         if (file.size > MAX_FILE_SIZE) {
             return NextResponse.json(
-                { error: `Fichier trop volumineux. Taille max: ${MAX_FILE_SIZE / 1024 / 1024}MB` },
+                { error: 'Trop gros' },
                 { status: 400 }
             );
         }
@@ -131,7 +138,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Erreur upload:', error);
         return NextResponse.json(
-            { error: 'Erreur lors de l\'upload' },
+            { error: 'Erreur upload' },
             { status: 500 }
         );
     }
@@ -141,13 +148,15 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
     try {
         // SECURITY: Validate session
-        const tenantId = await getTenantId();
-        if (!tenantId) {
+        const isAuth = await verifyAuth();
+        if (!isAuth) {
             return NextResponse.json(
                 { error: 'Non authentifié' },
                 { status: 401 }
             );
         }
+
+        const tenantId = await resolveTenantId();
 
         const assets = await prisma.asset.findMany({
             where: { tenantId },
@@ -158,7 +167,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('Erreur liste assets:', error);
         return NextResponse.json(
-            { error: 'Erreur lors de la récupération des assets' },
+            { error: 'Erreur fetch assets' },
             { status: 500 }
         );
     }

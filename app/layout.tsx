@@ -13,13 +13,32 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | Factory V5',
-    default: 'Factory V5',
-  },
-  description: "Plateforme Web",
-};
+// import type { Metadata } from 'next'; // Already imported at top
+import { getTenantId } from '@/shared/lib/tenant';
+import prisma from '@/shared/lib/db';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const tenantId = await getTenantId();
+  const config = await prisma.siteConfig.findUnique({
+    where: { tenantId },
+    select: {
+      faviconUrl: true,
+      nomSite: true,
+      metaDescription: true
+    },
+  });
+
+  return {
+    title: {
+      template: `%s | ${config?.nomSite || 'Factory V5'}`,
+      default: config?.nomSite || 'Factory V5',
+    },
+    description: config?.metaDescription || "Plateforme Web",
+    icons: {
+      icon: config?.faviconUrl || '/favicon.ico',
+    },
+  };
+}
 
 export default function RootLayout({
   children,

@@ -75,15 +75,16 @@ export default function CarouselBlock({ content, style }: CarouselBlockProps) {
         return (
             <div style={{
                 width: '100%',
-                paddingBottom: ASPECT_RATIOS[aspectRatio],
-                background: 'rgba(255,255,255,0.05)',
+                minHeight: '200px',
+                background: 'rgba(168,85,247,0.1)',
                 borderRadius,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#6b7280',
+                color: '#a855f7',
+                border: '2px dashed rgba(168,85,247,0.3)',
             }}>
-                Aucune image
+                🎠 Carousel - Ajoutez des images
             </div>
         );
     }

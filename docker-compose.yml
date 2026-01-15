@@ -27,7 +27,7 @@ services:
       - proxy # Réseau pour Traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.factory-v5.rule=Host(`mick-solutions.ch`) || Host(`www.mick-solutions.ch`) || HostRegexp(`{subdomain:[a-z0-9-]+}.mick-solutions.ch`)"
+      - "traefik.http.routers.factory-v5.rule=Host(`mick-solutions.ch`) || Host(`www.mick-solutions.ch`) || Host(`portfolio-sarah.mick-solutions.ch`) || Host(`admin.mick-solutions.ch`) || HostRegexp(`{subdomain:[a-z0-9-]+}.mick-solutions.ch`)"
       - "traefik.http.routers.factory-v5.entrypoints=websecure"
       - "traefik.http.routers.factory-v5.tls.certresolver=myresolver"
       - "traefik.http.services.factory-v5.loadbalancer.server.port=3000"

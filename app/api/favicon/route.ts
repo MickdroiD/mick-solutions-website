@@ -5,11 +5,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
 import prisma from '@/shared/lib/db';
 import path from 'path';
 import fs from 'fs/promises';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 // Favicon sizes to generate
 const FAVICON_SIZES = [
@@ -22,17 +22,29 @@ const FAVICON_SIZES = [
     { name: 'mstile-150x150.png', size: 150 },
 ];
 
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'factory-v5-secret-dev';
+
 export async function POST(request: NextRequest) {
     try {
-        // Check authentication
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        // Check authentication via JWT cookie
+        const cookieStore = await cookies();
+        const token = cookieStore.get('admin_session')?.value;
+
+        if (!token) {
+            return NextResponse.json({ success: false, message: 'Non autorisé - veuillez vous reconnecter' }, { status: 401 });
         }
 
-        const tenantId = (session.user as any).tenantId;
+        let tenantId: string | undefined;
+        try {
+            const secret = new TextEncoder().encode(JWT_SECRET);
+            const { payload } = await jwtVerify(token, secret);
+            tenantId = payload.tenantId as string;
+        } catch {
+            return NextResponse.json({ success: false, message: 'Session expirée - veuillez vous reconnecter' }, { status: 401 });
+        }
+
         if (!tenantId) {
-            return NextResponse.json({ error: 'Tenant non trouvé' }, { status: 400 });
+            return NextResponse.json({ success: false, message: 'Tenant non trouvé dans la session' }, { status: 400 });
         }
 
         // Get request body
@@ -40,7 +52,7 @@ export async function POST(request: NextRequest) {
         const { logoUrl } = body;
 
         if (!logoUrl) {
-            return NextResponse.json({ error: 'URL du logo requise' }, { status: 400 });
+            return NextResponse.json({ success: false, message: 'URL du logo requise' }, { status: 400 });
         }
 
         // Fetch the logo image
@@ -50,10 +62,19 @@ export async function POST(request: NextRequest) {
             // External URL - fetch it
             const response = await fetch(logoUrl);
             if (!response.ok) {
-                return NextResponse.json({ error: 'Impossible de télécharger le logo' }, { status: 400 });
+                return NextResponse.json({ success: false, message: 'Impossible de télécharger le logo' }, { status: 400 });
             }
             const arrayBuffer = await response.arrayBuffer();
             imageBuffer = Buffer.from(arrayBuffer);
+        } else if (logoUrl.startsWith('/uploads/')) {
+            // Local upload - read from public directory
+            try {
+                const filePath = path.join(process.cwd(), 'public', logoUrl);
+                imageBuffer = await fs.readFile(filePath);
+            } catch (err) {
+                console.error('Error reading local file:', err);
+                return NextResponse.json({ success: false, message: 'Fichier local non trouvé' }, { status: 404 });
+            }
         } else if (logoUrl.startsWith('/api/assets/')) {
             // Internal asset - get URL from database and fetch
             const assetId = logoUrl.replace('/api/assets/', '');
@@ -61,21 +82,21 @@ export async function POST(request: NextRequest) {
                 where: { id: assetId, tenantId }
             });
             if (!asset || !asset.url) {
-                return NextResponse.json({ error: 'Asset non trouvé' }, { status: 404 });
+                return NextResponse.json({ success: false, message: 'Asset non trouvé' }, { status: 404 });
             }
             // Fetch from the stored URL
             const assetResponse = await fetch(asset.url);
             if (!assetResponse.ok) {
-                return NextResponse.json({ error: 'Impossible de télécharger l\'asset' }, { status: 400 });
+                return NextResponse.json({ success: false, message: 'Impossible de télécharger l\'asset' }, { status: 400 });
             }
             const arrayBuffer = await assetResponse.arrayBuffer();
             imageBuffer = Buffer.from(arrayBuffer);
         } else {
-            return NextResponse.json({ error: 'Format d\'URL non supporté' }, { status: 400 });
+            return NextResponse.json({ success: false, message: 'Format d\'URL non supporté. Utilisez une URL http(s):// ou sélectionnez depuis la galerie.' }, { status: 400 });
         }
 
-        // Create output directory for this tenant
-        const outputDir = path.join(process.cwd(), 'public', 'favicons', tenantId);
+        // Create output directory for this tenant (store directly in tenant folder to avoid Next.js routing issues)
+        const outputDir = path.join(process.cwd(), 'public', 'uploads', tenantId);
         await fs.mkdir(outputDir, { recursive: true });
 
         // Generate all favicon sizes
@@ -122,8 +143,8 @@ export async function POST(request: NextRequest) {
             name: tenantId,
             short_name: tenantId,
             icons: [
-                { src: `/favicons/${tenantId}/android-chrome-192x192.png`, sizes: '192x192', type: 'image/png' },
-                { src: `/favicons/${tenantId}/android-chrome-512x512.png`, sizes: '512x512', type: 'image/png' }
+                { src: `/uploads/${tenantId}/android-chrome-192x192.png`, sizes: '192x192', type: 'image/png' },
+                { src: `/uploads/${tenantId}/android-chrome-512x512.png`, sizes: '512x512', type: 'image/png' }
             ],
             theme_color: '#22d3ee',
             background_color: '#0a0a0f',
@@ -136,12 +157,20 @@ export async function POST(request: NextRequest) {
         );
         generated.push('site.webmanifest');
 
+        // Update SiteConfig with the new favicon URL
+        const faviconUrl = `/uploads/${tenantId}/favicon.ico`;
+        await prisma.siteConfig.upsert({
+            where: { tenantId },
+            update: { faviconUrl },
+            create: { tenantId, faviconUrl }
+        });
+
         // Return success with paths
         return NextResponse.json({
             success: true,
-            message: `${generated.length} fichiers générés`,
+            message: `${generated.length} fichiers générés et favicon appliqué automatiquement`,
             files: generated,
-            basePath: `/favicons/${tenantId}`,
+            basePath: `/uploads/${tenantId}`,
             htmlTags: generateHtmlTags(tenantId)
         });
 
@@ -156,7 +185,7 @@ export async function POST(request: NextRequest) {
 
 // Generate HTML link tags for the head
 function generateHtmlTags(tenantId: string): string {
-    const base = `/favicons/${tenantId}`;
+    const base = `/uploads/${tenantId}`;
     return `
 <link rel="icon" type="image/x-icon" href="${base}/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="${base}/favicon-16x16.png">

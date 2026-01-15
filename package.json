@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "tenant:manage": "npx tsx scripts/tenant-manager.ts"
+    "tenant:manage": "docker exec -it -u root factory-v5 npx tsx scripts/tenant-manager.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -36,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "postcss": "^8.5.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/node": "^20"
   }
 }

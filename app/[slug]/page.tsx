@@ -14,16 +14,14 @@ interface PageProps {
     params: Promise<{ slug: string }>;
 }
 
-// Pour le moment, on utilise un tenant ID fixe (à remplacer par détection domaine)
-const TENANT_ID = 'demo-tenant';
-
-// Générer metadata SEO dynamique
+import { getTenantId } from '@/shared/lib/tenant';
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
+    const tenantId = await getTenantId();
 
     const page = await prisma.page.findFirst({
         where: {
-            tenantId: TENANT_ID,
+            tenantId,
             slug,
             isPublished: true,
         },
@@ -43,10 +41,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DynamicPage({ params }: PageProps) {
     const { slug } = await params;
+    const tenantId = await getTenantId();
 
     // Récupérer la config du site pour les couleurs branding
     const siteConfig = await prisma.siteConfig.findUnique({
-        where: { tenantId: TENANT_ID },
+        where: { tenantId },
     });
     const bgColor = siteConfig?.couleurBackground || '#0a0a0f';
     const textColor = siteConfig?.couleurText || '#ffffff';
@@ -54,7 +53,7 @@ export default async function DynamicPage({ params }: PageProps) {
     // Récupérer la page avec ses sections
     const page = await prisma.page.findFirst({
         where: {
-            tenantId: TENANT_ID,
+            tenantId,
             slug,
             isPublished: true,
         },
@@ -74,7 +73,7 @@ export default async function DynamicPage({ params }: PageProps) {
     return (
         <main style={{ minHeight: '100vh', background: bgColor, color: textColor }}>
             {/* Header */}
-            <Header />
+            <Header tenantId={tenantId} />
 
             {/* Sections dynamiques */}
             {page.sections.length > 0 ? (
@@ -97,7 +96,7 @@ export default async function DynamicPage({ params }: PageProps) {
             )}
 
             {/* Footer */}
-            <Footer />
+            <Footer tenantId={tenantId} />
         </main>
     );
 }

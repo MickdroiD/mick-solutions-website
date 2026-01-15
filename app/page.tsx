@@ -13,23 +13,7 @@ import type { PrismaSection } from '@/features/sections/types';
 import type { Metadata } from 'next';
 
 // Resolve tenant from hostname
-async function getTenantId(): Promise<string> {
-  const headersList = await headers();
-  const host = headersList.get('host') || '';
-
-  // Lookup tenant by domain or subdomain
-  const tenant = await prisma.tenant.findFirst({
-    where: {
-      OR: [
-        { domain: host },
-        { slug: host.split('.')[0] },
-      ],
-    },
-  });
-
-  // Fallback to demo-tenant for development
-  return tenant?.id || 'demo-tenant';
-}
+import { getTenantId } from '@/shared/lib/tenant';
 
 // Legacy constant for backwards compatibility in metadata
 const FALLBACK_TENANT_ID = 'demo-tenant';
@@ -80,7 +64,7 @@ export default async function HomePage() {
   if (!page) {
     return (
       <main style={{ minHeight: '100vh', background: bgColor, color: textColor }}>
-        <Header />
+        <Header tenantId={tenantId} />
         <section style={{
           minHeight: '80vh',
           display: 'flex',
@@ -105,14 +89,14 @@ export default async function HomePage() {
             Ce site est en cours de configuration.
           </p>
         </section>
-        <Footer />
+        <Footer tenantId={tenantId} />
       </main>
     );
   }
 
   return (
     <main style={{ minHeight: '100vh', background: bgColor, color: textColor }}>
-      <Header />
+      <Header tenantId={tenantId} />
       {page.sections.length > 0 ? (
         page.sections
           .filter(s => s.type !== 'HEADER' && s.type !== 'FOOTER') // Filter out global sections to avoid duplication
@@ -133,7 +117,7 @@ export default async function HomePage() {
           <p>Aucune section configurée.</p>
         </section>
       )}
-      <Footer />
+      <Footer tenantId={tenantId} />
     </main>
   );
 }

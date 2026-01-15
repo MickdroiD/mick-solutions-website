@@ -46,7 +46,12 @@ export default function SectionEditor({ initialConfig, onSave, onCancel, onChang
     const { data: session } = useSession();
     const tenantId = (session?.user as any)?.tenantId || '';
 
-    const [config, setConfig] = useState<UniversalSectionConfig>(initialConfig || DEFAULT_UNIVERSAL_CONFIG);
+    // Ensure config always has a valid blocks array
+    const safeInitialConfig = initialConfig
+        ? { ...DEFAULT_UNIVERSAL_CONFIG, ...initialConfig, blocks: initialConfig.blocks || [] }
+        : DEFAULT_UNIVERSAL_CONFIG;
+
+    const [config, setConfig] = useState<UniversalSectionConfig>(safeInitialConfig);
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [showColorPicker, setShowColorPicker] = useState<'from' | 'to' | 'solid' | 'overlay' | null>(null);
     const [activeTab, setActiveTab] = useState<'blocks' | 'layout' | 'design'>('blocks');
@@ -547,9 +552,9 @@ function createDefaultBlock(type: BlockType): ContentBlock {
         case 'form':
             return { id, order, type: 'form', content: { title: 'Contactez-nous', submitText: 'Envoyer', fields: [{ id: 'name', type: 'text', label: 'Nom', required: true }, { id: 'email', type: 'email', label: 'Email', required: true }, { id: 'message', type: 'textarea', label: 'Message' }] }, style: { variant: 'bordered', buttonVariant: 'gradient' } } as ContentBlock;
         case 'infinite-zoom':
-            return { id, order, type: 'infinite-zoom', content: { layers: [{ id: '1', imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', title: 'Layer 1' }] }, style: { variant: 'contained', showIndicators: true } } as ContentBlock;
+            return { id, order, type: 'infinite-zoom', content: { layers: [{ id: '1', imageUrl: 'https://placehold.co/1920x1080/1a1a2e/22d3ee?text=Layer+1', title: 'Layer 1' }, { id: '2', imageUrl: 'https://placehold.co/1920x1080/22d3ee/ffffff?text=Layer+2', title: 'Layer 2' }] }, style: { variant: 'contained', showIndicators: true, height: '400px' } } as ContentBlock;
         case 'carousel':
-            return { id, order, type: 'carousel', content: { images: [{ url: 'https://picsum.photos/800/400?random=1', alt: 'Image 1' }, { url: 'https://picsum.photos/800/400?random=2', alt: 'Image 2' }], autoplay: true }, style: { aspectRatio: '16:9', showArrows: true, showDots: true } } as ContentBlock;
+            return { id, order, type: 'carousel', content: { images: [{ url: 'https://placehold.co/800x400/a855f7/ffffff?text=Image+1', alt: 'Image 1' }, { url: 'https://placehold.co/800x400/22d3ee/000000?text=Image+2', alt: 'Image 2' }], autoplay: true }, style: { aspectRatio: '16:9', showArrows: true, showDots: true } } as ContentBlock;
         case 'gallery':
             return { id, order, type: 'gallery', content: { images: [{ url: 'https://picsum.photos/400/400?random=1' }, { url: 'https://picsum.photos/400/400?random=2' }, { url: 'https://picsum.photos/400/400?random=3' }] }, style: { columns: 3, gap: 'md', hoverEffect: 'zoom' } } as ContentBlock;
         case 'logo-cloud':
@@ -2570,7 +2575,7 @@ function LayoutProperties({ config, onUpdate }: { config: UniversalSectionConfig
 
             <StyledSelect
                 label="Hauteur Section"
-                value={['auto', 'small', 'medium', 'tall', 'fullscreen'].includes(config.sizing?.height || 'auto') ? (config.sizing?.height || 'auto') : 'custom'}
+                value={['auto', 'compact', 'header-sm', 'header-md', 'header-lg', 'small', 'medium', 'tall', 'fullscreen'].includes(config.sizing?.height || 'auto') ? (config.sizing?.height || 'auto') : 'custom'}
                 onChange={(e) => {
                     if (e.target.value === 'custom') {
                         onUpdate({ sizing: { ...config.sizing, height: 'custom-500px' } }); // Default custom start
@@ -2580,6 +2585,10 @@ function LayoutProperties({ config, onUpdate }: { config: UniversalSectionConfig
                 }}
                 options={[
                     { value: 'auto', label: 'Auto (Contenu)' },
+                    { value: 'compact', label: '🔹 Compact (60px)' },
+                    { value: 'header-sm', label: '🔸 Header Petit (80px)' },
+                    { value: 'header-md', label: '🔸 Header Standard (100px)' },
+                    { value: 'header-lg', label: '🔹 Header Large (150px)' },
                     { value: 'small', label: 'Petite (40vh)' },
                     { value: 'medium', label: 'Moyenne (60vh)' },
                     { value: 'tall', label: 'Grande (80vh)' },

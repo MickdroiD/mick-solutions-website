@@ -39,6 +39,16 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
+# Install Docker CLI for n8n orchestration
+RUN apk add --no-cache docker-cli
+
+# Create scripts directory and fix permissions
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/package.json ./package.json
+
+# Fix permissions for Next.js user to run scripts
+USER root
+RUN chown -R nextjs:nodejs /app/scripts && chmod +x /app/scripts/*.ts
 USER nextjs
 
 EXPOSE 3000
