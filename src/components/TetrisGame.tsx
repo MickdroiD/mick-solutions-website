@@ -323,6 +323,12 @@ export default function TetrisGame() {
     }
   }, [tryMove, lockPiece]);
 
+  const togglePause = useCallback(() => {
+    if (!started || gameOverRef.current) return;
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+  }, [started]);
+
   const reset = useCallback(() => {
     boardRef.current = emptyBoard();
     pieceRef.current = randomPiece();
@@ -422,6 +428,83 @@ export default function TetrisGame() {
     return () => window.removeEventListener('keydown', onKey);
   }, [tryMove, softDrop, rotate, hardDrop, reset, started]);
 
+  // Contrôles tactiles : swipes sur le plateau
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let lastMoveX = 0;
+    let lastMoveY = 0;
+    let moved = false;
+
+    const SWIPE_THRESHOLD = 24;
+    const TAP_MAX_DIST = 14;
+    const TAP_MAX_TIME = 250;
+    const HARD_DROP_VELOCITY = 0.9; // px/ms
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      if (!started || gameOverRef.current || pausedRef.current) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      lastMoveX = startX;
+      lastMoveY = startY;
+      startTime = performance.now();
+      moved = false;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      if (!started || gameOverRef.current || pausedRef.current) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      const dx = t.clientX - lastMoveX;
+      const dy = t.clientY - lastMoveY;
+
+      if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+        tryMove(dx > 0 ? 1 : -1, 0);
+        lastMoveX = t.clientX;
+        lastMoveY = t.clientY;
+        moved = true;
+      } else if (dy >= SWIPE_THRESHOLD) {
+        softDrop();
+        lastMoveY = t.clientY;
+        lastMoveX = t.clientX;
+        moved = true;
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!started || gameOverRef.current || pausedRef.current) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const dist = Math.hypot(dx, dy);
+      const dt = performance.now() - startTime;
+      const vy = dy / Math.max(dt, 1);
+
+      if (!moved && dist < TAP_MAX_DIST && dt < TAP_MAX_TIME) {
+        rotate();
+      } else if (dy > 60 && vy > HARD_DROP_VELOCITY && Math.abs(dx) < Math.abs(dy)) {
+        hardDrop();
+      }
+    };
+
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd);
+    return () => {
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [tryMove, softDrop, rotate, hardDrop, started]);
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4"
       style={{
@@ -448,6 +531,9 @@ export default function TetrisGame() {
               style={{
                 border: '2px solid #ff7ab8',
                 boxShadow: '0 0 30px rgba(255, 122, 184, 0.5), inset 0 0 20px rgba(255, 122, 184, 0.1)',
+                touchAction: 'none',
+                maxWidth: '100%',
+                height: 'auto',
               }}
             />
             {!started && (
@@ -469,6 +555,26 @@ export default function TetrisGame() {
                 buttonLabel="Rejouer"
               />
             )}
+          </div>
+
+          {/* Contrôles tactiles */}
+          <div className="mt-4 w-full max-w-[280px] lg:hidden select-none">
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <div />
+              <TouchButton onPress={rotate} label="↻" sub="Rotation" />
+              <div />
+              <TouchButton onPress={() => tryMove(-1, 0)} label="←" sub="Gauche" />
+              <TouchButton onPress={softDrop} label="↓" sub="Bas" />
+              <TouchButton onPress={() => tryMove(1, 0)} label="→" sub="Droite" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <TouchButton onPress={hardDrop} label="⤓" sub="Chute" />
+              <TouchButton
+                onPress={started && !gameOver ? togglePause : reset}
+                label={!started || gameOver ? '▶' : paused ? '▶' : '⏸'}
+                sub={!started ? 'Démarrer' : gameOver ? 'Rejouer' : paused ? 'Reprendre' : 'Pause'}
+              />
+            </div>
           </div>
         </div>
 
@@ -505,17 +611,56 @@ export default function TetrisGame() {
             }}
           >
             <div className="font-semibold mb-2" style={{ color: '#ff7ab8' }}>
-              Commandes
+              Clavier
             </div>
             <div>← → : Déplacer</div>
             <div>↑ / X : Rotation</div>
             <div>↓ : Descente</div>
             <div>Espace : Chute</div>
             <div>P : Pause</div>
+            <div className="font-semibold mt-3 mb-2" style={{ color: '#ff7ab8' }}>
+              Tactile
+            </div>
+            <div>Glisser ← → : Déplacer</div>
+            <div>Toucher : Rotation</div>
+            <div>Glisser ↓ : Descente</div>
+            <div>Balayer ↓ vite : Chute</div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function TouchButton({
+  onPress,
+  label,
+  sub,
+}: {
+  onPress: () => void;
+  label: string;
+  sub: string;
+}) {
+  const handle = (e: React.PointerEvent) => {
+    e.preventDefault();
+    onPress();
+  };
+  return (
+    <button
+      onPointerDown={handle}
+      className="flex flex-col items-center justify-center rounded-lg py-3 active:scale-95 transition-transform touch-manipulation"
+      style={{
+        background: 'linear-gradient(135deg, rgba(255,122,184,0.25), rgba(255,79,163,0.25))',
+        border: '1px solid rgba(255, 122, 184, 0.5)',
+        color: '#fff',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <span className="text-2xl leading-none">{label}</span>
+      <span className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#ffd1e8' }}>
+        {sub}
+      </span>
+    </button>
   );
 }
 
